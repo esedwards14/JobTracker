@@ -104,6 +104,9 @@
 
 <script>
 function updateStatus(appId, status, selectElement) {
+    // Update visual immediately (color changes on selection)
+    selectElement.className = 'text-xs font-medium rounded-full px-2 py-1 border-0 cursor-pointer status-' + status;
+
     fetch('/api/v1/applications/' + appId + '/status', {
         method: 'PATCH',
         headers: {
@@ -112,10 +115,7 @@ function updateStatus(appId, status, selectElement) {
         body: JSON.stringify({status: status})
     })
     .then(response => {
-        if (response.ok) {
-            // Update the select styling to match new status
-            selectElement.className = 'text-xs font-medium rounded-full px-2 py-1 border-0 cursor-pointer status-' + status;
-        } else {
+        if (!response.ok) {
             alert('Failed to update status');
             location.reload();
         }

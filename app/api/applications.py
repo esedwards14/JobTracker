@@ -107,6 +107,21 @@ def update_application(id):
     return jsonify(application.to_dict())
 
 
+@api_bp.route('/applications/<int:id>/notes', methods=['PATCH'])
+def update_application_notes(id):
+    """Update only the notes of an application."""
+    application = JobApplication.query.get_or_404(id)
+
+    data = request.json
+    if data is None:
+        data = {}
+
+    application.notes = data.get('notes') or None
+    db.session.commit()
+
+    return jsonify(application.to_dict())
+
+
 @api_bp.route('/applications/<int:id>/status', methods=['PATCH'])
 def update_application_status(id):
     """Update only the status of an application."""

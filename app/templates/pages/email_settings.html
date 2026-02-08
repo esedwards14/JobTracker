@@ -12,57 +12,57 @@
 
     <!-- Connection Settings -->
     <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b">
-            <h2 class="text-lg font-medium text-gray-900">Gmail Connection</h2>
-        </div>
-        <div class="px-6 py-4">
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <h2 class="text-base font-medium text-gray-900">Gmail Connection</h2>
             {% if settings and settings.refresh_token %}
-            <!-- Connected State -->
+            <button onclick="disconnectGmail()"
+                    class="px-2 py-0.5 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50">
+                Disconnect
+            </button>
+            {% endif %}
+        </div>
+        <div class="px-4 py-3">
+            {% if settings and settings.refresh_token %}
+            <!-- Connected State - compact -->
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex items-center space-x-2">
+                    <svg class="h-4 w-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Connected</p>
-                        <p class="text-sm text-gray-500">{{ settings.email_address }}</p>
+                        <p class="text-sm font-medium text-gray-900">Connected as {{ settings.email_address }}</p>
                         {% if settings.last_sync %}
-                        <p class="text-xs text-gray-400 mt-1">Last synced: {{ settings.last_sync.strftime('%b %d at %I:%M %p') }}</p>
+                        <p class="text-xs text-gray-400">Last synced: {{ settings.last_sync.strftime('%b %d at %I:%M %p') }}</p>
                         {% endif %}
                     </div>
                 </div>
-                <button onclick="disconnectGmail()"
-                        class="px-2 py-0.5 text-sm border border-red-300 text-red-700 rounded-md hover:bg-red-50">
-                    Disconnect
-                </button>
             </div>
             {% else %}
-            <!-- Not Connected State -->
-            <div class="text-center">
-                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">Gmail not connected</h3>
-                <p class="mt-1 text-sm text-gray-500">Sign in with Google to import job application emails</p>
-                <div class="mt-4">
-                    <button onclick="connectGmail()"
-                            class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Sign in with Google
-                    </button>
+            <!-- Not Connected State - compact -->
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">Gmail not connected</p>
+                        <p class="text-xs text-gray-500">Sign in to import job application emails</p>
+                    </div>
                 </div>
-                <p class="mt-4 text-xs text-gray-400">
-                    We only request read-only access to your emails.<br>
-                    No passwords are stored - authentication is handled securely by Google.
-                </p>
+                <button onclick="connectGmail()"
+                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0">
+                    <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Sign in with Google
+                </button>
             </div>
+            <p class="mt-2 text-xs text-gray-400">Read-only access. No passwords stored.</p>
 
-            <div id="oauth-error" class="mt-4 hidden p-4 bg-red-50 border border-red-200 rounded-md text-red-700"></div>
+            <div id="oauth-error" class="mt-2 hidden p-2 text-sm bg-red-50 border border-red-200 rounded text-red-700"></div>
             {% endif %}
         </div>
     </div>
@@ -115,11 +115,11 @@
     <!-- Pending Emails (moved above responses) -->
     <div class="bg-white rounded-lg shadow mt-4">
         <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-medium text-gray-900">Pending Imports</h2>
+            <h2 class="text-lg font-medium text-gray-900">Pending Imports <span id="pending-count" class="text-gray-500 font-normal text-base"></span></h2>
             <div class="flex items-center space-x-3">
-                <button id="pending-toggle" onclick="togglePending()" aria-expanded="true"
+                <button id="pending-toggle" onclick="togglePending()" aria-expanded="false"
                         class="px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-100 hover:bg-gray-200">
-                    ▾
+                    ▸
                 </button>
                 <button onclick="importAll()"
                         id="import-all-btn"
@@ -128,7 +128,7 @@
                 </button>
             </div>
         </div>
-        <div id="pending-emails" class="divide-y">
+        <div id="pending-emails" class="divide-y hidden">
             <div class="p-6 text-center text-gray-500">
                 <p>Click "Sync Now" to scan for job application emails</p>
             </div>
@@ -164,9 +164,9 @@
         <div class="p-6">
             <p class="text-gray-600 mb-4">Automatically detect and update application statuses based on emails:</p>
             <div class="flex flex-wrap gap-2 mb-4">
-                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">❌ Rejections</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">📅 Interview Requests</span>
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">🎉 Offers</span>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">Rejections</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Interview Requests</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Offers</span>
             </div>
             <div id="responses-message" class="hidden"></div>
             <div id="responses-preview" class="hidden mt-4 max-h-96 overflow-y-auto"></div>
@@ -285,17 +285,22 @@ async function syncEmails() {
 // Load pending emails
 async function loadPendingEmails() {
     const container = document.getElementById('pending-emails');
+    const countEl = document.getElementById('pending-count');
 
     try {
         const response = await fetch('/api/v1/email/parsed?status=pending');
         const data = await response.json();
 
-        if (data.emails.length === 0) {
+        const count = data.emails.length;
+        countEl.textContent = count === 0 ? '(0)' : `(${count})`;
+
+        if (count === 0) {
             container.innerHTML = '<div class="p-6 text-center text-gray-500">No pending emails to import</div>';
             return;
         }
 
-        container.innerHTML = data.emails.map(email => `
+        const sorted = [...data.emails].sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+        container.innerHTML = sorted.map(email => `
             <div class="p-4 hover:bg-gray-50 border-b" id="email-${email.id}">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
@@ -368,6 +373,7 @@ async function importEmail(id) {
     if (response.ok) {
         document.getElementById(`email-${id}`).remove();
         showMessage('sync-message', 'Application imported!', 'success');
+        updatePendingCount();
     }
 }
 
@@ -376,6 +382,7 @@ async function ignoreEmail(id) {
     const response = await fetch(`/api/v1/email/parsed/${id}/ignore`, { method: 'POST' });
     if (response.ok) {
         document.getElementById(`email-${id}`).remove();
+        updatePendingCount();
     }
 }
 
@@ -387,6 +394,17 @@ async function importAll() {
     if (response.ok) {
         showMessage('sync-message', `Imported ${data.imported} applications`, 'success');
         loadPendingEmails();
+    }
+}
+
+// Update pending count display (after import/ignore)
+function updatePendingCount() {
+    const container = document.getElementById('pending-emails');
+    const countEl = document.getElementById('pending-count');
+    const count = container.querySelectorAll('[id^="email-"]').length;
+    countEl.textContent = count === 0 ? '(0)' : `(${count})`;
+    if (count === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-gray-500">No pending emails to import</div>';
     }
 }
 
@@ -566,16 +584,12 @@ async function previewResponses() {
                     'offered': 'bg-green-100 text-green-800 border-green-200'
                 }[r.response_type] || 'bg-gray-100 text-gray-800';
 
-                const typeEmoji = {
-                    'rejected': '❌',
-                    'interviewing': '📅',
-                    'offered': '🎉'
-                }[r.response_type] || '📧';
+                const typeLabel = r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown';
 
                 html += `
                     <div class="p-3 border rounded ${typeColor}">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="font-medium">${typeEmoji} ${r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown'}</span>
+                            <span class="font-medium">${typeLabel}</span>
                             <span class="text-xs">${r.email_date ? new Date(r.email_date).toLocaleDateString() : ''}</span>
                         </div>
                         <div class="text-sm mb-1">
@@ -586,10 +600,10 @@ async function previewResponses() {
                         <div class="text-xs text-gray-600 truncate">${r.email_subject}</div>
                         ${r.matching_applications.length > 0 ? `
                             <div class="mt-2 text-xs">
-                                <span class="text-green-700">✓ Matches ${r.matching_applications.length} application(s):</span>
+                                <span class="text-green-700">Matches ${r.matching_applications.length} application(s):</span>
                                 ${r.matching_applications.map(a => `<span class="ml-1 px-1 bg-white rounded">${a.company} (${a.status})</span>`).join('')}
                             </div>
-                        ` : (r.would_be_duplicate ? '<div class="mt-2 text-xs text-gray-500">⏭ Skipped (duplicate response email)</div>' : (r.will_create_new ? '<div class="mt-2 text-xs text-blue-600">📝 Will create new application</div>' : '<div class="mt-2 text-xs text-orange-600">⚠ No matching applications found</div>')) }
+                        ` : (r.would_be_duplicate ? '<div class="mt-2 text-xs text-gray-500">Skipped (duplicate response email)</div>' : (r.will_create_new ? '<div class="mt-2 text-xs text-blue-600">Will create new application</div>' : '<div class="mt-2 text-xs text-orange-600">No matching applications found</div>')) }
                     </div>
                 `;
             });

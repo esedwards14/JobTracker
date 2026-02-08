@@ -34,7 +34,7 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-medium text-gray-900">Status</h2>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium status-{{ application.status }}">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full status-{{ application.status }}">
                         {{ application.status|replace('_', ' ')|title }}
                     </span>
                 </div>
@@ -44,7 +44,7 @@
                     {% for status in ['applied', 'interviewing', 'offered', 'rejected', 'withdrawn', 'follow_up'] %}
                         {% if status != application.status %}
                         <button onclick="updateStatus('{{ status }}')"
-                                class="px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
+                                class="px-2 py-1 text-xs font-medium rounded-full status-{{ status }} hover:opacity-90">
                             Mark as {{ status|replace('_', ' ')|title }}
                         </button>
                         {% endif %}
@@ -101,6 +101,15 @@
                     <p class="text-gray-900 whitespace-pre-wrap">{{ application.notes }}</p>
                 </div>
                 {% endif %}
+            </div>
+
+            <!-- Notes -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-2">Notes</h2>
+                <textarea id="quick-notes"
+                          placeholder="Click to add notes..."
+                          class="w-full rounded-md border-gray-300 text-sm min-h-[100px] focus:ring-indigo-500 focus:border-indigo-500"
+                          data-app-id="{{ application.id }}"></textarea>
             </div>
 
             <!-- Interview stages -->
@@ -216,7 +225,7 @@
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Tags</h2>
                 <div class="flex flex-wrap gap-2">
                     {% for tag in application.tags %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-md text-sm
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-sm tag-pill"
                           style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
                         {{ tag.name }}
                         <button hx-delete="{{ url_for('api.remove_tag_from_application', id=application.id, tag_id=tag.id) }}"
@@ -293,4 +302,21 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notesEl = document.getElementById('quick-notes');
+    if (!notesEl) return;
+
+    notesEl.addEventListener('blur', function() {
+        const appId = notesEl.dataset.appId;
+        const notes = notesEl.value.trim() || null;
+
+        fetch('/api/v1/applications/' + appId + '/notes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: notes })
+        }).catch(() => {});
+    });
+});
+</script>
 {% endblock %}
