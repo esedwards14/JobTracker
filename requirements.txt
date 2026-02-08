@@ -24,3 +24,6 @@ imap-tools==1.8.0
 google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.116.0
+
+# Production Server
+gunicorn==21.2.0
