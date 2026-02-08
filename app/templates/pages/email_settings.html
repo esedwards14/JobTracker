@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+
+{% block title %}Email Settings - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Page header -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Email Integration</h1>
+        <p class="mt-1 text-sm text-gray-500">Connect your Gmail to automatically import job applications from confirmation emails</p>
+    </div>
+
+    <!-- Connection Settings -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-lg font-medium text-gray-900">Gmail Connection</h2>
+        </div>
+        <div class="px-6 py-4">
+            {% if settings and settings.refresh_token %}
+            <!-- Connected State -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">Connected</p>
+                        <p class="text-sm text-gray-500">{{ settings.email_address }}</p>
+                        {% if settings.last_sync %}
+                        <p class="text-xs text-gray-400 mt-1">Last synced: {{ settings.last_sync.strftime('%b %d at %I:%M %p') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <button onclick="disconnectGmail()"
+                        class="px-2 py-0.5 text-sm border border-red-300 text-red-700 rounded-md hover:bg-red-50">
+                    Disconnect
+                </button>
+            </div>
+            {% else %}
+            <!-- Not Connected State -->
+            <div class="text-center">
+                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Gmail not connected</h3>
+                <p class="mt-1 text-sm text-gray-500">Sign in with Google to import job application emails</p>
+                <div class="mt-4">
+                    <button onclick="connectGmail()"
+                            class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign in with Google
+                    </button>
+                </div>
+                <p class="mt-4 text-xs text-gray-400">
+                    We only request read-only access to your emails.<br>
+                    No passwords are stored - authentication is handled securely by Google.
+                </p>
+            </div>
+
+            <div id="oauth-error" class="mt-4 hidden p-4 bg-red-50 border border-red-200 rounded-md text-red-700"></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sync Section (only show when connected) -->
+        {% if settings and settings.refresh_token %}
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h2 class="text-lg font-medium text-gray-900">Sync Emails</h2>
+            <button onclick="syncEmails()"
+                    id="sync-btn"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                <span id="sync-btn-text">Sync Now</span>
+                <span id="sync-spinner" class="hidden">
+                    <svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Syncing...
+                </span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-600 mb-4">Scan your inbox for job application confirmation emails from:</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Indeed</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">LinkedIn</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Handshake</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Greenhouse</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Lever</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Workday</span>
+                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">+ Company Websites</span>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <label for="days_back" class="text-sm font-medium text-gray-700">Look back:</label>
+                <select id="days_back" class="rounded-md border-gray-300 shadow-sm">
+                    <option value="7">7 days</option>
+                    <option value="14">14 days</option>
+                    <option value="30" selected>30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                </select>
+            </div>
+
+            <div id="sync-message" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Pending Emails (moved above responses) -->
+    <div class="bg-white rounded-lg shadow mt-4">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h2 class="text-lg font-medium text-gray-900">Pending Imports</h2>
+            <div class="flex items-center space-x-3">
+                <button id="pending-toggle" onclick="togglePending()" aria-expanded="true"
+                        class="px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-100 hover:bg-gray-200">
+                    ▾
+                </button>
+                <button onclick="importAll()"
+                        id="import-all-btn"
+                        class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+                    Import All High Confidence
+                </button>
+            </div>
+        </div>
+        <div id="pending-emails" class="divide-y">
+            <div class="p-6 text-center text-gray-500">
+                <p>Click "Sync Now" to scan for job application emails</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan for Responses -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-medium text-gray-900">Scan for Responses</h2>
+                <p class="text-sm text-gray-500">Find rejections, interview requests, and offers in your inbox</p>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="previewResponses()"
+                        id="preview-responses-btn"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                    Preview
+                </button>
+                <button onclick="scanResponses()"
+                        id="scan-responses-btn"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                    <span id="scan-responses-text">Scan & Update</span>
+                    <span id="scan-responses-spinner" class="hidden">
+                        <svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-600 mb-4">Automatically detect and update application statuses based on emails:</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">❌ Rejections</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">📅 Interview Requests</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">🎉 Offers</span>
+            </div>
+            <div id="responses-message" class="hidden"></div>
+            <div id="responses-preview" class="hidden mt-4 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- Manage Applications -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-lg font-medium text-gray-900">Manage Data</h2>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <p class="text-gray-600 mb-2">Delete all imported applications:</p>
+                <div class="flex items-center space-x-4">
+                    <button onclick="deleteAllApplications()"
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Delete All Applications
+                    </button>
+                    <span id="delete-count" class="text-sm text-gray-500"></span>
+                </div>
+            </div>
+            <div>
+                <p class="text-gray-600 mb-2">Clear email cache to re-scan (needed after changing filters):</p>
+                <div class="flex items-center space-x-4">
+                    <button onclick="clearParsedEmails()"
+                            class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+                        Clear Email Cache
+                    </button>
+                    <span id="cache-count" class="text-sm text-gray-500"></span>
+                </div>
+            </div>
+            <div id="delete-message" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Duplicate pending imports removed -->
+    {% endif %}
+</div>
+
+<script>
+// Connect Gmail via OAuth
+async function connectGmail() {
+    try {
+        const response = await fetch('/api/v1/email/oauth/start');
+        const data = await response.json();
+
+        if (data.authorization_url) {
+            // Redirect to Google OAuth
+            window.location.href = data.authorization_url;
+        } else if (data.error) {
+            showError(data.error);
+        }
+    } catch (err) {
+        showError('Failed to start Google sign-in: ' + err.message);
+    }
+}
+
+// Disconnect Gmail
+async function disconnectGmail() {
+    if (!confirm('Are you sure you want to disconnect Gmail?')) return;
+
+    const response = await fetch('/api/v1/email/settings', { method: 'DELETE' });
+    if (response.ok) {
+        location.reload();
+    }
+}
+
+// Show error message
+function showError(message) {
+    const el = document.getElementById('oauth-error');
+    if (el) {
+        el.textContent = message;
+        el.classList.remove('hidden');
+    }
+}
+
+{% if settings and settings.refresh_token %}
+// Sync emails
+async function syncEmails() {
+    const btn = document.getElementById('sync-btn');
+    const btnText = document.getElementById('sync-btn-text');
+    const spinner = document.getElementById('sync-spinner');
+
+    btn.disabled = true;
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+
+    try {
+        const daysBack = document.getElementById('days_back').value;
+        const response = await fetch('/api/v1/email/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days_back: parseInt(daysBack) })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage('sync-message',
+                `Found ${data.new_emails} new job applications (scanned ${data.total_scanned} emails)`,
+                'success');
+            loadPendingEmails();
+        } else {
+            showMessage('sync-message', data.error, 'error');
+        }
+    } catch (err) {
+        showMessage('sync-message', 'Sync failed: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+}
+
+// Load pending emails
+async function loadPendingEmails() {
+    const container = document.getElementById('pending-emails');
+
+    try {
+        const response = await fetch('/api/v1/email/parsed?status=pending');
+        const data = await response.json();
+
+        if (data.emails.length === 0) {
+            container.innerHTML = '<div class="p-6 text-center text-gray-500">No pending emails to import</div>';
+            return;
+        }
+
+        container.innerHTML = data.emails.map(email => `
+            <div class="p-4 hover:bg-gray-50 border-b" id="email-${email.id}">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="px-2 py-0.5 text-xs rounded-full ${email.confidence >= 0.7 ? 'bg-green-100 text-green-800' : email.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                ${Math.round(email.confidence * 100)}%
+                            </span>
+                            <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">${email.platform}</span>
+                            <span class="text-xs text-gray-400">${email.email_date ? new Date(email.email_date).toLocaleDateString() : ''}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Company</label>
+                                <input type="text"
+                                       id="company-${email.id}"
+                                       value="${email.company_name || ''}"
+                                       placeholder="Enter company name"
+                                       class="w-full text-sm border-gray-300 rounded px-2 py-1 ${!email.company_name ? 'border-red-300 bg-red-50' : ''}">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Position</label>
+                                <input type="text"
+                                       id="position-${email.id}"
+                                       value="${email.position || ''}"
+                                       placeholder="Enter position"
+                                       class="w-full text-sm border-gray-300 rounded px-2 py-1 ${!email.position ? 'border-red-300 bg-red-50' : ''}">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400">${email.email_subject}</p>
+                    </div>
+                    <div class="flex space-x-2 ml-4">
+                        <button onclick="importEmail(${email.id})"
+                                class="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                            Import
+                        </button>
+                        <button onclick="ignoreEmail(${email.id})"
+                                class="px-3 py-1 text-sm border border-gray-300 text-gray-600 rounded hover:bg-gray-50">
+                            Ignore
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = '<div class="p-6 text-center text-red-500">Failed to load emails</div>';
+    }
+}
+
+// Import single email with editable fields
+async function importEmail(id) {
+    const companyInput = document.getElementById(`company-${id}`);
+    const positionInput = document.getElementById(`position-${id}`);
+
+    const company = companyInput ? companyInput.value.trim() : '';
+    const position = positionInput ? positionInput.value.trim() : '';
+
+    if (!company) {
+        companyInput.classList.add('border-red-500', 'bg-red-50');
+        companyInput.focus();
+        alert('Please enter a company name before importing.');
+        return;
+    }
+
+    const response = await fetch(`/api/v1/email/parsed/${id}/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name: company, position: position })
+    });
+
+    if (response.ok) {
+        document.getElementById(`email-${id}`).remove();
+        showMessage('sync-message', 'Application imported!', 'success');
+    }
+}
+
+// Ignore email
+async function ignoreEmail(id) {
+    const response = await fetch(`/api/v1/email/parsed/${id}/ignore`, { method: 'POST' });
+    if (response.ok) {
+        document.getElementById(`email-${id}`).remove();
+    }
+}
+
+// Import all high confidence
+async function importAll() {
+    const response = await fetch('/api/v1/email/import-all', { method: 'POST' });
+    const data = await response.json();
+
+    if (response.ok) {
+        showMessage('sync-message', `Imported ${data.imported} applications`, 'success');
+        loadPendingEmails();
+    }
+}
+
+// Toggle pending imports visibility
+function togglePending() {
+    const container = document.getElementById('pending-emails');
+    const btn = document.getElementById('pending-toggle');
+
+    if (!container) return;
+    const isHidden = container.classList.toggle('hidden');
+    btn.setAttribute('aria-expanded', String(!isHidden));
+    btn.textContent = isHidden ? '▸' : '▾';
+}
+
+// Helper to show messages
+function showMessage(elementId, message, type) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = message;
+    el.className = `mt-4 p-3 rounded-md ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    el.classList.remove('hidden');
+}
+
+// Delete all applications
+async function deleteAllApplications() {
+    if (!confirm('Are you sure you want to delete ALL applications? This cannot be undone.')) return;
+    if (!confirm('This will permanently remove all your tracked job applications. Continue?')) return;
+
+    try {
+        const response = await fetch('/api/v1/applications/delete-all', {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage('delete-message', `Deleted ${data.deleted} applications`, 'success');
+            loadApplicationCount();
+        } else {
+            showMessage('delete-message', data.error || 'Failed to delete applications', 'error');
+        }
+    } catch (err) {
+        showMessage('delete-message', 'Failed to delete: ' + err.message, 'error');
+    }
+}
+
+// Load application count
+async function loadApplicationCount() {
+    try {
+        const response = await fetch('/api/v1/applications?per_page=1');
+        const data = await response.json();
+        document.getElementById('delete-count').textContent = `(${data.total} applications currently tracked)`;
+    } catch (err) {
+        console.error('Failed to load count:', err);
+    }
+}
+
+// Clear parsed emails cache
+async function clearParsedEmails() {
+    if (!confirm('Clear email cache? You will need to sync again to re-scan emails.')) return;
+
+    try {
+        const response = await fetch('/api/v1/email/parsed/clear', {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage('delete-message', `Cleared ${data.deleted} cached emails. Click Sync Now to re-scan.`, 'success');
+            loadParsedCount();
+            loadPendingEmails();
+        } else {
+            showMessage('delete-message', data.error || 'Failed to clear cache', 'error');
+        }
+    } catch (err) {
+        showMessage('delete-message', 'Failed to clear: ' + err.message, 'error');
+    }
+}
+
+// Load parsed email count
+async function loadParsedCount() {
+    try {
+        const response = await fetch('/api/v1/email/parsed?status=all');
+        const data = await response.json();
+        document.getElementById('cache-count').textContent = `(${data.emails.length} emails cached)`;
+    } catch (err) {
+        console.error('Failed to load cache count:', err);
+    }
+}
+
+// Scan for response emails (rejections, interviews, offers)
+async function scanResponses() {
+    const btn = document.getElementById('scan-responses-btn');
+    const btnText = document.getElementById('scan-responses-text');
+    const spinner = document.getElementById('scan-responses-spinner');
+
+    btn.disabled = true;
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+
+    try {
+        const daysBack = document.getElementById('days_back').value;
+        const response = await fetch('/api/v1/email/scan-responses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days_back: parseInt(daysBack) })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (data.updates.length > 0) {
+                let html = `<div class="mb-2 font-medium text-green-800">Updated ${data.updates.length} applications:</div>`;
+                html += '<div class="space-y-2">';
+                data.updates.forEach(update => {
+                    const statusColor = {
+                        'rejected': 'bg-red-100 text-red-800',
+                        'interviewing': 'bg-blue-100 text-blue-800',
+                        'offered': 'bg-green-100 text-green-800'
+                    }[update.new_status] || 'bg-gray-100 text-gray-800';
+
+                    html += `
+                        <div class="p-2 bg-gray-50 rounded text-sm">
+                            <span class="font-medium">${update.company}</span> - ${update.position}
+                            <span class="px-2 py-0.5 ${statusColor} rounded-full text-xs ml-2">
+                                ${update.old_status} → ${update.new_status}
+                            </span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                showResponsesMessage(html, 'success');
+            } else {
+                showResponsesMessage(`Scanned ${data.total_response_emails} response emails. No applications needed updating.`, 'success');
+            }
+        } else {
+            showResponsesMessage(data.error, 'error');
+        }
+    } catch (err) {
+        showResponsesMessage('Scan failed: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+}
+
+// Preview response emails without updating
+async function previewResponses() {
+    const preview = document.getElementById('responses-preview');
+    preview.innerHTML = '<div class="text-center py-4"><svg class="animate-spin h-6 w-6 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
+    preview.classList.remove('hidden');
+
+    try {
+        const daysBack = document.getElementById('days_back').value;
+        const response = await fetch('/api/v1/email/response-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days_back: parseInt(daysBack) })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (data.responses.length === 0) {
+                preview.innerHTML = '<div class="text-center text-gray-500 py-4">No response emails found</div>';
+                return;
+            }
+
+            let html = `<div class="mb-2 text-sm text-gray-600">Found ${data.total_found} response emails:</div>`;
+            html += '<div class="space-y-2">';
+
+            data.responses.forEach(r => {
+                const typeColor = {
+                    'rejected': 'bg-red-100 text-red-800 border-red-200',
+                    'interviewing': 'bg-blue-100 text-blue-800 border-blue-200',
+                    'offered': 'bg-green-100 text-green-800 border-green-200'
+                }[r.response_type] || 'bg-gray-100 text-gray-800';
+
+                const typeEmoji = {
+                    'rejected': '❌',
+                    'interviewing': '📅',
+                    'offered': '🎉'
+                }[r.response_type] || '📧';
+
+                html += `
+                    <div class="p-3 border rounded ${typeColor}">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-medium">${typeEmoji} ${r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown'}</span>
+                            <span class="text-xs">${r.email_date ? new Date(r.email_date).toLocaleDateString() : ''}</span>
+                        </div>
+                        <div class="text-sm mb-1">
+                            <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
+                            ${r.position ? `| <strong>Position:</strong> ${r.position}` : ''}
+                        </div>
+                        <div class="text-xs text-gray-500 mb-1">From: ${r.email_from}</div>
+                        <div class="text-xs text-gray-600 truncate">${r.email_subject}</div>
+                        ${r.matching_applications.length > 0 ? `
+                            <div class="mt-2 text-xs">
+                                <span class="text-green-700">✓ Matches ${r.matching_applications.length} application(s):</span>
+                                ${r.matching_applications.map(a => `<span class="ml-1 px-1 bg-white rounded">${a.company} (${a.status})</span>`).join('')}
+                            </div>
+                        ` : (r.would_be_duplicate ? '<div class="mt-2 text-xs text-gray-500">⏭ Skipped (duplicate response email)</div>' : (r.will_create_new ? '<div class="mt-2 text-xs text-blue-600">📝 Will create new application</div>' : '<div class="mt-2 text-xs text-orange-600">⚠ No matching applications found</div>')) }
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            preview.innerHTML = html;
+        } else {
+            preview.innerHTML = `<div class="text-red-500">${data.error}</div>`;
+        }
+    } catch (err) {
+        preview.innerHTML = `<div class="text-red-500">Preview failed: ${err.message}</div>`;
+    }
+}
+
+// Helper to show response messages
+function showResponsesMessage(message, type) {
+    const el = document.getElementById('responses-message');
+    if (typeof message === 'string') {
+        el.innerHTML = message;
+    } else {
+        el.innerHTML = message;
+    }
+    el.className = `mt-4 p-3 rounded-md ${type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-100 text-red-800'}`;
+    el.classList.remove('hidden');
+}
+
+// Load pending emails on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadPendingEmails();
+    loadApplicationCount();
+    loadParsedCount();
+});
+{% endif %}
+</script>
+{% endblock %}

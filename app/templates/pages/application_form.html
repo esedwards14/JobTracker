@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}{% if application %}Edit Application{% else %}New Application{% endif %} - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Page header -->
+    <div class="mb-6">
+        <a href="{{ url_for('views.applications') }}" class="text-indigo-600 hover:text-indigo-800 text-sm mb-2 inline-block">
+            &larr; Back to Applications
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900">
+            {% if application %}Edit Application{% else %}Add New Application{% endif %}
+        </h1>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow">
+        <form method="POST" class="p-6 space-y-6">
+            <!-- Company & Position -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="company_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Company Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="company_name"
+                           name="company_name"
+                           required
+                           value="{{ application.company_name if application else '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                           placeholder="Acme Corp">
+                </div>
+                <div>
+                    <label for="position" class="block text-sm font-medium text-gray-700 mb-1">
+                        Position <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="position"
+                           name="position"
+                           required
+                           value="{{ application.position if application else '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                           placeholder="Software Engineer">
+                </div>
+            </div>
+
+            <!-- Salary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="expected_salary_min" class="block text-sm font-medium text-gray-700 mb-1">
+                        Salary Min
+                    </label>
+                    <input type="number"
+                           id="expected_salary_min"
+                           name="expected_salary_min"
+                           step="1000"
+                           value="{{ application.expected_salary_min|int if application and application.expected_salary_min else '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                           placeholder="80000">
+                </div>
+                <div>
+                    <label for="expected_salary_max" class="block text-sm font-medium text-gray-700 mb-1">
+                        Salary Max
+                    </label>
+                    <input type="number"
+                           id="expected_salary_max"
+                           name="expected_salary_max"
+                           step="1000"
+                           value="{{ application.expected_salary_max|int if application and application.expected_salary_max else '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                           placeholder="120000">
+                </div>
+                <div>
+                    <label for="salary_currency" class="block text-sm font-medium text-gray-700 mb-1">
+                        Currency
+                    </label>
+                    <select id="salary_currency"
+                            name="salary_currency"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="USD" {% if not application or application.salary_currency == 'USD' %}selected{% endif %}>USD</option>
+                        <option value="EUR" {% if application and application.salary_currency == 'EUR' %}selected{% endif %}>EUR</option>
+                        <option value="GBP" {% if application and application.salary_currency == 'GBP' %}selected{% endif %}>GBP</option>
+                        <option value="CAD" {% if application and application.salary_currency == 'CAD' %}selected{% endif %}>CAD</option>
+                        <option value="AUD" {% if application and application.salary_currency == 'AUD' %}selected{% endif %}>AUD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date and Status -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="date_applied" class="block text-sm font-medium text-gray-700 mb-1">
+                        Date Applied <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date"
+                           id="date_applied"
+                           name="date_applied"
+                           required
+                           value="{{ application.date_applied.isoformat() if application else today }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                {% if application %}
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+                        Status
+                    </label>
+                    <select id="status"
+                            name="status"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="applied" {% if application.status == 'applied' %}selected{% endif %}>Applied</option>
+                        <option value="interviewing" {% if application.status == 'interviewing' %}selected{% endif %}>Interviewing</option>
+                        <option value="offered" {% if application.status == 'offered' %}selected{% endif %}>Offered</option>
+                        <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="withdrawn" {% if application.status == 'withdrawn' %}selected{% endif %}>Withdrawn</option>
+                        <option value="follow_up" {% if application.status == 'follow_up' %}selected{% endif %}>Follow Up</option>
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Response -->
+            {% if application %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-center">
+                    <input type="checkbox"
+                           id="response_received"
+                           name="response_received"
+                           {% if application.response_received %}checked{% endif %}
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="response_received" class="ml-2 block text-sm text-gray-700">
+                        Response Received
+                    </label>
+                </div>
+                <div>
+                    <label for="response_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Response Date
+                    </label>
+                    <input type="date"
+                           id="response_date"
+                           name="response_date"
+                           value="{{ application.response_date.isoformat() if application and application.response_date else '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- URL -->
+            <div>
+                <label for="application_url" class="block text-sm font-medium text-gray-700 mb-1">
+                    Application URL
+                </label>
+                <input type="text"
+                       id="application_url"
+                       name="application_url"
+                       value="{{ application.application_url if application else '' }}"
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                       placeholder="https://careers.example.com/job/12345">
+            </div>
+
+            <!-- Job Description -->
+            <div>
+                <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Job Description
+                </label>
+                <textarea id="job_description"
+                          name="job_description"
+                          rows="4"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Paste the job description here...">{{ application.job_description if application else '' }}</textarea>
+            </div>
+
+            <!-- Notes -->
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                </label>
+                <textarea id="notes"
+                          name="notes"
+                          rows="3"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Any additional notes (referral, recruiter contact, etc.)">{{ application.notes if application else '' }}</textarea>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a href="{{ url_for('views.applications') }}"
+                   class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    {% if application %}Save Changes{% else %}Add Application{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

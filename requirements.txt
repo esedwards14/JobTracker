@@ -1,0 +1,26 @@
+# Web Framework
+Flask==3.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-CORS==4.0.1
+
+# Database
+SQLAlchemy==2.0.36
+
+# Validation & Serialization
+marshmallow==3.23.1
+marshmallow-sqlalchemy==0.30.0
+
+# Configuration
+python-dotenv==1.0.1
+
+# Date handling
+python-dateutil==2.9.0
+
+# Email Parsing (Phase 4)
+imap-tools==1.8.0
+
+# Google OAuth
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.116.0

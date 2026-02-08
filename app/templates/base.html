@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Job Tracker{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN (enable class-based dark mode) -->
+    <script>
+        window.tailwind = window.tailwind || {};
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- HTMX JSON encoding extension -->
+    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
+
+    <!-- Custom styles -->
+    <style>
+        /* HTMX loading indicator */
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+
+        /* Status colors */
+        .status-applied { background-color: #E5E7EB; color: #374151; }
+        .status-interviewing { background-color: #DBEAFE; color: #1E40AF; }
+        .status-offered { background-color: #D1FAE5; color: #065F46; }
+        .status-rejected { background-color: #FEE2E2; color: #991B1B; }
+        .status-withdrawn { background-color: #FEF3C7; color: #92400E; }
+        .status-follow_up { background-color: #F3E8FF; color: #7E22CE; }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+    <!-- Dark-mode CSS: layered grayscale palette for subtle surfaces -->
+    <style>
+        .dark {
+            --bg: #202225;           /* page background (soft dark) */
+            --surface: #141617;      /* primary card/panel (slightly lighter) */
+            --surface-2: #1a1c1e;    /* secondary panels */
+            --muted-surface: #0c0d0e; /* inputs/very dark */
+            --border: #26282a;      /* soft gray lines (not white) */
+            --text: #E6E6E6;
+            --muted-text: #A0A0A0;
+            --accent: #9AA8B6;
+        }
+
+        /* Page background and base text */
+        .dark body { background-color: var(--bg); color: var(--text); }
+
+        /* Cards and panels use distinct grayscale surfaces */
+        .dark .bg-white { background-color: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+        .dark .bg-gray-50 { background-color: var(--surface-2) !important; }
+
+        /* Make rounded containers stand out more with soft shadow */
+        .dark .rounded-lg { box-shadow: 0 8px 20px rgba(2,6,23,0.25), 0 1px 0 rgba(255,255,255,0.01); }
+
+        /* Muted surface and utility colors */
+        .dark .bg-gray-100 { background-color: #111214 !important; color: var(--text) !important; }
+        .dark .bg-blue-100 { background-color: #0f1316 !important; }
+
+        /* Navbar and footer */
+        .dark nav { background-color: var(--surface) !important; border-color: var(--border) !important; }
+        .dark footer { background-color: var(--surface-2) !important; border-color: var(--border) !important; }
+
+        /* Text colors */
+        .dark .text-gray-900 { color: var(--text) !important; }
+        .dark .text-gray-500 { color: var(--muted-text) !important; }
+        .dark .text-gray-400 { color: var(--muted-text) !important; }
+        .dark a { color: var(--text); }
+
+        /* Muted borders and separators */
+        .dark .border-gray-200 { border-color: var(--border) !important; }
+        .dark .shadow { box-shadow: none !important; }
+
+        /* Inputs, selects */
+        .dark input, .dark select, .dark textarea {
+            background-color: var(--muted-surface) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+
+        /* Table header - slightly lighter surface */
+        .dark thead th { background-color: #232426 !important; color: var(--muted-text) !important; }
+
+        /* Buttons and accents keep readable contrast */
+        .dark .bg-indigo-600 { background-color: #2B5370 !important; }
+        .dark .text-indigo-600 { color: #9FB6C9 !important; }
+
+        /* Hover utility adjustments for dark mode (class-based utilities) */
+        .dark .hover\:bg-gray-50:hover { background-color: var(--surface-2) !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: #131416 !important; }
+
+        /* Ensure all border/divider lines are soft gray (replace white lines) */
+        .dark .border, .dark .border-white,
+        .dark .border-gray-100, .dark .border-gray-200,
+        .dark .border-gray-300, .dark .border-gray-400,
+        .dark .border-b, .dark .border-t, .dark .border-l, .dark .border-r {
+            border-color: var(--border) !important;
+        }
+
+        /* Specific utilities and separators */
+        .dark .divide-y > * + * { border-top-color: var(--border) !important; }
+        .dark hr { border-color: var(--border) !important; }
+        .dark nav, .dark footer { border-color: var(--border) !important; }
+        .dark .ring-1, .dark .ring { box-shadow: none !important; }
+
+        /* Make select boxes match site surfaces (remove glass look) */
+        .dark select, .dark input[type="text"], .dark textarea, .dark .rounded-md select {
+            background-color: var(--surface) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+            box-shadow: none !important;
+            -webkit-appearance: menulist-button;
+            appearance: menulist-button;
+        }
+        .dark select option {
+            background-color: var(--surface) !important;
+            color: var(--text) !important;
+        }
+
+        /* Remove small utility shadows that create 'glass' effect */
+        .dark .shadow-sm, .dark .shadow { box-shadow: none !important; }
+
+        /* Allow table cells to wrap nicely */
+        .break-words { word-wrap: break-word; word-break: break-word; }
+    </style>
+
+</head>
+<body class="min-h-screen dark">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('views.dashboard') }}" class="flex items-center">
+                        <!-- New compact logo -->
+                        <div class="h-8 w-8 flex items-center justify-center bg-indigo-600 rounded">
+                            <span class="text-white font-bold">JT</span>
+                        </div>
+                        <span class="ml-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Job Tracker</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('views.dashboard') }}"
+                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
+                              {% if request.endpoint == 'views.dashboard' %}text-indigo-600{% endif %}">
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('views.applications') }}"
+                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
+                              {% if request.endpoint == 'views.applications' %}text-indigo-600{% endif %}">
+                        Applications
+                    </a>
+                    <a href="{{ url_for('views.email_settings') }}"
+                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
+                              {% if request.endpoint == 'views.email_settings' %}text-indigo-600{% endif %}">
+                        Email Import
+                    </a>
+                    <a href="{{ url_for('views.new_application') }}"
+                       class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                        + Add Application
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t bg-white mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-center text-gray-500 text-sm">Job Application Tracker</p>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

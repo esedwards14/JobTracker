@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}{{ application.company_name }} - {{ application.position }} - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Back link and header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <a href="{{ url_for('views.applications') }}" class="text-indigo-600 hover:text-indigo-800 text-sm mb-2 inline-block">
+                &larr; Back to Applications
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ application.position }}</h1>
+            <p class="text-lg text-gray-600">{{ application.company_name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('views.edit_application', id=application.id) }}"
+               class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50">
+                Edit
+            </a>
+            <button hx-delete="{{ url_for('api.delete_application', id=application.id) }}"
+                    hx-confirm="Are you sure you want to delete this application?"
+                    hx-redirect="{{ url_for('views.applications') }}"
+                    class="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
+                Delete
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main info -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Status card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-medium text-gray-900">Status</h2>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium status-{{ application.status }}">
+                        {{ application.status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+
+                <!-- Quick status update buttons -->
+                <div class="flex flex-wrap gap-2">
+                    {% for status in ['applied', 'interviewing', 'offered', 'rejected', 'withdrawn', 'follow_up'] %}
+                        {% if status != application.status %}
+                        <button onclick="updateStatus('{{ status }}')"
+                                class="px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
+                            Mark as {{ status|replace('_', ' ')|title }}
+                        </button>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <script>
+                function updateStatus(status) {
+                    fetch('{{ url_for("api.update_application_status", id=application.id) }}', {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({status: status})
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Failed to update status');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to update status');
+                    });
+                }
+                </script>
+            </div>
+
+            <!-- Job details -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Job Details</h2>
+
+                {% if application.job_description %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">Description</h3>
+                    <p class="text-gray-900 whitespace-pre-wrap">{{ application.job_description }}</p>
+                </div>
+                {% endif %}
+
+                {% if application.application_url %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">Application URL</h3>
+                    <a href="{{ application.application_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 break-all">
+                        {{ application.application_url }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if application.notes %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-1">Notes</h3>
+                    <p class="text-gray-900 whitespace-pre-wrap">{{ application.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Interview stages -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">Interview Stages</h2>
+                    <button onclick="document.getElementById('add-interview-modal').classList.remove('hidden')"
+                            class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                        + Add Interview
+                    </button>
+                </div>
+                <div id="interviews-list" class="divide-y">
+                    {% if application.interviews.count() > 0 %}
+                        {% for interview in application.interviews.order_by(Interview.stage_number) %}
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="font-medium">Stage {{ interview.stage_number }}</span>
+                                    {% if interview.stage_type %}
+                                        <span class="text-gray-500">- {{ interview.stage_type|replace('_', ' ')|title }}</span>
+                                    {% endif %}
+                                    {% if interview.outcome %}
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full
+                                            {% if interview.outcome == 'passed' %}bg-green-100 text-green-800
+                                            {% elif interview.outcome == 'failed' %}bg-red-100 text-red-800
+                                            {% elif interview.outcome == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ interview.outcome|title }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <button hx-delete="{{ url_for('api.delete_interview', id=interview.id) }}"
+                                        hx-confirm="Delete this interview?"
+                                        hx-target="closest div"
+                                        hx-swap="outerHTML"
+                                        class="text-red-600 hover:text-red-800 text-sm">
+                                    Delete
+                                </button>
+                            </div>
+                            {% if interview.scheduled_date %}
+                            <p class="text-sm text-gray-500 mt-1">
+                                Scheduled: {{ interview.scheduled_date.strftime('%b %d, %Y at %I:%M %p') }}
+                            </p>
+                            {% endif %}
+                            {% if interview.interviewer_names %}
+                            <p class="text-sm text-gray-500">Interviewers: {{ interview.interviewer_names }}</p>
+                            {% endif %}
+                            {% if interview.notes %}
+                            <p class="text-sm text-gray-600 mt-2">{{ interview.notes }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            No interviews scheduled yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick info -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Details</h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date Applied</dt>
+                        <dd class="text-gray-900">{{ application.date_applied.strftime('%B %d, %Y') }}</dd>
+                    </div>
+
+                    {% if application.expected_salary_min or application.expected_salary_max %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Expected Salary</dt>
+                        <dd class="text-gray-900">
+                            {% if application.expected_salary_min and application.expected_salary_max %}
+                                {{ application.salary_currency }} {{ "{:,.0f}".format(application.expected_salary_min) }} - {{ "{:,.0f}".format(application.expected_salary_max) }}
+                            {% elif application.expected_salary_min %}
+                                {{ application.salary_currency }} {{ "{:,.0f}".format(application.expected_salary_min) }}+
+                            {% else %}
+                                Up to {{ application.salary_currency }} {{ "{:,.0f}".format(application.expected_salary_max) }}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Response Received</dt>
+                        <dd class="text-gray-900">
+                            {% if application.response_received %}
+                                Yes {% if application.response_date %}({{ application.response_date.strftime('%b %d, %Y') }}){% endif %}
+                            {% else %}
+                                No
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Source</dt>
+                        <dd class="text-gray-900">{{ application.source|title }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Added</dt>
+                        <dd class="text-gray-900">{{ application.created_at.strftime('%b %d, %Y') }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Tags -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Tags</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in application.tags %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-sm
+                          style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
+                        {{ tag.name }}
+                        <button hx-delete="{{ url_for('api.remove_tag_from_application', id=application.id, tag_id=tag.id) }}"
+                                hx-swap="none"
+                                hx-on::after-request="location.reload()"
+                                class="ml-1 hover:opacity-75">&times;</button>
+                    </span>
+                    {% else %}
+                    <p class="text-gray-500 text-sm">No tags</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Interview Modal -->
+<div id="add-interview-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-medium">Add Interview Stage</h3>
+            <button onclick="document.getElementById('add-interview-modal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+        <form hx-post="{{ url_for('api.create_interview', app_id=application.id) }}"
+              hx-headers='{"Content-Type": "application/json"}'
+              hx-ext="json-enc"
+              hx-swap="none"
+              hx-on::after-request="location.reload()"
+              class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stage Number</label>
+                <input type="number" name="stage_number" required min="1"
+                       value="{{ (application.interviews.count() or 0) + 1 }}"
+                       class="w-full rounded-md border-gray-300">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select name="stage_type" class="w-full rounded-md border-gray-300">
+                    <option value="">Select type...</option>
+                    <option value="phone_screen">Phone Screen</option>
+                    <option value="technical">Technical</option>
+                    <option value="behavioral">Behavioral</option>
+                    <option value="onsite">Onsite</option>
+                    <option value="final">Final</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Scheduled Date/Time</label>
+                <input type="datetime-local" name="scheduled_date" class="w-full rounded-md border-gray-300">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Interviewer Names</label>
+                <input type="text" name="interviewer_names" placeholder="John Doe, Jane Smith"
+                       class="w-full rounded-md border-gray-300">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea name="notes" rows="3" class="w-full rounded-md border-gray-300"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button"
+                        onclick="document.getElementById('add-interview-modal').classList.add('hidden')"
+                        class="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Add Interview
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

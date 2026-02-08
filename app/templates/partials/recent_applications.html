@@ -1,0 +1,35 @@
+{% if applications %}
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Applied</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for app in applications %}
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('views.application_detail', id=app.id) }}'">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="font-medium text-gray-900">{{ app.company_name }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ app.position }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full status-{{ app.status }}">
+                        {{ app.status|title }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ app.date_applied.strftime('%b %d, %Y') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="p-6 text-center text-gray-500">
+    <p>No applications yet.</p>
+    <a href="{{ url_for('views.new_application') }}" class="text-indigo-600 hover:text-indigo-800 mt-2 inline-block">Add your first application</a>
+</div>
+{% endif %}

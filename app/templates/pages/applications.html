@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Applications - Job Tracker{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Applications</h1>
+            <p class="mt-1 text-sm text-gray-500">Manage and track your job applications</p>
+        </div>
+        <a href="{{ url_for('views.new_application') }}"
+           class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+            + Add Application
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <form hx-get="{{ url_for('views.applications_list_partial') }}"
+              hx-target="#applications-list"
+              hx-trigger="change, keyup delay:300ms from:#search-input"
+              class="flex flex-wrap gap-4 items-end">
+
+            <div class="flex-1 min-w-[200px]">
+                <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text"
+                       id="search-input"
+                       name="search"
+                       placeholder="Search company, position, notes..."
+                       value="{{ request.args.get('search', '') }}"
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div class="w-40">
+                <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select id="status-filter"
+                        name="status"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">All Statuses</option>
+                    <option value="applied" {% if request.args.get('status') == 'applied' %}selected{% endif %}>Applied</option>
+                    <option value="interviewing" {% if request.args.get('status') == 'interviewing' %}selected{% endif %}>Interviewing</option>
+                    <option value="offered" {% if request.args.get('status') == 'offered' %}selected{% endif %}>Offered</option>
+                    <option value="rejected" {% if request.args.get('status') == 'rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="withdrawn" {% if request.args.get('status') == 'withdrawn' %}selected{% endif %}>Withdrawn</option>
+                    <option value="follow_up" {% if request.args.get('status') == 'follow_up' %}selected{% endif %}>Follow Up</option>
+                </select>
+            </div>
+
+            <div class="w-40">
+                <label for="from-date" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input type="date"
+                       id="from-date"
+                       name="from_date"
+                       value="{{ request.args.get('from_date', '') }}"
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div class="w-40">
+                <label for="to-date" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input type="date"
+                       id="to-date"
+                       name="to_date"
+                       value="{{ request.args.get('to_date', '') }}"
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div class="w-48">
+                <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                <select id="sort"
+                        name="sort"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="response_date_desc" {% if request.args.get('sort', 'response_date_desc') == 'response_date_desc' %}selected{% endif %}>Most Recent Response Received</option>
+                    <option value="date_applied_desc" {% if request.args.get('sort') == 'date_applied_desc' %}selected{% endif %}>Most Recent Applied</option>
+                    <option value="status" {% if request.args.get('sort') == 'status' %}selected{% endif %}>Status</option>
+                    <option value="alphabetical" {% if request.args.get('sort') == 'alphabetical' %}selected{% endif %}>Alphabetical (A-Z)</option>
+                </select>
+            </div>
+
+            <button type="button"
+                    onclick="this.form.reset(); htmx.trigger(this.form, 'change')"
+                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+                Clear
+            </button>
+        </form>
+    </div>
+
+    <!-- Applications list -->
+    <div id="applications-list"
+         hx-get="{{ url_for('views.applications_list_partial') }}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="bg-white rounded-lg shadow p-6 animate-pulse space-y-4">
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
