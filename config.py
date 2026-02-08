@@ -22,8 +22,13 @@ class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     SINGLE_USER_MODE = os.environ.get('SINGLE_USER_MODE', 'false').lower() == 'true'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'sqlite:///{basedir / "prod.db"}'
+
+    # Get database URL and fix Render's postgres:// to postgresql://
+    _database_url = os.environ.get('DATABASE_URL')
+    if _database_url and _database_url.startswith('postgres://'):
+        _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+
+    SQLALCHEMY_DATABASE_URI = _database_url or f'sqlite:///{basedir / "prod.db"}'
 
 
 class TestingConfig(Config):

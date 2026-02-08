@@ -6,6 +6,7 @@ Flask-CORS==4.0.1
 
 # Database
 SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9
 
 # Validation & Serialization
 marshmallow==3.23.1
