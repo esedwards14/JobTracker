@@ -22,7 +22,8 @@ class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     SINGLE_USER_MODE = os.environ.get('SINGLE_USER_MODE', 'false').lower() == 'true'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        f'sqlite:///{basedir / "prod.db"}'
 
 
 class TestingConfig(Config):
