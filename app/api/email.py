@@ -6,10 +6,70 @@ from datetime import datetime
 
 from app.api import api_bp
 from app.extensions import db
-from app.models import EmailSettings, ParsedEmail, JobApplication
+from app.models import EmailSettings, ParsedEmail, JobApplication, Contact
 from app.services.email_connector import GmailOAuthConnector
 from app.services.email_parser import JobEmailParser
 from app.services.google_oauth import get_authorization_url, exchange_code_for_tokens
+
+
+def is_personal_email(from_address: str) -> bool:
+    """
+    Check if an email is from a personal sender (not a noreply/automated system).
+    Returns True if it looks like a real person responded.
+    """
+    from_lower = from_address.lower()
+
+    # Noreply/automated patterns to exclude
+    automated_patterns = [
+        'noreply', 'no-reply', 'donotreply', 'do-not-reply',
+        'notifications@', 'alerts@', 'updates@', 'info@',
+        'jobs@', 'careers@', 'recruiting@', 'talent@',
+        'applications@', 'apply@', 'hiring@', 'hr@',
+        'system@', 'automated@', 'mailer@', 'postmaster@',
+    ]
+
+    # Platform domains that are always automated
+    platform_domains = [
+        'indeed.com', 'indeedemail.com', 'linkedin.com', 'linkedin.email',
+        'greenhouse.io', 'greenhouse-mail.io', 'lever.co',
+        'icims.com', 'workday.com', 'myworkdayjobs.com',
+        'smartrecruiters.com', 'jobvite.com', 'taleo.net',
+        'workable.com', 'workablemail.com', 'ashbyhq.com',
+        'bamboohr.com', 'breezy.hr', 'jazz.co', 'applytojob.com',
+    ]
+
+    # Check for automated patterns
+    for pattern in automated_patterns:
+        if pattern in from_lower:
+            return False
+
+    # Check for platform domains
+    for domain in platform_domains:
+        if domain in from_lower:
+            return False
+
+    return True
+
+
+def extract_sender_info(from_address: str) -> dict:
+    """
+    Extract sender name and email from a From address.
+    Handles formats like: "John Smith <john@company.com>" or just "john@company.com"
+    """
+    result = {'name': None, 'email': None}
+
+    # Try to extract "Name <email>" format
+    match = re.match(r'^"?([^"<]+?)"?\s*<([^>]+)>', from_address)
+    if match:
+        result['name'] = match.group(1).strip().strip('"\'')
+        result['email'] = match.group(2).strip()
+    else:
+        # Just an email address
+        email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', from_address)
+        if email_match:
+            result['email'] = email_match.group(0)
+
+    return result
 
 
 def normalize_company_name(name: str) -> str:
@@ -611,16 +671,27 @@ def preview_response_emails():
                 continue
 
             matching_apps = [{'id': a.id, 'company': a.company_name, 'position': a.position, 'status': a.status} for a in apps]
-            
+
             # Check if we would create a duplicate
             app_key = f"{normalize_company_name(company).lower()}|{position.lower()}"
             would_be_duplicate = app_key in created_app_keys
-            
+
             # If no matches, will create a new application (unless it would be a duplicate)
             will_create_new = len(matching_apps) == 0 and not would_be_duplicate
-            
+
             if will_create_new:
                 created_app_keys.add(app_key)
+
+            # Check if this is a personal email (potential connection)
+            is_personal = is_personal_email(from_addr)
+            sender_info = extract_sender_info(from_addr) if is_personal else None
+
+            # Check if we already have this contact
+            existing_contact = None
+            if sender_info and sender_info.get('email'):
+                existing_contact = Contact.query.filter(
+                    Contact.email.ilike(sender_info['email'])
+                ).first()
 
             preview.append({
                 'email_subject': response.get('email_subject', '')[:100],
@@ -631,7 +702,10 @@ def preview_response_emails():
                 'response_type': response_type,
                 'matching_applications': matching_apps,
                 'will_create_new': will_create_new,
-                'would_be_duplicate': would_be_duplicate
+                'would_be_duplicate': would_be_duplicate,
+                'is_personal_email': is_personal,
+                'sender_info': sender_info,
+                'existing_contact_id': existing_contact.id if existing_contact else None
             })
 
         return jsonify({
@@ -643,4 +717,52 @@ def preview_response_emails():
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Preview failed: {str(e)}'}), 500
+
+
+@api_bp.route('/email/save-connection', methods=['POST'])
+def save_connection_from_email():
+    """Save a connection from a scanned email response."""
+    data = request.get_json() or {}
+
+    name = data.get('name')
+    email = data.get('email')
+    company = data.get('company')
+    email_subject = data.get('email_subject')
+    application_id = data.get('application_id')
+    email_date = data.get('email_date')
+
+    if not name:
+        return jsonify({'error': 'Name is required'}), 400
+
+    # Check if contact already exists with this email
+    if email:
+        existing = Contact.query.filter(Contact.email.ilike(email)).first()
+        if existing:
+            return jsonify({'error': 'Contact with this email already exists', 'contact_id': existing.id}), 409
+
+    # Parse email date
+    last_contact = None
+    if email_date:
+        try:
+            last_contact = datetime.fromisoformat(email_date.replace('Z', '+00:00')).date()
+        except:
+            pass
+
+    contact = Contact(
+        name=name,
+        email=email,
+        company=company,
+        email_subject=email_subject[:500] if email_subject else None,
+        application_id=application_id,
+        source='email_scan',
+        last_contact_date=last_contact
+    )
+
+    db.session.add(contact)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Connection saved successfully',
+        'contact': contact.to_dict()
+    }), 201
     

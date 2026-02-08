@@ -38,6 +38,12 @@ def email_settings():
     return render_template('pages/email_settings.html', settings=settings)
 
 
+@views_bp.route('/connections')
+def connections():
+    """Render the connections/contacts page."""
+    return render_template('pages/connections.html')
+
+
 @views_bp.route('/oauth/callback')
 def oauth_callback():
     """Handle Google OAuth callback."""

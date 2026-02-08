@@ -577,7 +577,7 @@ async function previewResponses() {
             let html = `<div class="mb-2 text-sm text-gray-600">Found ${data.total_found} response emails:</div>`;
             html += '<div class="space-y-2">';
 
-            data.responses.forEach(r => {
+            data.responses.forEach((r, index) => {
                 const typeColor = {
                     'rejected': 'bg-red-100 text-red-800 border-red-200',
                     'interviewing': 'bg-blue-100 text-blue-800 border-blue-200',
@@ -585,6 +585,22 @@ async function previewResponses() {
                 }[r.response_type] || 'bg-gray-100 text-gray-800';
 
                 const typeLabel = r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown';
+
+                // Check if it's a personal email (potential connection)
+                const isPersonal = r.is_personal_email && r.sender_info && r.sender_info.name;
+                const connectionBtn = isPersonal && !r.existing_contact_id ? `
+                    <button onclick="saveConnection(${index})"
+                            id="save-conn-${index}"
+                            class="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded hover:bg-purple-200"
+                            data-name="${escapeAttr(r.sender_info.name)}"
+                            data-email="${escapeAttr(r.sender_info.email || '')}"
+                            data-company="${escapeAttr(r.company || '')}"
+                            data-subject="${escapeAttr(r.email_subject || '')}"
+                            data-date="${r.email_date || ''}"
+                            data-app-id="${r.matching_applications.length > 0 ? r.matching_applications[0].id : ''}">
+                        + Save as Connection
+                    </button>
+                ` : (r.existing_contact_id ? '<span class="ml-2 text-xs text-purple-600">Already a connection</span>' : '');
 
                 html += `
                     <div class="p-3 border rounded ${typeColor}">
@@ -596,7 +612,11 @@ async function previewResponses() {
                             <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
                             ${r.position ? `| <strong>Position:</strong> ${r.position}` : ''}
                         </div>
-                        <div class="text-xs text-gray-500 mb-1">From: ${r.email_from}</div>
+                        <div class="text-xs text-gray-500 mb-1 flex items-center flex-wrap">
+                            <span>From: ${r.email_from}</span>
+                            ${isPersonal ? '<span class="ml-2 px-1 bg-purple-50 text-purple-700 rounded text-xs">Personal</span>' : ''}
+                            ${connectionBtn}
+                        </div>
                         <div class="text-xs text-gray-600 truncate">${r.email_subject}</div>
                         ${r.matching_applications.length > 0 ? `
                             <div class="mt-2 text-xs">
@@ -615,6 +635,61 @@ async function previewResponses() {
         }
     } catch (err) {
         preview.innerHTML = `<div class="text-red-500">Preview failed: ${err.message}</div>`;
+    }
+}
+
+// Helper to escape attribute values
+function escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Save a connection from email response
+async function saveConnection(index) {
+    const btn = document.getElementById(`save-conn-${index}`);
+    if (!btn) return;
+
+    const name = btn.dataset.name;
+    const email = btn.dataset.email;
+    const company = btn.dataset.company;
+    const subject = btn.dataset.subject;
+    const emailDate = btn.dataset.date;
+    const appId = btn.dataset.appId;
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch('/api/v1/email/save-connection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                company: company,
+                email_subject: subject,
+                email_date: emailDate,
+                application_id: appId ? parseInt(appId) : null
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            btn.textContent = 'Saved!';
+            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded';
+        } else if (response.status === 409) {
+            btn.textContent = 'Already exists';
+            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded';
+        } else {
+            btn.textContent = 'Error';
+            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded';
+            console.error(data.error);
+        }
+    } catch (err) {
+        btn.textContent = 'Error';
+        btn.className = 'ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded';
+        console.error(err);
     }
 }
 

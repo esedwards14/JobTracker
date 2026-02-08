@@ -287,6 +287,11 @@
                               {% if request.endpoint == 'views.applications' %}text-indigo-600{% endif %}">
                         Applications
                     </a>
+                    <a href="{{ url_for('views.connections') }}"
+                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
+                              {% if request.endpoint == 'views.connections' %}text-indigo-600{% endif %}">
+                        Connections
+                    </a>
                     <a href="{{ url_for('views.email_settings') }}"
                        class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
                               {% if request.endpoint == 'views.email_settings' %}text-indigo-600{% endif %}">
