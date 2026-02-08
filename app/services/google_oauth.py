@@ -3,7 +3,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import url_for, current_app
+from flask import url_for, current_app, request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
@@ -11,6 +11,25 @@ from googleapiclient.discovery import build
 
 # Gmail API scope for reading emails
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+
+
+def get_redirect_uri():
+    """Get the OAuth redirect URI based on environment."""
+    # Check for explicit environment variable first
+    if os.environ.get('OAUTH_REDIRECT_URI'):
+        return os.environ.get('OAUTH_REDIRECT_URI')
+
+    # Try to build from request context
+    try:
+        # Use request.host_url which includes the scheme (http/https)
+        base_url = request.host_url.rstrip('/')
+        return f"{base_url}/oauth/callback"
+    except RuntimeError:
+        # No request context, fall back to default
+        pass
+
+    # Default for local development
+    return 'http://127.0.0.1:3000/oauth/callback'
 
 
 def get_client_config():
@@ -26,7 +45,7 @@ def get_client_config():
                 'client_secret': client_secret,
                 'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
                 'token_uri': 'https://oauth2.googleapis.com/token',
-                'redirect_uris': ['http://127.0.0.1:3000/oauth/callback'],
+                'redirect_uris': [get_redirect_uri()],
             }
         }
 
@@ -51,7 +70,7 @@ def create_oauth_flow(redirect_uri=None):
     flow = Flow.from_client_config(
         client_config,
         scopes=SCOPES,
-        redirect_uri=redirect_uri or 'http://127.0.0.1:3000/oauth/callback'
+        redirect_uri=redirect_uri or get_redirect_uri()
     )
 
     return flow
