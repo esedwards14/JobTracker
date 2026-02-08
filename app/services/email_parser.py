@@ -573,9 +573,13 @@ class JobEmailParser:
         )
 
         # Check if from careers/jobs email
-        is_from_careers_email = any(x in from_lower for x in ['careers@', 'jobs@', 'recruiting@', 'talent@', 'hr@', 'hiring@'])
+        is_from_careers_email = any(x in from_lower for x in [
+            'careers@', 'jobs@', 'recruiting@', 'talent@', 'hr@', 'hiring@',
+            'recruitment@', 'staffing@', 'humanresources@', 'people@',
+            'talentacquisition@', 'employment@'
+        ])
 
-        # Positive indicators - application confirmations
+        # Positive indicators - application confirmations and responses
         positive_keywords = [
             'application received',
             'application submitted',
@@ -599,20 +603,42 @@ class JobEmailParser:
             'application to',
             'successfully submitted',
             'successfully applied',
+            # Additional keywords for various job emails
+            'your candidacy',
+            'candidate',
+            'hiring process',
+            'recruitment process',
+            'hiring team',
+            'recruiting team',
+            'talent team',
+            'hr team',
+            'human resources',
+            'position you applied',
+            'role you applied',
+            'career opportunity',
+            'job opportunity',
+            'employment opportunity',
+            'we appreciate your interest',
+            'thank you for submitting',
+            'your resume',
+            'your qualifications',
+            'interview',
+            'next steps',
+            'move forward',
         ]
 
-        # Negative indicators (rejection, interview scheduling, job alerts)
+        # Negative indicators (things that should NOT be imported as new applications)
+        # These are responses, not application confirmations
         negative_keywords = [
-            'unfortunately',
-            'regret to inform',
-            'not selected',
-            'not moving forward',
-            'position has been filled',
-            'offer letter',
-            'background check',
             'your account',
             'password reset',
             'verify your email',
+            'confirm your email',
+            'subscription',
+            'unsubscribe',
+            'newsletter',
+            'weekly digest',
+            'daily digest',
         ]
 
         # Job match/recommendation keywords (check in SUBJECT LINE only)

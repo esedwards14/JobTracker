@@ -65,9 +65,9 @@ class GmailOAuthConnector:
         # Calculate date filter
         after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
 
-        # Expanded search queries for job-related emails
+        # Broader search queries for job-related emails
         search_queries = [
-            # Subject-based searches
+            # Subject-based searches - application keywords
             f'after:{after_date} subject:application',
             f'after:{after_date} subject:"thank you for applying"',
             f'after:{after_date} subject:"thanks for applying"',
@@ -81,6 +81,34 @@ class GmailOAuthConnector:
             f'after:{after_date} subject:"application confirmation"',
             f'after:{after_date} subject:"thank you for your interest"',
             f'after:{after_date} subject:"thanks for your interest"',
+
+            # Response/update keywords
+            f'after:{after_date} subject:"application update"',
+            f'after:{after_date} subject:"application status"',
+            f'after:{after_date} subject:"regarding your application"',
+            f'after:{after_date} subject:"update on your application"',
+            f'after:{after_date} subject:"unfortunately"',
+            f'after:{after_date} subject:"not moving forward"',
+            f'after:{after_date} subject:"regret to inform"',
+            f'after:{after_date} subject:"position has been filled"',
+
+            # Interview keywords
+            f'after:{after_date} subject:interview',
+            f'after:{after_date} subject:"schedule a call"',
+            f'after:{after_date} subject:"next steps"',
+            f'after:{after_date} subject:"phone screen"',
+
+            # Offer keywords
+            f'after:{after_date} subject:"offer letter"',
+            f'after:{after_date} subject:"job offer"',
+            f'after:{after_date} subject:"offer of employment"',
+
+            # Candidate/hiring keywords
+            f'after:{after_date} subject:candidate',
+            f'after:{after_date} subject:"hiring process"',
+            f'after:{after_date} subject:"recruitment"',
+            f'after:{after_date} subject:"position"',
+            f'after:{after_date} subject:"opportunity"',
 
             # Platform-specific sender searches
             f'after:{after_date} from:indeed.com',
@@ -104,6 +132,16 @@ class GmailOAuthConnector:
             f'after:{after_date} from:brassring.com',
             f'after:{after_date} from:ultipro.com',
             f'after:{after_date} from:ashbyhq.com',
+            f'after:{after_date} from:paylocity.com',
+            f'after:{after_date} from:paycom.com',
+            f'after:{after_date} from:adp.com',
+            f'after:{after_date} from:bamboohr.com',
+            f'after:{after_date} from:ceridian.com',
+            f'after:{after_date} from:phenom.com',
+            f'after:{after_date} from:avature.net',
+            f'after:{after_date} from:beamery.com',
+            f'after:{after_date} from:eightfold.ai',
+            f'after:{after_date} from:phenom.com',
 
             # Common company career email patterns
             f'after:{after_date} from:careers@',
@@ -111,8 +149,21 @@ class GmailOAuthConnector:
             f'after:{after_date} from:recruiting@',
             f'after:{after_date} from:talent@',
             f'after:{after_date} from:hr@',
+            f'after:{after_date} from:hiring@',
+            f'after:{after_date} from:recruitment@',
+            f'after:{after_date} from:staffing@',
+            f'after:{after_date} from:humanresources@',
             f'after:{after_date} from:noreply@ subject:application',
             f'after:{after_date} from:no-reply@ subject:application',
+            f'after:{after_date} from:notifications@ subject:application',
+
+            # Body content searches (catches more emails)
+            f'after:{after_date} "thank you for applying"',
+            f'after:{after_date} "we received your application"',
+            f'after:{after_date} "application has been received"',
+            f'after:{after_date} "your candidacy"',
+            f'after:{after_date} "hiring team"',
+            f'after:{after_date} "recruiting team"',
         ]
 
         emails = []
