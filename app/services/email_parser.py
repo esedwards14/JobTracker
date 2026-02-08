@@ -780,6 +780,66 @@ class JobEmailParser:
         r'onboarding',
     ]
 
+    # Recruiter outreach patterns - these indicate someone is reaching out about a NEW position
+    # NOT a response to an application you submitted
+    RECRUITER_OUTREACH_PATTERNS = [
+        # Direct outreach phrases
+        r'came across your (profile|resume|background|linkedin)',
+        r'found your (profile|resume|background|linkedin)',
+        r'saw your (profile|resume|background|linkedin)',
+        r'viewed your (profile|resume|linkedin)',
+        r'noticed your (profile|resume|background|linkedin)',
+        r'i\'m reaching out',
+        r'i am reaching out',
+        r'reaching out (to you )?(about|regarding|because)',
+        r'wanted to reach out',
+        r'reaching out to (see|gauge|discuss|explore)',
+        r'i wanted to (connect|reach out|touch base|introduce)',
+        r'thought (of you|you\'d be|you might be)',
+        r'you\'d be (a )?(great|perfect|ideal|excellent) (fit|candidate|match)',
+        r'you might be (interested|a good fit|a great fit)',
+        r'perfect (fit|candidate|match) for',
+        r'great (fit|candidate|match) for',
+        r'ideal (candidate|fit) for',
+        r'i have (a |an )?(opportunity|role|position)',
+        r'i\'ve got (a |an )?(opportunity|role|position)',
+        r'we have (a |an )?(opportunity|role|position)',
+        r'we\'ve got (a |an )?(opportunity|role|position)',
+        r'there\'s (a |an )?(opportunity|role|position)',
+        r'exciting opportunity',
+        r'new opportunity',
+        r'open (role|position|opportunity)',
+        r'are you (open to|interested in|looking for)',
+        r'would you be (open to|interested in)',
+        r'is this something you\'d be interested',
+        r'would this be of interest',
+        r'are you currently (looking|open|exploring)',
+        r'looking for (new opportunities|a new role|your next)',
+        r'exploring (new opportunities|new roles)',
+        r'on behalf of (my |our )?client',
+        r'my client (is |has )',
+        r'one of (my |our )clients',
+        r'client of (mine|ours)',
+        r'confidential (search|opportunity|role|position)',
+        r'passive candidates',
+        r'your (background|experience|skills) (caught|stood out|impressed|align)',
+        r'based on your (experience|background|profile|linkedin)',
+        r'your (linkedin|profile) (caught|stood out|impressed)',
+        r'quick (call|chat|conversation)',
+        r'brief (call|chat|conversation)',
+        r'hop on a (call|quick call)',
+        r'jump on a (call|quick call)',
+        r'15 (minute|min) (call|chat)',
+        r'20 (minute|min) (call|chat)',
+        r'let me know if.{0,30}interested',
+        r'let me know if.{0,30}open to',
+        r'if you\'re interested.{0,30}let me know',
+        r'if (this|you\'re) interested',
+        r'feel free to reach out',
+        r'feel free to reply',
+        r'looking forward to (hearing|connecting)',
+    ]
+
     # Additional patterns for extracting company from RESPONSE emails
     # These are patterns more common in rejection/interview emails vs confirmation emails
     RESPONSE_COMPANY_PATTERNS = [
@@ -906,6 +966,45 @@ class JobEmailParser:
 
         return None
 
+    def _is_recruiter_outreach(self, subject: str, body: str, from_address: str) -> bool:
+        """
+        Detect if this email is a recruiter reaching out about a NEW position,
+        NOT a response to an application you submitted.
+        """
+        text = (subject + ' ' + body[:3000]).lower()
+
+        # Count how many outreach patterns match
+        outreach_count = sum(1 for pattern in self.RECRUITER_OUTREACH_PATTERNS
+                            if re.search(pattern, text, re.IGNORECASE))
+
+        # If 2+ outreach patterns match, this is likely recruiter outreach
+        if outreach_count >= 2:
+            return True
+
+        # Also check for common recruiter outreach subject lines
+        subject_lower = subject.lower()
+        outreach_subject_patterns = [
+            r'opportunity',
+            r'interested\?',
+            r'perfect fit',
+            r'great fit',
+            r'quick question',
+            r'reaching out',
+            r'your (profile|background|experience)',
+            r'new role',
+            r'open (role|position)',
+            r'job opportunity',
+            r'career opportunity',
+        ]
+        subject_outreach_count = sum(1 for pattern in outreach_subject_patterns
+                                     if re.search(pattern, subject_lower, re.IGNORECASE))
+
+        # If subject has outreach language AND body has at least 1 outreach pattern
+        if subject_outreach_count >= 1 and outreach_count >= 1:
+            return True
+
+        return False
+
     def _detect_response_type(self, subject: str, body: str, from_address: str) -> Optional[str]:
         """
         Detect what type of response this email is.
@@ -916,6 +1015,11 @@ class JobEmailParser:
         text = (subject + ' ' + body[:3000]).lower()
         subject_lower = subject.lower()
         from_lower = from_address.lower()
+
+        # FIRST: Check if this is recruiter outreach about a NEW position
+        # If so, it should NOT be treated as a response to your application
+        if self._is_recruiter_outreach(subject, body, from_address):
+            return None
 
         # Skip email thread replies for rejection/offer detection
         # (but interview scheduling can be in reply threads)
@@ -932,10 +1036,36 @@ class JobEmailParser:
         if offer_count >= 2:
             return 'offered'
 
-        # Check for interview request
+        # Check for interview request - but require stronger evidence
+        # to avoid false positives from recruiter outreach
         interview_count = sum(1 for pattern in self.INTERVIEW_PATTERNS
                              if re.search(pattern, text, re.IGNORECASE))
-        if interview_count >= 2:
+
+        # Also check for phrases that indicate this is about YOUR application
+        application_reference_patterns = [
+            r'your application',
+            r'you applied',
+            r'application (?:to|at|for|with)',
+            r'role you applied',
+            r'position you applied',
+            r'regarding your.{0,20}application',
+            r'thank you for applying',
+            r'thanks for applying',
+            r'after reviewing your application',
+            r'reviewed your application',
+            r'your recent application',
+        ]
+        has_application_reference = any(
+            re.search(pattern, text, re.IGNORECASE)
+            for pattern in application_reference_patterns
+        )
+
+        # For interview status, require either:
+        # - 3+ interview patterns (strong signal)
+        # - OR 2+ interview patterns AND reference to your application
+        if interview_count >= 3:
+            return 'interviewing'
+        if interview_count >= 2 and has_application_reference:
             return 'interviewing'
 
         # Check for rejection (skip if from personal email - likely a personal reply)

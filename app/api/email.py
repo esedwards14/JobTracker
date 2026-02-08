@@ -10,6 +10,7 @@ from app.models import EmailSettings, ParsedEmail, JobApplication, Contact
 from app.services.email_connector import GmailOAuthConnector
 from app.services.email_parser import JobEmailParser
 from app.services.google_oauth import get_authorization_url, exchange_code_for_tokens
+from app.services.user_service import get_current_user_id
 
 
 def is_personal_email(from_address: str) -> bool:
@@ -112,14 +113,17 @@ def extract_companies_from_text(text: str) -> list:
     return companies
 
 
-def find_matching_applications(company: str, position: str, email_from: str, body_preview: str) -> list:
+def find_matching_applications(company: str, position: str, email_from: str, body_preview: str, user_id: str = None) -> list:
     """Find matching applications using multiple matching strategies."""
     applications = []
-    
+
     # Strategy 1: Direct company name match (with normalization)
     if company:
         normalized_company = normalize_company_name(company)
-        apps = JobApplication.query.all()
+        base_query = JobApplication.query
+        if user_id:
+            base_query = base_query.filter_by(user_id=user_id)
+        apps = base_query.all()
         for app in apps:
             normalized_app_name = normalize_company_name(app.company_name)
             # Direct match or substring match
@@ -140,9 +144,12 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
         normalized_company = normalize_company_name(company)
         words = [w for w in normalized_company.split() if len(w) > 3]
         for word in words:
-            apps = JobApplication.query.filter(
+            query = JobApplication.query.filter(
                 JobApplication.company_name.ilike(f'%{word}%')
-            ).all()
+            )
+            if user_id:
+                query = query.filter(JobApplication.user_id == user_id)
+            apps = query.all()
             if apps:
                 applications.extend(apps)
         
@@ -155,9 +162,12 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
         for potential_company in potential_companies:
             normalized = normalize_company_name(potential_company)
             if normalized:
-                apps = JobApplication.query.filter(
+                query = JobApplication.query.filter(
                     JobApplication.company_name.ilike(f'%{normalized}%')
-                ).all()
+                )
+                if user_id:
+                    query = query.filter(JobApplication.user_id == user_id)
+                apps = query.all()
                 if apps:
                     applications.extend(apps)
         
@@ -174,9 +184,12 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
                            'smartrecruiters', 'jobvite', 'taleo', 'ashby', 'workable',
                            'bamboohr', 'breezy', 'jazz', 'zoho', 'noreply', 'mail']
             if domain not in skip_domains and len(domain) > 2:
-                apps = JobApplication.query.filter(
+                query = JobApplication.query.filter(
                     JobApplication.company_name.ilike(f'%{domain}%')
-                ).all()
+                )
+                if user_id:
+                    query = query.filter(JobApplication.user_id == user_id)
+                apps = query.all()
                 if apps:
                     applications.extend(apps)
                     return list(set(applications))
@@ -196,19 +209,25 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
             
             if (sender_name.lower() not in skip_names and len(sender_name) > 2 and
                 not any(p in sender_name.lower() for p in platform_keywords)):
-                apps = JobApplication.query.filter(
+                query = JobApplication.query.filter(
                     JobApplication.company_name.ilike(f'%{sender_name}%')
-                ).all()
+                )
+                if user_id:
+                    query = query.filter(JobApplication.user_id == user_id)
+                apps = query.all()
                 if apps:
                     applications.extend(apps)
-                
+
                 # Try first word too
                 if not apps and ' ' in sender_name:
                     first_word = sender_name.split()[0]
                     if len(first_word) > 3:
-                        apps = JobApplication.query.filter(
+                        query = JobApplication.query.filter(
                             JobApplication.company_name.ilike(f'%{first_word}%')
-                        ).all()
+                        )
+                        if user_id:
+                            query = query.filter(JobApplication.user_id == user_id)
+                        apps = query.all()
                         if apps:
                             applications.extend(apps)
     
@@ -217,11 +236,15 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
 
 @api_bp.route('/email/settings', methods=['GET'])
 def get_email_settings():
-    """Get current email settings."""
-    settings = EmailSettings.query.first()
+    """Get current email settings for logged-in user."""
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'configured': False, 'logged_in': False})
+
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
     if settings and settings.refresh_token:
         return jsonify(settings.to_dict())
-    return jsonify({'configured': False})
+    return jsonify({'configured': False, 'logged_in': True})
 
 
 @api_bp.route('/email/oauth/start', methods=['GET'])
@@ -237,8 +260,9 @@ def start_oauth():
 
 @api_bp.route('/email/settings', methods=['DELETE'])
 def delete_email_settings():
-    """Delete email settings (disconnect Gmail)."""
-    settings = EmailSettings.query.first()
+    """Delete email settings (disconnect Gmail) for current user."""
+    user_id = get_current_user_id()
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
     if settings:
         db.session.delete(settings)
         db.session.commit()
@@ -248,7 +272,11 @@ def delete_email_settings():
 @api_bp.route('/email/sync', methods=['POST'])
 def sync_emails():
     """Sync emails and parse job applications."""
-    settings = EmailSettings.query.first()
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Please sign in first.'}), 401
+
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
@@ -303,7 +331,7 @@ def sync_emails():
             position = (parsed.get('position') or '').strip()
             app_exists = None
             if company or position:
-                app_q = JobApplication.query
+                app_q = JobApplication.query.filter_by(user_id=user_id)
                 if company:
                     app_q = app_q.filter(JobApplication.company_name.ilike(f'%{company}%'))
                 if position:
@@ -315,6 +343,7 @@ def sync_emails():
                 continue
 
             email_record = ParsedEmail(
+                user_id=user_id,
                 message_id=msg_id,
                 email_subject=parsed['email_subject'],
                 email_from=parsed['email_from'],
@@ -348,10 +377,11 @@ def sync_emails():
 
 @api_bp.route('/email/parsed', methods=['GET'])
 def get_parsed_emails():
-    """Get list of parsed emails."""
+    """Get list of parsed emails for current user."""
+    user_id = get_current_user_id()
     status = request.args.get('status', 'pending')
 
-    query = ParsedEmail.query
+    query = ParsedEmail.query.filter_by(user_id=user_id)
     if status != 'all':
         query = query.filter_by(status=status)
 
@@ -364,9 +394,10 @@ def get_parsed_emails():
 
 @api_bp.route('/email/parsed/clear', methods=['DELETE'])
 def clear_parsed_emails():
-    """Clear all parsed emails to allow re-sync."""
-    count = ParsedEmail.query.count()
-    ParsedEmail.query.delete()
+    """Clear all parsed emails for current user to allow re-sync."""
+    user_id = get_current_user_id()
+    count = ParsedEmail.query.filter_by(user_id=user_id).count()
+    ParsedEmail.query.filter_by(user_id=user_id).delete()
     db.session.commit()
     return jsonify({'message': f'Cleared {count} parsed emails', 'deleted': count})
 
@@ -374,7 +405,8 @@ def clear_parsed_emails():
 @api_bp.route('/email/parsed/<int:id>/import', methods=['POST'])
 def import_parsed_email(id):
     """Import a parsed email as a job application."""
-    parsed = ParsedEmail.query.get_or_404(id)
+    user_id = get_current_user_id()
+    parsed = ParsedEmail.query.filter_by(id=id, user_id=user_id).first_or_404()
 
     if parsed.status == 'imported':
         return jsonify({'error': 'Email already imported'}), 400
@@ -384,6 +416,7 @@ def import_parsed_email(id):
 
     # Create job application
     application = JobApplication(
+        user_id=user_id,
         company_name=data.get('company_name') or parsed.company_name or 'Unknown Company',
         position=data.get('position') or parsed.position or 'Unknown Position',
         date_applied=parsed.email_date.date() if parsed.email_date else None,
@@ -407,7 +440,8 @@ def import_parsed_email(id):
 @api_bp.route('/email/parsed/<int:id>/ignore', methods=['POST'])
 def ignore_parsed_email(id):
     """Mark a parsed email as ignored."""
-    parsed = ParsedEmail.query.get_or_404(id)
+    user_id = get_current_user_id()
+    parsed = ParsedEmail.query.filter_by(id=id, user_id=user_id).first_or_404()
     parsed.status = 'ignored'
     db.session.commit()
 
@@ -417,7 +451,8 @@ def ignore_parsed_email(id):
 @api_bp.route('/email/parsed/<int:id>', methods=['DELETE'])
 def delete_parsed_email(id):
     """Delete a parsed email."""
-    parsed = ParsedEmail.query.get_or_404(id)
+    user_id = get_current_user_id()
+    parsed = ParsedEmail.query.filter_by(id=id, user_id=user_id).first_or_404()
     db.session.delete(parsed)
     db.session.commit()
 
@@ -427,12 +462,14 @@ def delete_parsed_email(id):
 @api_bp.route('/email/import-all', methods=['POST'])
 def import_all_pending():
     """Import all pending parsed emails as job applications."""
-    pending = ParsedEmail.query.filter_by(status='pending').all()
+    user_id = get_current_user_id()
+    pending = ParsedEmail.query.filter_by(user_id=user_id, status='pending').all()
 
     imported = 0
     for parsed in pending:
         if parsed.company_name and parsed.confidence >= 0.5:
             application = JobApplication(
+                user_id=user_id,
                 company_name=parsed.company_name,
                 position=parsed.position or 'Unknown Position',
                 date_applied=parsed.email_date.date() if parsed.email_date else None,
@@ -455,7 +492,11 @@ def import_all_pending():
 @api_bp.route('/email/scan-responses', methods=['POST'])
 def scan_response_emails():
     """Scan emails for responses (rejections, interview requests, offers) and update application statuses."""
-    settings = EmailSettings.query.first()
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Please sign in first.'}), 401
+
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
@@ -504,7 +545,7 @@ def scan_response_emails():
                 continue
 
             # Find matching application(s) using improved matching logic
-            applications = find_matching_applications(company, position, from_addr, body_preview)
+            applications = find_matching_applications(company, position, from_addr, body_preview, user_id)
             
             # Check if any matched app already has this response (already scanned)
             already_scanned = False
@@ -531,12 +572,14 @@ def scan_response_emails():
                 if app_key not in created_app_keys:
                     # Also check if it already exists in the database
                     existing = JobApplication.query.filter(
+                        JobApplication.user_id == user_id,
                         JobApplication.company_name.ilike(f'%{normalize_company_name(company)}%'),
                         JobApplication.position.ilike(f'%{position}%')
                     ).first()
-                    
+
                     if not existing:
                         new_app = JobApplication(
+                            user_id=user_id,
                             company_name=company,
                             position=position,
                             date_applied=email_date.date() if email_date else datetime.utcnow().date(),
@@ -619,7 +662,11 @@ def scan_response_emails():
 @api_bp.route('/email/response-preview', methods=['POST'])
 def preview_response_emails():
     """Preview what response emails were found without updating anything."""
-    settings = EmailSettings.query.first()
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Please sign in first.'}), 401
+
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
@@ -655,7 +702,7 @@ def preview_response_emails():
             body_preview = response.get('body_preview', '')
 
             # Find potential matching applications using improved logic
-            apps = find_matching_applications(company, position, from_addr, body_preview)
+            apps = find_matching_applications(company, position, from_addr, body_preview, user_id)
 
             # Check if any matched app already has this response (already scanned)
             already_scanned = False
@@ -690,6 +737,7 @@ def preview_response_emails():
             existing_contact = None
             if sender_info and sender_info.get('email'):
                 existing_contact = Contact.query.filter(
+                    Contact.user_id == user_id,
                     Contact.email.ilike(sender_info['email'])
                 ).first()
 
@@ -722,6 +770,7 @@ def preview_response_emails():
 @api_bp.route('/email/save-connection', methods=['POST'])
 def save_connection_from_email():
     """Save a connection from a scanned email response."""
+    user_id = get_current_user_id()
     data = request.get_json() or {}
 
     name = data.get('name')
@@ -734,9 +783,12 @@ def save_connection_from_email():
     if not name:
         return jsonify({'error': 'Name is required'}), 400
 
-    # Check if contact already exists with this email
+    # Check if contact already exists with this email for this user
     if email:
-        existing = Contact.query.filter(Contact.email.ilike(email)).first()
+        existing = Contact.query.filter(
+            Contact.user_id == user_id,
+            Contact.email.ilike(email)
+        ).first()
         if existing:
             return jsonify({'error': 'Contact with this email already exists', 'contact_id': existing.id}), 409
 
@@ -749,6 +801,7 @@ def save_connection_from_email():
             pass
 
     contact = Contact(
+        user_id=user_id,
         name=name,
         email=email,
         company=company,

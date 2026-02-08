@@ -25,7 +25,9 @@ def applications():
 @views_bp.route('/applications/<int:id>')
 def application_detail(id):
     """Render the application detail page."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
     return render_template('pages/application_detail.html',
                          application=application,
                          Interview=InterviewStage)
@@ -34,8 +36,19 @@ def application_detail(id):
 @views_bp.route('/settings/email')
 def email_settings():
     """Render the email settings page."""
-    settings = EmailSettings.query.first()
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    settings = EmailSettings.query.filter_by(user_id=user_id).first() if user_id else None
     return render_template('pages/email_settings.html', settings=settings)
+
+
+@views_bp.route('/logout')
+def logout():
+    """Log out the current user."""
+    from app.services.user_service import clear_current_user
+    clear_current_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('views.email_settings'))
 
 
 @views_bp.route('/connections')
@@ -48,6 +61,7 @@ def connections():
 def oauth_callback():
     """Handle Google OAuth callback."""
     from app.services.google_oauth import exchange_code_for_tokens
+    from app.services.user_service import set_current_user
 
     error = request.args.get('error')
     if error:
@@ -69,8 +83,11 @@ def oauth_callback():
             flash('Warning: Could not retrieve email address. Please try connecting again.', 'warning')
             return redirect(url_for('views.email_settings'))
 
-        # Save to database
-        settings = EmailSettings.query.first()
+        # Set the user in session - this is the key for per-user data
+        set_current_user(email)
+
+        # Save to database - look for existing settings for this user
+        settings = EmailSettings.query.filter_by(user_id=email).first()
         if settings:
             settings.email_address = email
             settings.access_token = tokens['access_token']
@@ -79,6 +96,7 @@ def oauth_callback():
             settings.is_active = True
         else:
             settings = EmailSettings(
+                user_id=email,
                 email_address=email,
                 access_token=tokens['access_token'],
                 refresh_token=tokens['refresh_token'],
@@ -99,9 +117,13 @@ def oauth_callback():
 @views_bp.route('/applications/new', methods=['GET', 'POST'])
 def new_application():
     """Render the new application form and handle submission."""
+    from app.services.user_service import get_current_user_id
+
     if request.method == 'POST':
+        user_id = get_current_user_id()
         # Parse form data
         data = {
+            'user_id': user_id,
             'company_name': request.form.get('company_name'),
             'position': request.form.get('position'),
             'date_applied': datetime.strptime(request.form.get('date_applied'), '%Y-%m-%d').date()
@@ -134,7 +156,9 @@ def new_application():
 @views_bp.route('/applications/<int:id>/edit', methods=['GET', 'POST'])
 def edit_application(id):
     """Render the edit application form and handle submission."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
 
     if request.method == 'POST':
         # Update application fields
@@ -191,34 +215,40 @@ def stats_partial():
     """Return dashboard stats as HTML partial."""
     from sqlalchemy import func
     from datetime import timedelta
+    from app.services.user_service import get_current_user_id
 
-    total = JobApplication.query.count()
+    user_id = get_current_user_id()
+
+    # Base query filtered by user
+    base_query = JobApplication.query.filter_by(user_id=user_id)
+
+    total = base_query.count()
 
     # Status counts
     status_counts = db.session.query(
         JobApplication.status,
         func.count(JobApplication.id)
-    ).group_by(JobApplication.status).all()
+    ).filter(JobApplication.user_id == user_id).group_by(JobApplication.status).all()
     status_dict = {status: count for status, count in status_counts}
 
     # Response rate
-    with_response = JobApplication.query.filter_by(response_received=True).count()
+    with_response = base_query.filter_by(response_received=True).count()
     response_rate = (with_response / total * 100) if total > 0 else 0
 
-    # Interview rate
+    # Interview rate - join with applications to filter by user
     apps_with_interviews = db.session.query(
         func.count(func.distinct(InterviewStage.application_id))
-    ).scalar() or 0
+    ).join(JobApplication).filter(JobApplication.user_id == user_id).scalar() or 0
     interview_rate = (apps_with_interviews / total * 100) if total > 0 else 0
 
     # Recent applications
     week_ago = date.today() - timedelta(days=7)
-    recent_week = JobApplication.query.filter(
+    recent_week = base_query.filter(
         JobApplication.date_applied >= week_ago
     ).count()
 
     month_ago = date.today() - timedelta(days=30)
-    recent_month = JobApplication.query.filter(
+    recent_month = base_query.filter(
         JobApplication.date_applied >= month_ago
     ).count()
 
@@ -246,13 +276,16 @@ def stats_partial():
 def status_breakdown_partial():
     """Return status breakdown as HTML partial."""
     from sqlalchemy import func
+    from app.services.user_service import get_current_user_id
 
-    total = JobApplication.query.count()
+    user_id = get_current_user_id()
+
+    total = JobApplication.query.filter_by(user_id=user_id).count()
 
     status_counts = db.session.query(
         JobApplication.status,
         func.count(JobApplication.id)
-    ).group_by(JobApplication.status).all()
+    ).filter(JobApplication.user_id == user_id).group_by(JobApplication.status).all()
     status_dict = {status: count for status, count in status_counts}
 
     stats = {
@@ -272,7 +305,10 @@ def status_breakdown_partial():
 @views_bp.route('/partials/recent-applications')
 def recent_applications_partial():
     """Return recent applications as HTML partial."""
-    applications = JobApplication.query.order_by(
+    from app.services.user_service import get_current_user_id
+
+    user_id = get_current_user_id()
+    applications = JobApplication.query.filter_by(user_id=user_id).order_by(
         JobApplication.date_applied.desc()
     ).limit(5).all()
 
@@ -283,6 +319,8 @@ def recent_applications_partial():
 @views_bp.route('/partials/applications-list')
 def applications_list_partial():
     """Return filtered applications list as HTML partial."""
+    from app.services.user_service import get_current_user_id
+
     # Get filter parameters
     status = request.args.get('status')
     search = request.args.get('search')
@@ -292,8 +330,9 @@ def applications_list_partial():
     page = request.args.get('page', 1, type=int)
     per_page = 20
 
-    # Build query
-    query = JobApplication.query
+    # Build query - filter by current user
+    user_id = get_current_user_id()
+    query = JobApplication.query.filter_by(user_id=user_id)
 
     if status:
         query = query.filter(JobApplication.status == status)

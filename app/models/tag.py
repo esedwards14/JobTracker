@@ -17,7 +17,8 @@ class Tag(db.Model):
     __tablename__ = 'tags'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    user_id = db.Column(db.String(255), nullable=True, index=True)  # Google user email/ID
+    name = db.Column(db.String(100), nullable=False)  # Removed unique=True since tags are per-user
     color = db.Column(db.String(7), default='#6B7280')  # Hex color
 
     def __repr__(self):

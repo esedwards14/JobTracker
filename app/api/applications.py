@@ -14,6 +14,8 @@ from app.schemas import ApplicationSchema, ApplicationCreateSchema, ApplicationU
 @api_bp.route('/applications', methods=['GET'])
 def list_applications():
     """List all applications with optional filters."""
+    from app.services.user_service import get_current_user_id
+
     # Query parameters
     status = request.args.get('status')
     company = request.args.get('company')
@@ -25,8 +27,9 @@ def list_applications():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    # Build query
-    query = JobApplication.query
+    # Build query - filter by current user
+    user_id = get_current_user_id()
+    query = JobApplication.query.filter_by(user_id=user_id)
 
     # Apply filters
     if status:
@@ -67,19 +70,26 @@ def list_applications():
 @api_bp.route('/applications/<int:id>', methods=['GET'])
 def get_application(id):
     """Get a single application by ID."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
     return jsonify(application.to_dict())
 
 
 @api_bp.route('/applications', methods=['POST'])
 def create_application():
     """Create a new application."""
+    from app.services.user_service import get_current_user_id
+
     schema = ApplicationCreateSchema()
 
     try:
         data = schema.load(request.json)
     except ValidationError as err:
         return jsonify({'errors': err.messages}), 400
+
+    # Add current user ID
+    data['user_id'] = get_current_user_id()
 
     application = JobApplication(**data)
     db.session.add(application)
@@ -91,7 +101,9 @@ def create_application():
 @api_bp.route('/applications/<int:id>', methods=['PUT'])
 def update_application(id):
     """Update an existing application."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
     schema = ApplicationUpdateSchema()
 
     try:
@@ -110,7 +122,9 @@ def update_application(id):
 @api_bp.route('/applications/<int:id>/notes', methods=['PATCH'])
 def update_application_notes(id):
     """Update only the notes of an application."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
 
     data = request.json
     if data is None:
@@ -125,7 +139,9 @@ def update_application_notes(id):
 @api_bp.route('/applications/<int:id>/status', methods=['PATCH'])
 def update_application_status(id):
     """Update only the status of an application."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
 
     data = request.json
     if 'status' not in data:
@@ -150,7 +166,9 @@ def update_application_status(id):
 @api_bp.route('/applications/<int:id>', methods=['DELETE'])
 def delete_application(id):
     """Delete an application."""
-    application = JobApplication.query.get_or_404(id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
     db.session.delete(application)
     db.session.commit()
 
@@ -163,9 +181,11 @@ def delete_application(id):
 
 @api_bp.route('/applications/delete-all', methods=['DELETE'])
 def delete_all_applications():
-    """Delete all applications."""
-    count = JobApplication.query.count()
-    JobApplication.query.delete()
+    """Delete all applications for current user."""
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    count = JobApplication.query.filter_by(user_id=user_id).count()
+    JobApplication.query.filter_by(user_id=user_id).delete()
     db.session.commit()
 
     return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
@@ -174,8 +194,10 @@ def delete_all_applications():
 @api_bp.route('/applications/<int:id>/tags/<int:tag_id>', methods=['POST'])
 def add_tag_to_application(id, tag_id):
     """Add a tag to an application."""
-    application = JobApplication.query.get_or_404(id)
-    tag = Tag.query.get_or_404(tag_id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
+    tag = Tag.query.filter_by(id=tag_id, user_id=user_id).first_or_404()
 
     if tag not in application.tags:
         application.tags.append(tag)
@@ -187,8 +209,10 @@ def add_tag_to_application(id, tag_id):
 @api_bp.route('/applications/<int:id>/tags/<int:tag_id>', methods=['DELETE'])
 def remove_tag_from_application(id, tag_id):
     """Remove a tag from an application."""
-    application = JobApplication.query.get_or_404(id)
-    tag = Tag.query.get_or_404(tag_id)
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    application = JobApplication.query.filter_by(id=id, user_id=user_id).first_or_404()
+    tag = Tag.query.filter_by(id=tag_id, user_id=user_id).first_or_404()
 
     if tag in application.tags:
         application.tags.remove(tag)

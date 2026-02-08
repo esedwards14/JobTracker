@@ -10,6 +10,7 @@ class JobApplication(db.Model):
     __tablename__ = 'job_applications'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), nullable=True, index=True)  # Google user email/ID
     company_name = db.Column(db.String(255), nullable=False)
     position = db.Column(db.String(255), nullable=False)
     expected_salary_min = db.Column(db.Numeric(12, 2), nullable=True)

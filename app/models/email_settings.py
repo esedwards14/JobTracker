@@ -10,6 +10,7 @@ class EmailSettings(db.Model):
     __tablename__ = 'email_settings'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), nullable=True, unique=True, index=True)  # Google user email/ID
     email_address = db.Column(db.String(255), nullable=False)
     provider = db.Column(db.String(50), default='gmail')
     is_active = db.Column(db.Boolean, default=True)
@@ -39,6 +40,7 @@ class ParsedEmail(db.Model):
     __tablename__ = 'parsed_emails'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), nullable=True, index=True)  # Google user email/ID
     message_id = db.Column(db.String(255), unique=True, nullable=False)
     email_subject = db.Column(db.Text)
     email_from = db.Column(db.String(255))

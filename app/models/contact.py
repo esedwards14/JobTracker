@@ -10,6 +10,7 @@ class Contact(db.Model):
     __tablename__ = 'contacts'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), nullable=True, index=True)  # Google user email/ID
     application_id = db.Column(db.Integer, db.ForeignKey('job_applications.id'), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     company = db.Column(db.String(255), nullable=True)  # Company name (for contacts not tied to an application)
