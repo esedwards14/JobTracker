@@ -56,6 +56,7 @@ def has_personal_name(from_address: str) -> bool:
     """
     Check if the From field contains a real person's name (not a generic/automated sender).
     Works even for platform emails like '"Kylie Morin" <hash@indeedemail.com>'.
+    Also accepts single first names like "Chelsea".
     """
     sender_info = extract_sender_info(from_address)
     name = sender_info.get('name')
@@ -64,37 +65,38 @@ def has_personal_name(from_address: str) -> bool:
 
     name_lower = name.lower().strip()
 
-    # Generic/automated sender names to exclude
-    generic_names = [
+    # Must have at least one word
+    if not name_lower or len(name_lower) < 2:
+        return False
+
+    # Words that indicate this is NOT a person's name
+    # If ANY of these appear anywhere in the name, reject it
+    non_person_keywords = [
+        # Platform names
         'indeed', 'linkedin', 'greenhouse', 'lever', 'workday', 'icims',
         'handshake', 'glassdoor', 'ziprecruiter', 'monster', 'careerbuilder',
         'smartrecruiters', 'jobvite', 'workable', 'ashby', 'bamboohr',
-        'notifications', 'careers', 'jobs', 'recruiting', 'talent',
-        'hiring', 'hr', 'team', 'noreply', 'no-reply', 'support',
-        'admin', 'system', 'updates', 'alerts', 'info',
+        # Business/generic terms
+        'recruiting', 'recruitment', 'talent', 'careers', 'hiring',
+        'team', 'staff', 'group', 'department', 'dept',
+        'company', 'corp', 'corporation', 'inc', 'llc', 'ltd',
+        'solutions', 'services', 'consulting', 'associates', 'partners',
+        'mortgage', 'insurance', 'financial', 'technologies', 'tech',
+        'healthcare', 'medical', 'logistics', 'management', 'enterprise',
+        'global', 'national', 'international', 'resources', 'capital',
+        # Automated senders
+        'notifications', 'noreply', 'no-reply', 'donotreply',
+        'support', 'admin', 'system', 'updates', 'alerts', 'info',
+        'jobs', 'hr', 'apply', 'applications',
     ]
 
-    # Check if the name is just a generic/platform name
-    for generic in generic_names:
-        if name_lower == generic or name_lower == f'{generic} team':
-            return False
-
-    # A real person's name typically has at least 2 parts (first + last)
-    # and contains mostly letters
-    name_parts = [p for p in name_lower.split() if len(p) > 1]
-    if len(name_parts) < 2:
+    if any(kw in name_lower for kw in non_person_keywords):
         return False
 
-    # Check name looks like a person (mostly alphabetic, allowing parentheses for maiden names)
-    cleaned = re.sub(r'[().\'-]', '', name_lower)
+    # Check name looks like a person (mostly alphabetic)
+    cleaned = re.sub(r'[().\'\-,]', '', name_lower)
     alpha_ratio = sum(c.isalpha() or c.isspace() for c in cleaned) / max(len(cleaned), 1)
     if alpha_ratio < 0.8:
-        return False
-
-    # Filter out names that contain platform keywords
-    platform_keywords = ['indeed', 'linkedin', 'greenhouse', 'lever', 'workday',
-                         'careers', 'jobs', 'recruiting', 'notifications']
-    if any(kw in name_lower for kw in platform_keywords):
         return False
 
     return True
