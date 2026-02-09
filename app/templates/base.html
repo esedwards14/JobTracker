@@ -110,12 +110,12 @@
         .dark .shadow { box-shadow: none !important; }
 
         /* Inputs, selects */
-        .dark input, .dark select, .dark textarea {
+        .dark input:not([type="checkbox"]), .dark select, .dark textarea {
             background-color: var(--muted-surface) !important;
             color: var(--text) !important;
             border-color: var(--border) !important;
         }
-        .dark input:focus, .dark select:focus, .dark textarea:focus {
+        .dark input:not([type="checkbox"]):focus, .dark select:focus, .dark textarea:focus {
             border-color: var(--accent) !important;
             box-shadow: 0 0 0 1px var(--accent) !important;
         }
@@ -275,6 +275,16 @@
         .dark #bulk-tag-dropdown { background-color: var(--surface) !important; border-color: var(--border) !important; }
         .dark #bulk-status-dropdown button:hover,
         .dark #bulk-tag-dropdown button:hover { background-color: var(--surface-2) !important; }
+        .dark #bulk-tag-dropdown .border-t { border-color: var(--border) !important; }
+        .dark #bulk-tag-dropdown input[type="text"] {
+            background-color: var(--muted-surface) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
+        }
+        .dark #bulk-tag-dropdown input[type="color"] {
+            background-color: transparent !important;
+            border: none !important;
+        }
 
         /* Bulk delete modal */
         .dark #bulk-delete-modal .bg-white { background-color: var(--surface) !important; border: 1px solid var(--border) !important; }

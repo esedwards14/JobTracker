@@ -174,9 +174,23 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <div id="bulk-tag-dropdown" class="hidden absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[200px]">
+            <div id="bulk-tag-dropdown" class="hidden absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[240px]">
                 <div id="bulk-tag-list" class="max-h-48 overflow-y-auto">
                     <p class="px-3 py-2 text-xs text-gray-400">Loading tags...</p>
+                </div>
+                <div class="border-t border-gray-200 px-3 py-2">
+                    <form onsubmit="bulkSelect.createTag(event)" class="flex items-center gap-2">
+                        <input type="color" id="new-tag-color" value="#6B7280"
+                               class="w-6 h-6 rounded cursor-pointer border-0 p-0"
+                               title="Tag color">
+                        <input type="text" id="new-tag-name" placeholder="New tag name..."
+                               class="flex-1 text-sm border border-gray-300 rounded px-2 py-1 min-w-0"
+                               maxlength="100" required>
+                        <button type="submit"
+                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+                            Add
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -362,10 +376,8 @@ const bulkSelect = {
         statusDd.classList.add('hidden');
         dd.classList.toggle('hidden');
 
-        // Load tags if not yet loaded
-        if (dd.querySelector('#bulk-tag-list p')) {
-            this.loadTags();
-        }
+        // Load/refresh tags
+        this.loadTags();
     },
 
     closeAllDropdowns() {
@@ -388,10 +400,40 @@ const bulkSelect = {
                     </button>`
                 ).join('');
             } else {
-                list.innerHTML = '<p class="px-3 py-2 text-xs text-gray-400">No tags created yet</p>';
+                list.innerHTML = '<p class="px-3 py-2 text-xs text-gray-400">No tags yet — create one below</p>';
             }
         } catch (e) {
             console.error('Failed to load tags:', e);
+        }
+    },
+
+    async createTag(event) {
+        event.preventDefault();
+        const nameInput = document.getElementById('new-tag-name');
+        const colorInput = document.getElementById('new-tag-color');
+        const name = nameInput.value.trim();
+        const color = colorInput.value;
+
+        if (!name) return;
+
+        try {
+            const resp = await fetch('/api/v1/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                nameInput.value = '';
+                colorInput.value = '#6B7280';
+                // Reload tag list and apply the new tag immediately
+                await this.loadTags();
+                this.addTag(data.id, data.name);
+            } else {
+                this.showToast(data.error || 'Failed to create tag', true);
+            }
+        } catch (e) {
+            this.showToast('Failed to create tag', true);
         }
     },
 
