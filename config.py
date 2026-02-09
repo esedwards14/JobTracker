@@ -23,10 +23,12 @@ class ProductionConfig(Config):
     DEBUG = False
     SINGLE_USER_MODE = os.environ.get('SINGLE_USER_MODE', 'false').lower() == 'true'
 
-    # Get database URL and fix Render's postgres:// to postgresql://
+    # Get database URL and fix Render's postgres:// to postgresql+psycopg://
     _database_url = os.environ.get('DATABASE_URL')
     if _database_url and _database_url.startswith('postgres://'):
-        _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+        _database_url = _database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+    elif _database_url and _database_url.startswith('postgresql://'):
+        _database_url = _database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
     SQLALCHEMY_DATABASE_URI = _database_url or f'sqlite:///{basedir / "prod.db"}'
 
