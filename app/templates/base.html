@@ -259,7 +259,7 @@
         .break-words { word-wrap: break-word; word-break: break-word; }
 
         /* Bulk selection - selected row highlight */
-        .dark .bg-indigo-50\/50 { background-color: rgba(30, 40, 52, 0.6) !important; }
+        .dark .bg-indigo-50\/50 { background-color: rgba(30, 50, 70, 0.35) !important; }
 
         /* Bulk action bar */
         .dark #bulk-action-bar > div { background-color: var(--surface) !important; border-color: var(--border) !important; }
@@ -288,8 +288,58 @@
         /* Checkbox styling for dark mode */
         .dark .row-checkbox,
         .dark #select-all-checkbox {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
             background-color: var(--muted-surface) !important;
-            border-color: var(--border) !important;
+            border: 1.5px solid #3a3d42 !important;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .dark .row-checkbox:hover,
+        .dark #select-all-checkbox:hover {
+            border-color: #5b8fd9 !important;
+        }
+        .dark .row-checkbox:checked,
+        .dark #select-all-checkbox:checked {
+            background-color: #5b8fd9 !important;
+            border-color: #5b8fd9 !important;
+        }
+        .dark .row-checkbox:checked::after,
+        .dark #select-all-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 5px;
+            height: 9px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .dark #select-all-checkbox:indeterminate {
+            background-color: #5b8fd9 !important;
+            border-color: #5b8fd9 !important;
+        }
+        .dark #select-all-checkbox:indeterminate::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 6px;
+            width: 8px;
+            height: 0;
+            border: solid #fff;
+            border-width: 0 0 2px 0;
+            transform: none;
+        }
+        .dark .row-checkbox:focus,
+        .dark #select-all-checkbox:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(91, 143, 217, 0.3) !important;
         }
     </style>
 

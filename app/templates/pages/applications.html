@@ -10,10 +10,19 @@
             <h1 class="text-2xl font-bold text-gray-900">Applications</h1>
             <p class="mt-1 text-sm text-gray-500">Manage and track your job applications</p>
         </div>
-        <a href="{{ url_for('views.new_application') }}"
-           class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
-            + Add Application
-        </a>
+        <div class="flex items-center gap-3">
+            <button id="select-mode-btn" onclick="toggleSelectMode()"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="select-mode-label">Select</span>
+            </button>
+            <a href="{{ url_for('views.new_application') }}"
+               class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                + Add Application
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -102,4 +111,59 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+    /* Hide checkbox column by default */
+    .bulk-select-col { display: none; }
+    .select-mode-active .bulk-select-col { display: table-cell; }
+
+    /* Select button active state */
+    #select-mode-btn.active {
+        background-color: #EEF2FF;
+        border-color: #6366F1;
+        color: #4F46E5;
+    }
+    .dark #select-mode-btn.active {
+        background-color: #1e2834 !important;
+        border-color: #5b8fd9 !important;
+        color: #9FB6C9 !important;
+    }
+</style>
+<script>
+function toggleSelectMode() {
+    const listContainer = document.getElementById('applications-list');
+    const btn = document.getElementById('select-mode-btn');
+    const label = document.getElementById('select-mode-label');
+    const isActive = btn.classList.toggle('active');
+
+    if (isActive) {
+        listContainer.classList.add('select-mode-active');
+        label.textContent = 'Cancel';
+    } else {
+        listContainer.classList.remove('select-mode-active');
+        label.textContent = 'Select';
+        // Clear any existing selections
+        if (typeof bulkSelect !== 'undefined') {
+            bulkSelect.clearAll();
+        }
+    }
+}
+
+// Re-apply select mode after HTMX swaps (filter, pagination)
+document.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target.id === 'applications-list') {
+        const btn = document.getElementById('select-mode-btn');
+        if (btn && btn.classList.contains('active')) {
+            e.detail.target.classList.add('select-mode-active');
+        }
+        // Clear selections since the rows have changed
+        if (typeof bulkSelect !== 'undefined') {
+            bulkSelect.selected.clear();
+            bulkSelect.updateUI();
+        }
+    }
+});
+</script>
 {% endblock %}

@@ -3,7 +3,7 @@
     <table class="table-fixed w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="w-10 px-3 py-3 text-center">
+                <th class="w-10 px-3 py-3 text-center bulk-select-col">
                     <input type="checkbox" id="select-all-checkbox"
                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                            onchange="bulkSelect.toggleAll(this.checked)"
@@ -21,7 +21,7 @@
         <tbody class="bg-white divide-y divide-gray-200">
             {% for app in applications %}
             <tr class="hover:bg-gray-50 bulk-row" data-app-id="{{ app.id }}">
-                <td class="px-3 py-4 text-center">
+                <td class="px-3 py-4 text-center bulk-select-col">
                     <input type="checkbox" class="row-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                            value="{{ app.id }}"
                            onclick="bulkSelect.toggleRow(this, event)"
@@ -193,9 +193,9 @@
         <div class="w-px h-6 bg-gray-200"></div>
 
         <!-- Deselect all -->
-        <button onclick="bulkSelect.clearAll()"
+        <button onclick="bulkSelect.clearAll(true)"
                 class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Clear selection">
+                title="Exit select mode">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -292,13 +292,25 @@ const bulkSelect = {
         this.updateUI();
     },
 
-    clearAll() {
+    clearAll(exitMode = false) {
         this.selected.clear();
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
         const selectAll = document.getElementById('select-all-checkbox');
         if (selectAll) selectAll.checked = false;
         this.updateUI();
         this.closeAllDropdowns();
+
+        // Exit select mode if requested
+        if (exitMode) {
+            const btn = document.getElementById('select-mode-btn');
+            const label = document.getElementById('select-mode-label');
+            const listContainer = document.getElementById('applications-list');
+            if (btn) {
+                btn.classList.remove('active');
+                listContainer.classList.remove('select-mode-active');
+                if (label) label.textContent = 'Select';
+            }
+        }
     },
 
     updateUI() {
