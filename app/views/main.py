@@ -260,6 +260,7 @@ def stats_partial():
             'offered': status_dict.get('offered', 0),
             'rejected': status_dict.get('rejected', 0),
             'withdrawn': status_dict.get('withdrawn', 0),
+            'follow_up': status_dict.get('follow_up', 0),
         },
         'response_rate': round(response_rate, 1),
         'interview_rate': round(interview_rate, 1),
@@ -296,6 +297,7 @@ def status_breakdown_partial():
             'offered': status_dict.get('offered', 0),
             'rejected': status_dict.get('rejected', 0),
             'withdrawn': status_dict.get('withdrawn', 0),
+            'follow_up': status_dict.get('follow_up', 0),
         },
     }
 

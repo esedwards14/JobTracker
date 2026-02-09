@@ -43,7 +43,7 @@ class ApplicationUpdateSchema(Schema):
     notes = fields.String(allow_none=True)
     source = fields.String(validate=validate.OneOf(['manual', 'extension', 'email']))
     status = fields.String(
-        validate=validate.OneOf(['applied', 'interviewing', 'offered', 'rejected', 'withdrawn'])
+        validate=validate.OneOf(['applied', 'interviewing', 'offered', 'rejected', 'withdrawn', 'follow_up'])
     )
     response_received = fields.Boolean()
     response_date = fields.Date(allow_none=True)
