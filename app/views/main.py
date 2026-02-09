@@ -380,9 +380,23 @@ def applications_list_partial():
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
+    # Build query string for pagination links (preserve current filters)
+    filter_params = {}
+    if sort and sort != 'response_date_desc':
+        filter_params['sort'] = sort
+    if status:
+        filter_params['status'] = status
+    if search:
+        filter_params['search'] = search
+    if from_date:
+        filter_params['from_date'] = from_date
+    if to_date:
+        filter_params['to_date'] = to_date
+
     return render_template('partials/applications_list.html',
                          applications=pagination.items,
                          total=pagination.total,
                          pages=pagination.pages,
                          current_page=page,
-                         per_page=per_page)
+                         per_page=per_page,
+                         filter_params=filter_params)
