@@ -257,6 +257,40 @@
 
         /* Allow table cells to wrap nicely */
         .break-words { word-wrap: break-word; word-break: break-word; }
+
+        /* Bulk selection - selected row highlight */
+        .dark .bg-indigo-50\/50 { background-color: rgba(30, 40, 52, 0.6) !important; }
+
+        /* Bulk action bar */
+        .dark #bulk-action-bar > div { background-color: var(--surface) !important; border-color: var(--border) !important; }
+        .dark #bulk-action-bar .bg-gray-100 { background-color: var(--surface-2) !important; }
+        .dark #bulk-action-bar .hover\:bg-gray-200:hover { background-color: #2a2c2e !important; }
+        .dark #bulk-action-bar .bg-red-50 { background-color: #2a2222 !important; }
+        .dark #bulk-action-bar .hover\:bg-red-100:hover { background-color: #3a2828 !important; }
+        .dark #bulk-action-bar .hover\:bg-gray-100:hover { background-color: var(--surface-2) !important; }
+        .dark #bulk-action-bar .w-px { background-color: var(--border) !important; }
+
+        /* Bulk dropdowns */
+        .dark #bulk-status-dropdown,
+        .dark #bulk-tag-dropdown { background-color: var(--surface) !important; border-color: var(--border) !important; }
+        .dark #bulk-status-dropdown button:hover,
+        .dark #bulk-tag-dropdown button:hover { background-color: var(--surface-2) !important; }
+
+        /* Bulk delete modal */
+        .dark #bulk-delete-modal .bg-white { background-color: var(--surface) !important; border: 1px solid var(--border) !important; }
+        .dark #bulk-delete-modal .bg-red-100 { background-color: #2a2222 !important; }
+        .dark #bulk-delete-modal .border-gray-300 { border-color: var(--border) !important; }
+        .dark #bulk-delete-modal .hover\:bg-gray-50:hover { background-color: var(--surface-2) !important; }
+
+        /* Bulk toast */
+        .dark #bulk-toast > div { background-color: var(--surface-2) !important; border: 1px solid var(--border) !important; }
+
+        /* Checkbox styling for dark mode */
+        .dark .row-checkbox,
+        .dark #select-all-checkbox {
+            background-color: var(--muted-surface) !important;
+            border-color: var(--border) !important;
+        }
     </style>
 
 </head>

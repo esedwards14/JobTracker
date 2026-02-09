@@ -191,6 +191,108 @@ def delete_all_applications():
     return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
 
 
+@api_bp.route('/applications/bulk/delete', methods=['POST'])
+def bulk_delete_applications():
+    """Delete multiple applications by ID."""
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+
+    data = request.json
+    if not data or 'ids' not in data or not isinstance(data['ids'], list):
+        return jsonify({'error': 'ids field is required and must be a list'}), 400
+
+    ids = data['ids']
+    if len(ids) > 500:
+        return jsonify({'error': 'Cannot delete more than 500 applications at once'}), 400
+
+    count = JobApplication.query.filter(
+        JobApplication.id.in_(ids),
+        JobApplication.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
+
+
+@api_bp.route('/applications/bulk/status', methods=['PATCH'])
+def bulk_update_status():
+    """Update status for multiple applications."""
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+
+    data = request.json
+    if not data or 'ids' not in data or 'status' not in data:
+        return jsonify({'error': 'ids and status fields are required'}), 400
+
+    valid_statuses = ['applied', 'interviewing', 'offered', 'rejected', 'withdrawn', 'follow_up']
+    if data['status'] not in valid_statuses:
+        return jsonify({'error': f'Invalid status. Must be one of: {valid_statuses}'}), 400
+
+    ids = data['ids']
+    if len(ids) > 500:
+        return jsonify({'error': 'Cannot update more than 500 applications at once'}), 400
+
+    applications = JobApplication.query.filter(
+        JobApplication.id.in_(ids),
+        JobApplication.user_id == user_id
+    ).all()
+
+    for app in applications:
+        app.status = data['status']
+        if data['status'] == 'interviewing' and not app.response_received:
+            app.response_received = True
+            app.response_date = datetime.utcnow().date()
+
+    db.session.commit()
+
+    return jsonify({'message': f'Updated {len(applications)} applications', 'updated': len(applications)}), 200
+
+
+@api_bp.route('/applications/bulk/tags', methods=['POST'])
+def bulk_add_tags():
+    """Add tags to multiple applications."""
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+
+    data = request.json
+    if not data or 'ids' not in data or 'tag_ids' not in data:
+        return jsonify({'error': 'ids and tag_ids fields are required'}), 400
+
+    ids = data['ids']
+    tag_ids = data['tag_ids']
+
+    if len(ids) > 500:
+        return jsonify({'error': 'Cannot update more than 500 applications at once'}), 400
+
+    applications = JobApplication.query.filter(
+        JobApplication.id.in_(ids),
+        JobApplication.user_id == user_id
+    ).all()
+
+    tags = Tag.query.filter(
+        Tag.id.in_(tag_ids),
+        Tag.user_id == user_id
+    ).all()
+
+    if not tags:
+        return jsonify({'error': 'No valid tags found'}), 400
+
+    count = 0
+    for app in applications:
+        for tag in tags:
+            if tag not in app.tags:
+                app.tags.append(tag)
+                count += 1
+
+    db.session.commit()
+
+    return jsonify({
+        'message': f'Added tags to {len(applications)} applications',
+        'updated': len(applications),
+        'tags_added': count
+    }), 200
+
+
 @api_bp.route('/applications/<int:id>/tags/<int:tag_id>', methods=['POST'])
 def add_tag_to_application(id, tag_id):
     """Add a tag to an application."""
