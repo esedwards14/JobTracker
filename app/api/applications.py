@@ -248,6 +248,28 @@ def bulk_update_status():
     return jsonify({'message': f'Updated {len(applications)} applications', 'updated': len(applications)}), 200
 
 
+@api_bp.route('/applications/fix-response-received', methods=['POST'])
+def fix_response_received():
+    """Retroactively mark response_received=True for all applications with non-applied status."""
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+
+    applications = JobApplication.query.filter(
+        JobApplication.user_id == user_id,
+        JobApplication.status != 'applied',
+        JobApplication.response_received == False
+    ).all()
+
+    for app in applications:
+        app.response_received = True
+        if not app.response_date:
+            app.response_date = datetime.utcnow().date()
+
+    db.session.commit()
+
+    return jsonify({'message': f'Fixed {len(applications)} applications', 'updated': len(applications)}), 200
+
+
 @api_bp.route('/applications/bulk/tags', methods=['POST'])
 def bulk_add_tags():
     """Add tags to multiple applications."""

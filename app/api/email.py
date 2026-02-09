@@ -648,12 +648,56 @@ def scan_response_emails():
                         'email_subject': response.get('email_subject', '')[:80]
                     })
 
+        # Auto-save contacts from personal emails
+        contacts_created = 0
+        for response in response_emails:
+            from_addr = response.get('email_from', '')
+            if not is_personal_email(from_addr):
+                continue
+
+            sender_info = extract_sender_info(from_addr)
+            if not sender_info.get('name') or not sender_info.get('email'):
+                continue
+
+            # Skip if contact already exists with this email
+            existing_contact = Contact.query.filter(
+                Contact.user_id == user_id,
+                Contact.email.ilike(sender_info['email'])
+            ).first()
+            if existing_contact:
+                continue
+
+            # Find matching application for this contact
+            company = response.get('company_name') or ''
+            position = response.get('position') or ''
+            body_preview = response.get('body_preview', '')
+            matched_apps = find_matching_applications(company, position, from_addr, body_preview, user_id)
+            app_id = matched_apps[0].id if matched_apps else None
+            app_company = matched_apps[0].company_name if matched_apps else company
+
+            email_date = response.get('email_date')
+            last_contact = email_date.date() if email_date else None
+
+            contact = Contact(
+                user_id=user_id,
+                name=sender_info['name'],
+                email=sender_info['email'],
+                company=app_company or None,
+                application_id=app_id,
+                email_subject=response.get('email_subject', '')[:500] or None,
+                source='email_scan',
+                last_contact_date=last_contact
+            )
+            db.session.add(contact)
+            contacts_created += 1
+
         db.session.commit()
 
         return jsonify({
-            'message': f'Scan complete. Updated {len(updates)} applications.',
+            'message': f'Scan complete. Updated {len(updates)} applications. Saved {contacts_created} new contacts.',
             'total_response_emails': len(response_emails),
-            'updates': updates
+            'updates': updates,
+            'contacts_created': contacts_created
         })
 
     except Exception as e:
@@ -768,6 +812,90 @@ def preview_response_emails():
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Preview failed: {str(e)}'}), 500
+
+
+@api_bp.route('/email/scan-contacts', methods=['POST'])
+def scan_contacts_from_emails():
+    """Scan emails for personal sender info and save as contacts."""
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Please sign in first.'}), 401
+
+    settings = EmailSettings.query.filter_by(user_id=user_id).first()
+    if not settings or not settings.is_active or not settings.refresh_token:
+        return jsonify({'error': 'Gmail not connected.'}), 400
+
+    days_back = request.json.get('days_back', 90) if request.json else 90
+
+    try:
+        connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
+        with connector:
+            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=200)
+
+            updated_tokens = connector.get_updated_tokens()
+            if updated_tokens:
+                settings.access_token = updated_tokens['access_token']
+                settings.token_expiry = updated_tokens['token_expiry']
+
+        parser = JobEmailParser()
+        response_emails = parser.parse_response_emails(raw_emails)
+
+        contacts_created = 0
+        skipped_existing = 0
+        for response in response_emails:
+            from_addr = response.get('email_from', '')
+            if not is_personal_email(from_addr):
+                continue
+
+            sender_info = extract_sender_info(from_addr)
+            if not sender_info.get('name') or not sender_info.get('email'):
+                continue
+
+            # Skip if contact already exists
+            existing_contact = Contact.query.filter(
+                Contact.user_id == user_id,
+                Contact.email.ilike(sender_info['email'])
+            ).first()
+            if existing_contact:
+                skipped_existing += 1
+                continue
+
+            company = response.get('company_name') or ''
+            position = response.get('position') or ''
+            body_preview = response.get('body_preview', '')
+            matched_apps = find_matching_applications(company, position, from_addr, body_preview, user_id)
+            app_id = matched_apps[0].id if matched_apps else None
+            app_company = matched_apps[0].company_name if matched_apps else company
+
+            email_date = response.get('email_date')
+            last_contact = email_date.date() if email_date else None
+
+            contact = Contact(
+                user_id=user_id,
+                name=sender_info['name'],
+                email=sender_info['email'],
+                company=app_company or None,
+                application_id=app_id,
+                email_subject=response.get('email_subject', '')[:500] or None,
+                source='email_scan',
+                last_contact_date=last_contact
+            )
+            db.session.add(contact)
+            contacts_created += 1
+
+        db.session.commit()
+
+        return jsonify({
+            'message': f'Contact scan complete. Saved {contacts_created} new contacts.',
+            'contacts_created': contacts_created,
+            'skipped_existing': skipped_existing,
+            'total_response_emails': len(response_emails)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Contact scan failed: {str(e)}'}), 500
 
 
 @api_bp.route('/email/save-connection', methods=['POST'])
