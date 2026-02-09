@@ -54,9 +54,8 @@ def is_personal_email(from_address: str) -> bool:
 
 def has_personal_name(from_address: str) -> bool:
     """
-    Check if the From field contains a real person's name (not a generic/automated sender).
+    Check if the From field contains a real person's name (first and last name required).
     Works even for platform emails like '"Kylie Morin" <hash@indeedemail.com>'.
-    Also accepts single first names like "Chelsea".
     """
     sender_info = extract_sender_info(from_address)
     name = sender_info.get('name')
@@ -93,6 +92,11 @@ def has_personal_name(from_address: str) -> bool:
     }
 
     if name_words & non_person_words:
+        return False
+
+    # Require first and last name (at least 2 name parts)
+    name_parts = [p for p in name_lower.split() if len(p) > 1]
+    if len(name_parts) < 2:
         return False
 
     # Check name looks like a person (mostly alphabetic)
@@ -947,10 +951,14 @@ def scan_contacts_from_emails():
             if email_date:
                 try:
                     if isinstance(email_date, str):
-                        last_contact = datetime.fromisoformat(email_date.replace('Z', '+00:00')).date()
-                    else:
-                        last_contact = email_date.date() if hasattr(email_date, 'date') else None
-                except (ValueError, AttributeError):
+                        parsed_dt = datetime.fromisoformat(email_date.replace('Z', '+00:00'))
+                        last_contact = parsed_dt.date()
+                    elif hasattr(email_date, 'date'):
+                        last_contact = email_date.date() if callable(email_date.date) else None
+                    elif hasattr(email_date, 'year'):
+                        # Already a date object
+                        last_contact = email_date
+                except (ValueError, AttributeError, TypeError):
                     pass
 
             contact = Contact(
