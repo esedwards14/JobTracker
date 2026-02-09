@@ -50,7 +50,9 @@ A web application to track your job applications, automatically import them from
    - Create a new project or select an existing one
    - Enable the Gmail API
    - Create OAuth 2.0 credentials (Web application)
-   - Add `http://127.0.0.1:3000/oauth/callback` to Authorized redirect URIs
+   - Add your redirect URI to Authorized redirect URIs:
+     - For local development: `http://127.0.0.1:3000/oauth/callback`
+     - For production: `https://your-app.onrender.com/oauth/callback`
 
 5. Create a `.env` file:
    ```
