@@ -2,7 +2,7 @@
 
 import re
 from typing import Optional, Dict, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class JobEmailParser:
@@ -706,7 +706,7 @@ class JobEmailParser:
 
         # Filter to only job application emails and sort by confidence
         results = [r for r in results if r['is_job_email']]
-        results.sort(key=lambda x: (x['confidence'], x['email_date'] or datetime.min), reverse=True)
+        results.sort(key=lambda x: (x['confidence'], x['email_date'] or datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
 
         return results
 
@@ -1190,6 +1190,6 @@ class JobEmailParser:
                 continue
 
         # Sort by date (newest first)
-        results.sort(key=lambda x: x['email_date'] or datetime.min, reverse=True)
+        results.sort(key=lambda x: x['email_date'] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
         return results
