@@ -18,14 +18,14 @@ export GOOGLE_CLIENT_SECRET=your-client-secret
 python run.py
 ```
 
-Add `http://127.0.0.1:3000/oauth/callback` as a redirect URI in Google Cloud Console.
+Add your callback URL as a redirect URI in Google Cloud Console (e.g., `http://localhost:3000/oauth/callback` for local development).
 
 ## Deploy to Render
 
 1. Fork this repo
 2. Create PostgreSQL database and Web Service on Render
 3. Set environment variables: `FLASK_ENV`, `SECRET_KEY`, `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-4. Add your Render URL to Google OAuth redirect URIs
+4. Add `https://your-app.onrender.com/oauth/callback` to Google OAuth redirect URIs
 
 ## License
 
