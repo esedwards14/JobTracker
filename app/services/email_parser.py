@@ -1077,9 +1077,9 @@ class JobEmailParser:
         from_lower = from_address.lower()
 
         # FIRST: Check if this is an employer message through a job platform
-        # (Indeed, LinkedIn, etc.) - these should be tracked as follow_up items
+        # (Indeed, LinkedIn, etc.) - skip these, follow_up is set manually
         if self._is_employer_message(subject, body, from_address):
-            return 'follow_up'
+            return None
 
         # Check if this is recruiter outreach about a NEW position
         # If so, it should NOT be treated as a response to your application

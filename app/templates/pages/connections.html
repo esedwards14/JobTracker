@@ -10,10 +10,24 @@
             <h1 class="text-2xl font-bold text-gray-900">Connections</h1>
             <p class="mt-1 text-sm text-gray-500">Recruiters, hiring managers, and other contacts from your job search</p>
         </div>
-        <button onclick="openAddModal()"
-                class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
-            + Add Connection
-        </button>
+        <div class="flex space-x-2">
+            <button onclick="scanContacts()"
+                    id="scan-contacts-btn"
+                    class="border border-purple-300 text-purple-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-50">
+                <span id="scan-contacts-text">Scan Contacts</span>
+                <span id="scan-contacts-spinner" class="hidden">
+                    <svg class="animate-spin h-4 w-4 inline" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Scanning...
+                </span>
+            </button>
+            <button onclick="openAddModal()"
+                    class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                + Add Connection
+            </button>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -38,6 +52,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Scan message -->
+    <div id="scan-message" class="hidden rounded-md p-3"></div>
 
     <!-- Connections List -->
     <div class="bg-white rounded-lg shadow">
@@ -350,6 +367,51 @@ document.getElementById('contact-form').addEventListener('submit', async functio
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
 });
+
+// Scan contacts from emails
+async function scanContacts() {
+    const btn = document.getElementById('scan-contacts-btn');
+    const btnText = document.getElementById('scan-contacts-text');
+    const spinner = document.getElementById('scan-contacts-spinner');
+
+    btn.disabled = true;
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/v1/email/scan-contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days_back: 90 })
+        });
+
+        const data = await response.json();
+        const msgEl = document.getElementById('scan-message');
+
+        if (response.ok) {
+            let msg = `Saved ${data.contacts_created} new contacts`;
+            if (data.skipped_existing > 0) {
+                msg += ` (${data.skipped_existing} already existed)`;
+            }
+            msgEl.textContent = msg;
+            msgEl.className = 'rounded-md p-3 bg-green-100 text-green-800';
+            if (data.contacts_created > 0) {
+                loadContacts();
+            }
+        } else {
+            msgEl.textContent = data.error || 'Scan failed';
+            msgEl.className = 'rounded-md p-3 bg-red-100 text-red-800';
+        }
+    } catch (err) {
+        const msgEl = document.getElementById('scan-message');
+        msgEl.textContent = 'Contact scan failed: ' + err.message;
+        msgEl.className = 'rounded-md p-3 bg-red-100 text-red-800';
+    } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+}
 
 // Close modal on backdrop click
 document.getElementById('contact-modal').addEventListener('click', function(e) {

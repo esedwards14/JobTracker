@@ -622,9 +622,6 @@ def scan_response_emails():
                 if response_type == 'rejected':
                     # Only reject if not already offered or withdrawn
                     should_update = app.status not in ['offered', 'withdrawn']
-                elif response_type == 'follow_up':
-                    # Only update to follow_up if currently applied
-                    should_update = app.status == 'applied'
                 elif response_type == 'interviewing':
                     # Only update to interviewing if currently applied or follow_up
                     should_update = app.status in ['applied', 'follow_up']
