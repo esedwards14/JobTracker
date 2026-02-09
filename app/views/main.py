@@ -363,13 +363,13 @@ def applications_list_partial():
     elif sort == 'date_applied_desc':
         query = query.order_by(JobApplication.date_applied.desc())
     elif sort == 'status':
-        # Sort by status in custom order: follow_up, offered, rejected, applied, interviewing, withdrawn
+        # Sort by status in custom order: follow_up, offered, interviewing, rejected, applied, withdrawn
         status_order = case(
             (JobApplication.status == 'follow_up', 0),
             (JobApplication.status == 'offered', 1),
-            (JobApplication.status == 'rejected', 2),
-            (JobApplication.status == 'applied', 3),
-            (JobApplication.status == 'interviewing', 4),
+            (JobApplication.status == 'interviewing', 2),
+            (JobApplication.status == 'rejected', 3),
+            (JobApplication.status == 'applied', 4),
             (JobApplication.status == 'withdrawn', 5),
             else_=6
         )
