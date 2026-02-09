@@ -52,6 +52,54 @@ def is_personal_email(from_address: str) -> bool:
     return True
 
 
+def has_personal_name(from_address: str) -> bool:
+    """
+    Check if the From field contains a real person's name (not a generic/automated sender).
+    Works even for platform emails like '"Kylie Morin" <hash@indeedemail.com>'.
+    """
+    sender_info = extract_sender_info(from_address)
+    name = sender_info.get('name')
+    if not name:
+        return False
+
+    name_lower = name.lower().strip()
+
+    # Generic/automated sender names to exclude
+    generic_names = [
+        'indeed', 'linkedin', 'greenhouse', 'lever', 'workday', 'icims',
+        'handshake', 'glassdoor', 'ziprecruiter', 'monster', 'careerbuilder',
+        'smartrecruiters', 'jobvite', 'workable', 'ashby', 'bamboohr',
+        'notifications', 'careers', 'jobs', 'recruiting', 'talent',
+        'hiring', 'hr', 'team', 'noreply', 'no-reply', 'support',
+        'admin', 'system', 'updates', 'alerts', 'info',
+    ]
+
+    # Check if the name is just a generic/platform name
+    for generic in generic_names:
+        if name_lower == generic or name_lower == f'{generic} team':
+            return False
+
+    # A real person's name typically has at least 2 parts (first + last)
+    # and contains mostly letters
+    name_parts = [p for p in name_lower.split() if len(p) > 1]
+    if len(name_parts) < 2:
+        return False
+
+    # Check name looks like a person (mostly alphabetic, allowing parentheses for maiden names)
+    cleaned = re.sub(r'[().\'-]', '', name_lower)
+    alpha_ratio = sum(c.isalpha() or c.isspace() for c in cleaned) / max(len(cleaned), 1)
+    if alpha_ratio < 0.8:
+        return False
+
+    # Filter out names that contain platform keywords
+    platform_keywords = ['indeed', 'linkedin', 'greenhouse', 'lever', 'workday',
+                         'careers', 'jobs', 'recruiting', 'notifications']
+    if any(kw in name_lower for kw in platform_keywords):
+        return False
+
+    return True
+
+
 def extract_sender_info(from_address: str) -> dict:
     """
     Extract sender name and email from a From address.
@@ -645,21 +693,26 @@ def scan_response_emails():
                         'email_subject': response.get('email_subject', '')[:80]
                     })
 
-        # Auto-save contacts from personal emails
+        # Auto-save contacts from emails with personal sender names
         contacts_created = 0
         for response in response_emails:
             from_addr = response.get('email_from', '')
-            if not is_personal_email(from_addr):
+            if not has_personal_name(from_addr):
                 continue
 
             sender_info = extract_sender_info(from_addr)
-            if not sender_info.get('name') or not sender_info.get('email'):
+            if not sender_info.get('name'):
                 continue
 
-            # Skip if contact already exists with this email
+            # Only save real email addresses, not platform relay addresses
+            contact_email = sender_info.get('email')
+            if contact_email and not is_personal_email(from_addr):
+                contact_email = None  # Don't save platform relay emails
+
+            # Skip if contact with same name already exists for this user
             existing_contact = Contact.query.filter(
                 Contact.user_id == user_id,
-                Contact.email.ilike(sender_info['email'])
+                Contact.name.ilike(sender_info['name'])
             ).first()
             if existing_contact:
                 continue
@@ -678,7 +731,7 @@ def scan_response_emails():
             contact = Contact(
                 user_id=user_id,
                 name=sender_info['name'],
-                email=sender_info['email'],
+                email=contact_email,
                 company=app_company or None,
                 application_id=app_id,
                 email_subject=response.get('email_subject', '')[:500] or None,
@@ -773,16 +826,16 @@ def preview_response_emails():
             if will_create_new:
                 created_app_keys.add(app_key)
 
-            # Check if this is a personal email (potential connection)
-            is_personal = is_personal_email(from_addr)
+            # Check if this email has a personal sender name (potential connection)
+            is_personal = has_personal_name(from_addr)
             sender_info = extract_sender_info(from_addr) if is_personal else None
 
             # Check if we already have this contact
             existing_contact = None
-            if sender_info and sender_info.get('email'):
+            if sender_info and sender_info.get('name'):
                 existing_contact = Contact.query.filter(
                     Contact.user_id == user_id,
-                    Contact.email.ilike(sender_info['email'])
+                    Contact.name.ilike(sender_info['name'])
                 ).first()
 
             preview.append({
@@ -841,17 +894,22 @@ def scan_contacts_from_emails():
         skipped_existing = 0
         for response in response_emails:
             from_addr = response.get('email_from', '')
-            if not is_personal_email(from_addr):
+            if not has_personal_name(from_addr):
                 continue
 
             sender_info = extract_sender_info(from_addr)
-            if not sender_info.get('name') or not sender_info.get('email'):
+            if not sender_info.get('name'):
                 continue
 
-            # Skip if contact already exists
+            # Only save real email addresses, not platform relay addresses
+            contact_email = sender_info.get('email')
+            if contact_email and not is_personal_email(from_addr):
+                contact_email = None
+
+            # Skip if contact with same name already exists
             existing_contact = Contact.query.filter(
                 Contact.user_id == user_id,
-                Contact.email.ilike(sender_info['email'])
+                Contact.name.ilike(sender_info['name'])
             ).first()
             if existing_contact:
                 skipped_existing += 1
@@ -870,7 +928,7 @@ def scan_contacts_from_emails():
             contact = Contact(
                 user_id=user_id,
                 name=sender_info['name'],
-                email=sender_info['email'],
+                email=contact_email,
                 company=app_company or None,
                 application_id=app_id,
                 email_subject=response.get('email_subject', '')[:500] or None,
