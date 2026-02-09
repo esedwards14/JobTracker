@@ -69,28 +69,30 @@ def has_personal_name(from_address: str) -> bool:
     if not name_lower or len(name_lower) < 2:
         return False
 
-    # Words that indicate this is NOT a person's name
-    # If ANY of these appear anywhere in the name, reject it
-    non_person_keywords = [
+    # Split name into individual words for word-level checks
+    name_words = set(name_lower.split())
+
+    # Words that indicate this is NOT a person's name (checked as whole words)
+    non_person_words = {
         # Platform names
         'indeed', 'linkedin', 'greenhouse', 'lever', 'workday', 'icims',
         'handshake', 'glassdoor', 'ziprecruiter', 'monster', 'careerbuilder',
         'smartrecruiters', 'jobvite', 'workable', 'ashby', 'bamboohr',
-        # Business/generic terms
+        # Business/generic terms (only match as whole words)
         'recruiting', 'recruitment', 'talent', 'careers', 'hiring',
-        'team', 'staff', 'group', 'department', 'dept',
+        'team', 'staff', 'department', 'dept',
         'company', 'corp', 'corporation', 'inc', 'llc', 'ltd',
         'solutions', 'services', 'consulting', 'associates', 'partners',
-        'mortgage', 'insurance', 'financial', 'technologies', 'tech',
-        'healthcare', 'medical', 'logistics', 'management', 'enterprise',
+        'mortgage', 'insurance', 'financial', 'technologies',
+        'healthcare', 'medical', 'logistics', 'enterprise',
         'global', 'national', 'international', 'resources', 'capital',
         # Automated senders
         'notifications', 'noreply', 'no-reply', 'donotreply',
         'support', 'admin', 'system', 'updates', 'alerts', 'info',
         'jobs', 'hr', 'apply', 'applications',
-    ]
+    }
 
-    if any(kw in name_lower for kw in non_person_keywords):
+    if name_words & non_person_words:
         return False
 
     # Check name looks like a person (mostly alphabetic)
@@ -868,7 +870,7 @@ def preview_response_emails():
 
 @api_bp.route('/email/scan-contacts', methods=['POST'])
 def scan_contacts_from_emails():
-    """Scan emails for personal sender info and save as contacts."""
+    """Scan ALL fetched emails for personal sender info and save as contacts."""
     user_id = get_current_user_id()
     if not user_id:
         return jsonify({'error': 'Please sign in first.'}), 401
@@ -889,19 +891,26 @@ def scan_contacts_from_emails():
                 settings.access_token = updated_tokens['access_token']
                 settings.token_expiry = updated_tokens['token_expiry']
 
-        parser = JobEmailParser()
-        response_emails = parser.parse_response_emails(raw_emails)
-
         contacts_created = 0
         skipped_existing = 0
-        for response in response_emails:
-            from_addr = response.get('email_from', '')
+        seen_names = set()  # Avoid processing duplicate senders in this batch
+
+        for email in raw_emails:
+            from_addr = email.get('from_address', '')
             if not has_personal_name(from_addr):
                 continue
 
             sender_info = extract_sender_info(from_addr)
             if not sender_info.get('name'):
                 continue
+
+            name = sender_info['name']
+
+            # Skip duplicates within this batch
+            name_key = name.lower().strip()
+            if name_key in seen_names:
+                continue
+            seen_names.add(name_key)
 
             # Only save real email addresses, not platform relay addresses
             contact_email = sender_info.get('email')
@@ -911,29 +920,46 @@ def scan_contacts_from_emails():
             # Skip if contact with same name already exists
             existing_contact = Contact.query.filter(
                 Contact.user_id == user_id,
-                Contact.name.ilike(sender_info['name'])
+                Contact.name.ilike(name)
             ).first()
             if existing_contact:
                 skipped_existing += 1
                 continue
 
-            company = response.get('company_name') or ''
-            position = response.get('position') or ''
-            body_preview = response.get('body_preview', '')
-            matched_apps = find_matching_applications(company, position, from_addr, body_preview, user_id)
+            # Try to match to an application using email domain or sender info
+            subject = email.get('subject', '')
+            body = email.get('body_text', '')[:500]
+            matched_apps = find_matching_applications('', '', from_addr, body, user_id)
             app_id = matched_apps[0].id if matched_apps else None
-            app_company = matched_apps[0].company_name if matched_apps else company
+            app_company = matched_apps[0].company_name if matched_apps else None
 
-            email_date = response.get('email_date')
-            last_contact = email_date.date() if email_date else None
+            # Extract company from email domain if no app match
+            if not app_company and contact_email:
+                domain_match = re.search(r'@([^.]+)', contact_email)
+                if domain_match:
+                    domain = domain_match.group(1)
+                    skip_domains = ['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'icloud', 'mail']
+                    if domain.lower() not in skip_domains:
+                        app_company = domain.capitalize()
+
+            email_date = email.get('date')
+            last_contact = None
+            if email_date:
+                try:
+                    if isinstance(email_date, str):
+                        last_contact = datetime.fromisoformat(email_date.replace('Z', '+00:00')).date()
+                    else:
+                        last_contact = email_date.date() if hasattr(email_date, 'date') else None
+                except (ValueError, AttributeError):
+                    pass
 
             contact = Contact(
                 user_id=user_id,
-                name=sender_info['name'],
+                name=name,
                 email=contact_email,
                 company=app_company or None,
                 application_id=app_id,
-                email_subject=response.get('email_subject', '')[:500] or None,
+                email_subject=subject[:500] if subject else None,
                 source='email_scan',
                 last_contact_date=last_contact
             )
@@ -946,7 +972,7 @@ def scan_contacts_from_emails():
             'message': f'Contact scan complete. Saved {contacts_created} new contacts.',
             'contacts_created': contacts_created,
             'skipped_existing': skipped_existing,
-            'total_response_emails': len(response_emails)
+            'total_emails_scanned': len(raw_emails)
         })
 
     except Exception as e:
