@@ -780,6 +780,34 @@ class JobEmailParser:
         r'onboarding',
     ]
 
+    # Employer message/invitation patterns - these indicate an employer reached out
+    # through a job platform (Indeed, LinkedIn, etc.) about a position
+    # These should be tracked as follow_up items
+    EMPLOYER_MESSAGE_PATTERNS = [
+        # Indeed employer messages
+        r'sent you a message',
+        r'new message from',
+        r'employer message',
+        r'message from.{0,30}employer',
+        r'has sent you a message',
+        r'wants to chat',
+        r'invited you to apply',
+        r'inviting you to apply',
+        r'invitation to apply',
+        r'invited you to interview',
+        r'invitation to interview',
+        r'employer is interested',
+        r'is interested in (you|your)',
+        r'wants to connect with you',
+        r'has expressed interest',
+        r'you have a new message',
+        r'respond to this message',
+        r'reply to this message',
+        r'view (this )?message',
+        r'view the full message',
+        r'an employer.{0,30}(messaged|contacted|reached out)',
+    ]
+
     # Recruiter outreach patterns - these indicate someone is reaching out about a NEW position
     # NOT a response to an application you submitted
     RECRUITER_OUTREACH_PATTERNS = [
@@ -966,6 +994,38 @@ class JobEmailParser:
 
         return None
 
+    def _is_employer_message(self, subject: str, body: str, from_address: str) -> bool:
+        """
+        Detect if this email is an employer message/invitation sent through a job platform
+        like Indeed or LinkedIn. These are employers reaching out through the platform's
+        messaging system, NOT random recruiter outreach via personal email.
+        """
+        from_lower = from_address.lower()
+        text = (subject + ' ' + body[:3000]).lower()
+
+        # Only consider emails from known job platforms
+        # Personal recruiter emails are handled separately by _is_recruiter_outreach
+        job_platform_domains = [
+            'indeed.com', 'indeedemail.com',
+            'linkedin.com', 'linkedin.email', 'e.linkedin.com',
+            'handshake.com', 'joinhandshake.com',
+            'glassdoor.com', 'ziprecruiter.com',
+        ]
+
+        is_from_platform = any(domain in from_lower for domain in job_platform_domains)
+        if not is_from_platform:
+            return False
+
+        # Check for employer message patterns
+        message_count = sum(1 for pattern in self.EMPLOYER_MESSAGE_PATTERNS
+                           if re.search(pattern, text, re.IGNORECASE))
+
+        # If 1+ employer message patterns match and it's from a job platform, it's an employer message
+        if message_count >= 1:
+            return True
+
+        return False
+
     def _is_recruiter_outreach(self, subject: str, body: str, from_address: str) -> bool:
         """
         Detect if this email is a recruiter reaching out about a NEW position,
@@ -1016,7 +1076,12 @@ class JobEmailParser:
         subject_lower = subject.lower()
         from_lower = from_address.lower()
 
-        # FIRST: Check if this is recruiter outreach about a NEW position
+        # FIRST: Check if this is an employer message through a job platform
+        # (Indeed, LinkedIn, etc.) - these should be tracked as follow_up items
+        if self._is_employer_message(subject, body, from_address):
+            return 'follow_up'
+
+        # Check if this is recruiter outreach about a NEW position
         # If so, it should NOT be treated as a response to your application
         if self._is_recruiter_outreach(subject, body, from_address):
             return None
@@ -1099,12 +1164,13 @@ class JobEmailParser:
         is_from_careers_email = any(x in from_lower for x in
                                     ['careers@', 'jobs@', 'recruiting@', 'talent@', 'hr@', 'hiring@'])
 
-        # Keywords that indicate this is about a job application
+        # Keywords that indicate this is about a job application or employer interest
         application_keywords = [
             'your application', 'your candidacy', 'your resume',
             'position', 'role', 'opportunity', 'interview',
             'next steps', 'hiring process', 'recruitment',
             'application status', 'application update',
+            'message', 'invited you', 'invitation',
         ]
 
         has_app_keyword = any(kw in text for kw in application_keywords)
