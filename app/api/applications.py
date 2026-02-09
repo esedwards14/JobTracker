@@ -153,8 +153,8 @@ def update_application_status(id):
 
     application.status = data['status']
 
-    # Auto-update related fields based on status
-    if data['status'] == 'interviewing' and not application.response_received:
+    # Any status other than 'applied' means a response was received
+    if data['status'] != 'applied' and not application.response_received:
         application.response_received = True
         application.response_date = datetime.utcnow().date()
 
@@ -239,7 +239,7 @@ def bulk_update_status():
 
     for app in applications:
         app.status = data['status']
-        if data['status'] == 'interviewing' and not app.response_received:
+        if data['status'] != 'applied' and not app.response_received:
             app.response_received = True
             app.response_date = datetime.utcnow().date()
 
