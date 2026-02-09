@@ -240,12 +240,27 @@ class GmailOAuthConnector:
             # Get from address
             from_header = headers.get('from', '')
 
-            # Get date
+            # Get date - handle various formats
             date_str = headers.get('date', '')
-            try:
-                msg_date = parsedate_to_datetime(date_str)
-            except:
-                msg_date = None
+            msg_date = None
+            if date_str:
+                try:
+                    msg_date = parsedate_to_datetime(date_str)
+                except Exception:
+                    # Try alternative parsing for malformed dates
+                    try:
+                        from dateutil import parser as dateutil_parser
+                        msg_date = dateutil_parser.parse(date_str)
+                    except Exception:
+                        # Last resort: extract just the date portion
+                        import re
+                        date_match = re.search(r'(\d{1,2}\s+\w+\s+\d{4})', date_str)
+                        if date_match:
+                            try:
+                                from dateutil import parser as dateutil_parser
+                                msg_date = dateutil_parser.parse(date_match.group(1))
+                            except Exception:
+                                msg_date = None
 
             # Get body text
             body_text = self._get_body_text(msg['payload'])
