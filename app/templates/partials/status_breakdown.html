@@ -1,11 +1,11 @@
 <div class="space-y-3">
     {% set total = stats.total_applications %}
     {% set statuses = [
-        ('Follow Up', stats.status_breakdown.follow_up, 'bg-purple-500'),
-        ('Offered', stats.status_breakdown.offered, 'bg-green-500'),
-        ('Interviewing', stats.status_breakdown.interviewing, 'bg-blue-500'),
         ('Applied', stats.status_breakdown.applied, 'bg-gray-500'),
         ('Rejected', stats.status_breakdown.rejected, 'bg-red-500'),
+        ('Interviewing', stats.status_breakdown.interviewing, 'bg-blue-500'),
+        ('Offered', stats.status_breakdown.offered, 'bg-green-500'),
+        ('Follow Up', stats.status_breakdown.follow_up, 'bg-purple-500'),
         ('Withdrawn', stats.status_breakdown.withdrawn, 'bg-yellow-500')
     ] %}
 
