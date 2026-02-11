@@ -277,8 +277,9 @@ class JobEmailParser:
 
         text_lower = text.lower().strip()
 
-        # Reject anything containing noreply/no-reply - never valid
-        if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
+        # Reject anything containing noreply/no-reply variations - never valid
+        noreply_patterns = ['noreply', 'no-reply', 'no_reply', 'no reply', 'donotreply', 'do-not-reply', 'do not reply']
+        if any(pattern in text_lower for pattern in noreply_patterns):
             return False
 
         # Words that would never be part of a company name
@@ -417,8 +418,9 @@ class JobEmailParser:
 
         text_lower = text.lower()
 
-        # Reject anything containing noreply/no-reply - never valid
-        if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
+        # Reject anything containing noreply/no-reply variations - never valid
+        noreply_patterns = ['noreply', 'no-reply', 'no_reply', 'no reply', 'donotreply', 'do-not-reply', 'do not reply']
+        if any(pattern in text_lower for pattern in noreply_patterns):
             return False
 
         # Words that would never appear in a job title - reject if text contains these
