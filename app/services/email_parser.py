@@ -277,19 +277,29 @@ class JobEmailParser:
 
         text_lower = text.lower().strip()
 
-        # Reject common generic names and job platform names
+        # Reject common generic names and job platform/ATS names
         generic_names = [
             'indeed', 'linkedin', 'hr team', 'recruiting', 'talent', 'careers',
             'indeed apply', 'indeed job', 'linkedin jobs', 'glassdoor',
             'ziprecruiter', 'monster', 'careerbuilder', 'handshake',
-            'greenhouse', 'lever', 'workday', 'icims', 'smartrecruiters',
-            'workable', 'jobvite', 'taleo', 'ashby', 'bamboohr', 'zoho',
-            'breezy', 'jazz', 'recruiterbox', 'adobe acrobat sign',
-            'noreply', 'no-reply', 'notifications', 'alerts', 'updates',
-            'human resources', 'hr', 'adobesign', 'adobe sign',
+            'greenhouse', 'lever', 'workday', 'myworkday', 'myworkdayjobs',
+            'icims', 'smartrecruiters', 'workable', 'jobvite', 'taleo',
+            'ashby', 'bamboohr', 'zoho', 'breezy', 'jazz', 'recruiterbox',
+            'adobe acrobat sign', 'noreply', 'no-reply', 'notifications',
+            'alerts', 'updates', 'human resources', 'hr', 'adobesign',
+            'adobe sign', 'successfactors', 'adp', 'paylocity', 'paycom',
+            'ultipro', 'ceridian', 'phenom', 'avature', 'beamery',
+            'eightfold', 'hirevue', 'calendly', 'goodtime',
         ]
         if text_lower in generic_names:
             return False
+
+        # Also reject if it starts with or contains these platform names
+        platform_prefixes = ['myworkday', 'workday', 'indeed', 'linkedin', 'glassdoor',
+                            'greenhouse', 'lever', 'icims', 'taleo', 'successfactors']
+        for prefix in platform_prefixes:
+            if text_lower.startswith(prefix) or text_lower == prefix:
+                return False
 
         # Reject if it looks like a job title (common position keywords)
         position_keywords = [
@@ -519,12 +529,15 @@ class JobEmailParser:
 
     def _extract_company_from_domain(self, from_address: str) -> Optional[str]:
         """Extract company name from email domain as last resort."""
-        # Skip known job platform domains
+        # Skip known job platform domains and ATS providers
         skip_domains = ['indeed', 'linkedin', 'handshake', 'greenhouse', 'lever',
-                       'workday', 'gmail', 'outlook', 'yahoo', 'hotmail', 'icims',
-                       'smartrecruiters', 'jobvite', 'taleo', 'noreply', 'no-reply',
-                       'notifications', 'mail', 'email', 'e', 'workable', 'bamboohr',
-                       'zoho', 'breezy', 'jazz', 'ashby', 'recruiterbox', 'candidates']
+                       'workday', 'myworkday', 'myworkdayjobs', 'gmail', 'outlook',
+                       'yahoo', 'hotmail', 'icims', 'smartrecruiters', 'jobvite',
+                       'taleo', 'noreply', 'no-reply', 'notifications', 'mail',
+                       'email', 'e', 'workable', 'bamboohr', 'zoho', 'breezy',
+                       'jazz', 'ashby', 'recruiterbox', 'candidates', 'successfactors',
+                       'adp', 'paylocity', 'paycom', 'ultipro', 'ceridian', 'phenom',
+                       'avature', 'beamery', 'eightfold', 'hirevue', 'calendly', 'goodtime']
 
         # Try to get domain from email
         match = re.search(r'@([^.>]+)', from_address)
