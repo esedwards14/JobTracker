@@ -65,35 +65,118 @@ class GmailOAuthConnector:
         # Calculate date filter
         after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
 
-        # Optimized search queries - using Gmail's {} OR syntax
-        # This reduces API calls from 70+ to ~15, preventing timeouts
+        # Broader search queries for job-related emails
         search_queries = [
-            # Application-related subject searches
+            # Subject-based searches - application keywords
             f'after:{after_date} subject:application',
             f'after:{after_date} subject:"thank you for applying"',
+            f'after:{after_date} subject:"thanks for applying"',
+            f'after:{after_date} subject:"application received"',
+            f'after:{after_date} subject:"application submitted"',
+            f'after:{after_date} subject:"we received your application"',
             f'after:{after_date} subject:"your application"',
+            f'after:{after_date} subject:"applied for"',
+            f'after:{after_date} subject:"applying for"',
+            f'after:{after_date} subject:"job application"',
+            f'after:{after_date} subject:"application confirmation"',
+            f'after:{after_date} subject:"thank you for your interest"',
+            f'after:{after_date} subject:"thanks for your interest"',
 
-            # Response/rejection subject searches
-            f'after:{after_date} {{subject:unfortunately subject:"not moving forward" subject:"regret to inform" subject:"position has been filled"}}',
-            f'after:{after_date} {{subject:"application update" subject:"application status"}}',
+            # Response/update keywords
+            f'after:{after_date} subject:"application update"',
+            f'after:{after_date} subject:"application status"',
+            f'after:{after_date} subject:"regarding your application"',
+            f'after:{after_date} subject:"update on your application"',
+            f'after:{after_date} subject:"unfortunately"',
+            f'after:{after_date} subject:"not moving forward"',
+            f'after:{after_date} subject:"regret to inform"',
+            f'after:{after_date} subject:"position has been filled"',
 
-            # Interview and offer keywords
+            # Interview keywords
             f'after:{after_date} subject:interview',
-            f'after:{after_date} {{subject:"offer letter" subject:"job offer"}}',
+            f'after:{after_date} subject:"schedule a call"',
+            f'after:{after_date} subject:"next steps"',
+            f'after:{after_date} subject:"phone screen"',
 
-            # Major job platforms
-            f'after:{after_date} {{from:indeed.com from:indeedemail.com}}',
-            f'after:{after_date} {{from:linkedin.com from:handshake.com from:joinhandshake.com}}',
+            # Offer keywords
+            f'after:{after_date} subject:"offer letter"',
+            f'after:{after_date} subject:"job offer"',
+            f'after:{after_date} subject:"offer of employment"',
 
-            # ATS platforms
-            f'after:{after_date} {{from:greenhouse.io from:lever.co from:workday.com from:myworkdayjobs.com}}',
-            f'after:{after_date} {{from:icims.com from:smartrecruiters.com from:jobvite.com from:taleo.net}}',
+            # Candidate/hiring keywords
+            f'after:{after_date} subject:candidate',
+            f'after:{after_date} subject:"hiring process"',
+            f'after:{after_date} subject:"recruitment"',
+            f'after:{after_date} subject:"position"',
+            f'after:{after_date} subject:"opportunity"',
 
-            # Company career email patterns
-            f'after:{after_date} {{from:careers@ from:jobs@ from:recruiting@}}',
+            # Platform-specific sender searches
+            f'after:{after_date} from:indeed.com',
+            f'after:{after_date} from:indeedemail.com',
+            f'after:{after_date} from:linkedin.com',
+            f'after:{after_date} from:jobalerts-noreply@linkedin.com',
+            f'after:{after_date} from:messages-noreply@linkedin.com',
+            f'after:{after_date} from:handshake.com',
+            f'after:{after_date} from:joinhandshake.com',
+            f'after:{after_date} from:greenhouse.io',
+            f'after:{after_date} from:greenhouse-mail.io',
+            f'after:{after_date} from:lever.co',
+            f'after:{after_date} from:workday.com',
+            f'after:{after_date} from:myworkdayjobs.com',
+            f'after:{after_date} from:smartrecruiters.com',
+            f'after:{after_date} from:icims.com',
+            f'after:{after_date} from:jobvite.com',
+            f'after:{after_date} from:applytojob.com',
+            f'after:{after_date} from:taleo.net',
+            f'after:{after_date} from:successfactors.com',
+            f'after:{after_date} from:brassring.com',
+            f'after:{after_date} from:ultipro.com',
+            f'after:{after_date} from:ashbyhq.com',
+            f'after:{after_date} from:paylocity.com',
+            f'after:{after_date} from:paycom.com',
+            f'after:{after_date} from:adp.com',
+            f'after:{after_date} from:bamboohr.com',
+            f'after:{after_date} from:ceridian.com',
+            f'after:{after_date} from:phenom.com',
+            f'after:{after_date} from:avature.net',
+            f'after:{after_date} from:beamery.com',
+            f'after:{after_date} from:eightfold.ai',
+            f'after:{after_date} from:phenom.com',
+            f'after:{after_date} from:glassdoor.com',
+            f'after:{after_date} from:ziprecruiter.com',
+            f'after:{after_date} from:monster.com',
+            f'after:{after_date} from:careerbuilder.com',
+            f'after:{after_date} from:dice.com',
+            f'after:{after_date} from:simplyhired.com',
+            f'after:{after_date} from:snagajob.com',
+            f'after:{after_date} from:flexjobs.com',
+            f'after:{after_date} from:roberthalf.com',
+            f'after:{after_date} from:randstad.com',
+            f'after:{after_date} from:manpower.com',
+            f'after:{after_date} from:kellyservices.com',
+            f'after:{after_date} from:adecco.com',
 
-            # Body content searches
+            # Common company career email patterns
+            f'after:{after_date} from:careers@',
+            f'after:{after_date} from:jobs@',
+            f'after:{after_date} from:recruiting@',
+            f'after:{after_date} from:talent@',
+            f'after:{after_date} from:hr@',
+            f'after:{after_date} from:hiring@',
+            f'after:{after_date} from:recruitment@',
+            f'after:{after_date} from:staffing@',
+            f'after:{after_date} from:humanresources@',
+            f'after:{after_date} from:noreply@ subject:application',
+            f'after:{after_date} from:no-reply@ subject:application',
+            f'after:{after_date} from:notifications@ subject:application',
+
+            # Body content searches (catches more emails)
             f'after:{after_date} "thank you for applying"',
+            f'after:{after_date} "we received your application"',
+            f'after:{after_date} "application has been received"',
+            f'after:{after_date} "your candidacy"',
+            f'after:{after_date} "hiring team"',
+            f'after:{after_date} "recruiting team"',
         ]
 
         emails = []
