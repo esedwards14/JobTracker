@@ -222,6 +222,12 @@ def bulk_delete_applications():
         if not applications:
             return jsonify({'error': 'No matching applications found'}), 404
 
+        app_ids = [app.id for app in applications]
+
+        # Clear tags association first (many-to-many doesn't cascade automatically)
+        for app in applications:
+            app.tags = []
+
         # Delete each application (this triggers ORM cascade for related records)
         count = 0
         for app in applications:

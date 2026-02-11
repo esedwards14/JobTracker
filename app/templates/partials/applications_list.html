@@ -538,7 +538,8 @@ const bulkSelect = {
                 this.showToast(data.error || 'Failed to delete applications', true);
             }
         } catch (e) {
-            this.showToast('Failed to delete applications', true);
+            console.error('Delete error:', e);
+            this.showToast(`Failed to delete ${ids.length} applications: ${e.message}`, true);
         }
     },
 
