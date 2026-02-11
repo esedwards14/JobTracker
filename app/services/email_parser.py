@@ -281,6 +281,18 @@ class JobEmailParser:
         if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
             return False
 
+        # Words that would never be part of a company name
+        invalid_company_words = [
+            'our', 'your', 'their', 'my', 'we', 'you', 'they',  # Pronouns/possessives
+            'please', 'thank', 'thanks', 'hello', 'hi',  # Greetings/politeness
+            'click', 'view', 'see', 'read', 'check', 'visit',  # Action verbs
+            'unsubscribe', 'subscribe', 'confirm', 'verify',  # Email actions
+            'regarding', 'subject', 'attached', 'enclosed',  # Email formalities
+        ]
+        words = text_lower.split()
+        if any(word in invalid_company_words for word in words):
+            return False
+
         # Reject common generic names and job platform/ATS names
         generic_names = [
             'indeed', 'linkedin', 'hr team', 'recruiting', 'talent', 'careers',
@@ -409,6 +421,24 @@ class JobEmailParser:
         if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
             return False
 
+        # Words that would never appear in a job title - reject if text contains these
+        invalid_title_words = [
+            'our', 'your', 'their', 'my', 'we', 'you', 'they', 'i',  # Pronouns/possessives
+            'please', 'thank', 'thanks', 'sorry', 'hello', 'hi',  # Greetings/politeness
+            'click', 'view', 'see', 'read', 'check', 'visit',  # Action verbs (email CTAs)
+            'email', 'message', 'notification', 'update', 'alert',  # Email terms
+            'unsubscribe', 'subscribe', 'confirm', 'verify',  # Email actions
+            'password', 'login', 'account', 'profile',  # Account terms
+            'attached', 'enclosed', 'regarding', 'subject',  # Email formalities
+            'sincerely', 'regards', 'best', 'cheers',  # Sign-offs
+            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',  # Days
+            'january', 'february', 'march', 'april', 'may', 'june',  # Months
+            'july', 'august', 'september', 'october', 'november', 'december',
+        ]
+        words = text_lower.split()
+        if any(word in invalid_title_words for word in words):
+            return False
+
         # Reject if it looks like a company or contains bad patterns
         bad_patterns = [
             r'^the\s',
@@ -454,6 +484,8 @@ class JobEmailParser:
             r'be considered',
             r'training program',
             r'one of our',
+            r'^a\s+',  # "a Software Engineer" - starts with article
+            r'^an\s+',  # "an Analyst" - starts with article
         ]
 
         # Position keywords - if text contains these, it's likely a position
