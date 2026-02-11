@@ -868,8 +868,9 @@ def preview_response_emails():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return jsonify({'error': f'Preview failed: {str(e)}'}), 500
+        tb = traceback.format_exc()
+        print(tb)
+        return jsonify({'error': f'Preview failed: {str(e)}', 'traceback': tb}), 500
 
 
 @api_bp.route('/email/scan-contacts', methods=['POST'])
@@ -985,8 +986,9 @@ def scan_contacts_from_emails():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return jsonify({'error': f'Contact scan failed: {str(e)}'}), 500
+        tb = traceback.format_exc()
+        print(tb)
+        return jsonify({'error': f'Contact scan failed: {str(e)}', 'traceback': tb}), 500
 
 
 @api_bp.route('/email/save-connection', methods=['POST'])

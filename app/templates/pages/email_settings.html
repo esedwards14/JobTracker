@@ -642,7 +642,11 @@ async function previewResponses() {
 
             preview.innerHTML = html;
         } else {
-            preview.innerHTML = `<div class="text-red-500">${data.error}</div>`;
+            let errHtml = `<div class="text-red-500">${data.error}</div>`;
+            if (data.traceback) {
+                errHtml += `<pre class="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded overflow-auto max-h-48">${data.traceback}</pre>`;
+            }
+            preview.innerHTML = errHtml;
         }
     } catch (err) {
         preview.innerHTML = `<div class="text-red-500">Preview failed: ${err.message}</div>`;
