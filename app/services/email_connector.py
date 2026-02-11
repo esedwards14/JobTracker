@@ -65,35 +65,35 @@ class GmailOAuthConnector:
         # Calculate date filter
         after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
 
-        # Optimized search queries - using OR to combine related searches
-        # This reduces API calls from 70+ to ~10, preventing timeouts
+        # Optimized search queries - using Gmail's {} OR syntax
+        # This reduces API calls from 70+ to ~15, preventing timeouts
         search_queries = [
-            # Combined application-related subject searches
-            f'after:{after_date} (subject:application OR subject:"thank you for applying" OR subject:"thanks for applying" OR subject:"applied for")',
+            # Application-related subject searches
+            f'after:{after_date} subject:application',
+            f'after:{after_date} subject:"thank you for applying"',
+            f'after:{after_date} subject:"your application"',
 
             # Response/rejection subject searches
-            f'after:{after_date} (subject:"unfortunately" OR subject:"not moving forward" OR subject:"regret to inform" OR subject:"position has been filled" OR subject:"application update" OR subject:"application status")',
+            f'after:{after_date} {{subject:unfortunately subject:"not moving forward" subject:"regret to inform" subject:"position has been filled"}}',
+            f'after:{after_date} {{subject:"application update" subject:"application status"}}',
 
             # Interview and offer keywords
-            f'after:{after_date} (subject:interview OR subject:"schedule a call" OR subject:"next steps" OR subject:"offer letter" OR subject:"job offer")',
+            f'after:{after_date} subject:interview',
+            f'after:{after_date} {{subject:"offer letter" subject:"job offer"}}',
 
-            # Major job platforms (combined)
-            f'after:{after_date} (from:indeed.com OR from:indeedemail.com OR from:linkedin.com OR from:handshake.com OR from:joinhandshake.com)',
+            # Major job platforms
+            f'after:{after_date} {{from:indeed.com from:indeedemail.com}}',
+            f'after:{after_date} {{from:linkedin.com from:handshake.com from:joinhandshake.com}}',
 
-            # ATS platforms (combined)
-            f'after:{after_date} (from:greenhouse.io OR from:lever.co OR from:workday.com OR from:myworkdayjobs.com OR from:icims.com OR from:smartrecruiters.com)',
-
-            # More ATS platforms
-            f'after:{after_date} (from:jobvite.com OR from:taleo.net OR from:ashbyhq.com OR from:bamboohr.com OR from:workable.com)',
-
-            # Job boards
-            f'after:{after_date} (from:glassdoor.com OR from:ziprecruiter.com OR from:monster.com OR from:dice.com)',
+            # ATS platforms
+            f'after:{after_date} {{from:greenhouse.io from:lever.co from:workday.com from:myworkdayjobs.com}}',
+            f'after:{after_date} {{from:icims.com from:smartrecruiters.com from:jobvite.com from:taleo.net}}',
 
             # Company career email patterns
-            f'after:{after_date} (from:careers@ OR from:jobs@ OR from:recruiting@ OR from:talent@ OR from:hiring@)',
+            f'after:{after_date} {{from:careers@ from:jobs@ from:recruiting@}}',
 
             # Body content searches
-            f'after:{after_date} ("thank you for applying" OR "we received your application" OR "your candidacy")',
+            f'after:{after_date} "thank you for applying"',
         ]
 
         emails = []
