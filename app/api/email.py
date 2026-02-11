@@ -2,7 +2,7 @@
 
 import re
 from flask import request, jsonify, redirect, session, url_for
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.api import api_bp
 from app.extensions import db
@@ -11,6 +11,19 @@ from app.services.email_connector import GmailOAuthConnector
 from app.services.email_parser import JobEmailParser
 from app.services.google_oauth import get_authorization_url, exchange_code_for_tokens
 from app.services.user_service import get_current_user_id
+
+
+def safe_isoformat(dt):
+    """Safely convert a datetime to ISO format string for JSON serialization."""
+    if dt is None:
+        return None
+    try:
+        # Ensure timezone-aware
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+    except Exception:
+        return None
 
 
 def is_personal_email(from_address: str) -> bool:
@@ -850,7 +863,7 @@ def preview_response_emails():
             preview.append({
                 'email_subject': response.get('email_subject', '')[:100],
                 'email_from': response.get('email_from', ''),
-                'email_date': response.get('email_date').isoformat() if response.get('email_date') else None,
+                'email_date': safe_isoformat(response.get('email_date')),
                 'company': company,
                 'position': position,
                 'response_type': response_type,
