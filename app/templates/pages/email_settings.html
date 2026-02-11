@@ -219,6 +219,20 @@
 </div>
 
 <script>
+// Safe date formatting helper - prevents "The string did not match the expected pattern" error
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString();
+        }
+    } catch (e) {
+        console.warn('Date parse error:', e);
+    }
+    return '';
+}
+
 // Connect Gmail via OAuth
 async function connectGmail() {
     try {
@@ -320,7 +334,7 @@ async function loadPendingEmails() {
                                 ${Math.round(email.confidence * 100)}%
                             </span>
                             <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">${email.platform}</span>
-                            <span class="text-xs text-gray-400">${email.email_date ? new Date(email.email_date).toLocaleDateString() : ''}</span>
+                            <span class="text-xs text-gray-400">${formatDate(email.email_date)}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <div>
@@ -617,7 +631,7 @@ async function previewResponses() {
                     <div class="p-3 border rounded ${typeColor}">
                         <div class="flex items-center justify-between mb-1">
                             <span class="font-medium">${typeLabel}</span>
-                            <span class="text-xs">${r.email_date ? new Date(r.email_date).toLocaleDateString() : ''}</span>
+                            <span class="text-xs">${formatDate(r.email_date)}</span>
                         </div>
                         <div class="text-sm mb-1">
                             <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
