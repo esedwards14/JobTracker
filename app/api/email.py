@@ -576,7 +576,7 @@ def scan_response_emails():
         connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
         with connector:
             # Fetch emails that might be responses (broader search)
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=200)
+            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
 
             # Update tokens if refreshed
             updated_tokens = connector.get_updated_tokens()
@@ -799,7 +799,7 @@ def preview_response_emails():
         # Connect and fetch emails via OAuth
         connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
         with connector:
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=200)
+            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
 
             # Update tokens if refreshed
             updated_tokens = connector.get_updated_tokens()
@@ -909,7 +909,7 @@ def scan_contacts_from_emails():
     try:
         connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
         with connector:
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=200)
+            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
 
             updated_tokens = connector.get_updated_tokens()
             if updated_tokens:
