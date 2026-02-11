@@ -621,9 +621,14 @@ def scan_response_emails():
 
             # If no matching application found, create a new one (but avoid duplicates)
             if not applications:
+                # Only create if we have valid company OR position (not just "Unknown")
+                has_valid_info = (company != 'Unknown Company') or (position != 'Unknown Position')
+                if not has_valid_info:
+                    continue  # Skip responses without valid info
+
                 # Create a key to check for duplicates
                 app_key = f"{normalize_company_name(company).lower()}|{position.lower()}"
-                
+
                 # Only create if we haven't created one with this company+position combo
                 if app_key not in created_app_keys:
                     # Also check if it already exists in the database
@@ -828,8 +833,11 @@ def preview_response_emails():
             app_key = f"{normalize_company_name(company).lower()}|{position.lower()}"
             would_be_duplicate = app_key in created_app_keys
 
-            # If no matches, will create a new application (unless it would be a duplicate)
-            will_create_new = len(matching_apps) == 0 and not would_be_duplicate
+            # Only create new application if we have valid company OR position (not just "Unknown")
+            has_valid_info = (company != 'Unknown Company') or (position != 'Unknown Position')
+
+            # If no matches, will create a new application (unless it would be a duplicate or missing valid info)
+            will_create_new = len(matching_apps) == 0 and not would_be_duplicate and has_valid_info
 
             if will_create_new:
                 created_app_keys.add(app_key)

@@ -871,6 +871,10 @@ class JobEmailParser:
     # Additional patterns for extracting company from RESPONSE emails
     # These are patterns more common in rejection/interview emails vs confirmation emails
     RESPONSE_COMPANY_PATTERNS = [
+        # "Position Filled: Job Title with Company" - common rejection format
+        r'[Pp]osition [Ff]illed:.+?with\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.|,|\n)',
+        # "with Company" at end of subject/line
+        r'\swith\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.|,|\n)',
         # "Update from Company" or "Update on your application to Company"
         r'[Uu]pdate (?:from|on your.{0,30}(?:at|to|with))\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.)',
         # "Thank you for your interest in Company"
@@ -897,6 +901,20 @@ class JobEmailParser:
         r'we at\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s+|\.|,|!)',
     ]
 
+    # Patterns for extracting position/job title from response emails
+    RESPONSE_POSITION_PATTERNS = [
+        # "Position Filled: Job Title with Company"
+        r'[Pp]osition [Ff]illed:\s*([A-Za-z0-9\s&\-\.\'\/]+?)\s+with\s+',
+        # "regarding the Job Title position"
+        r'regarding the\s+([A-Za-z0-9\s&\-\.\'\/]+?)\s+(?:position|role)',
+        # "for the Job Title role"
+        r'for the\s+([A-Za-z0-9\s&\-\.\'\/]+?)\s+(?:position|role)',
+        # "Job Title position at"
+        r'([A-Za-z0-9\s&\-\.\'\/]+?)\s+(?:position|role)\s+(?:at|with)',
+        # "your application for Job Title"
+        r'application for\s+(?:the\s+)?([A-Za-z0-9\s&\-\.\'\/]+?)(?:\s+position|\s+role|\s+at|\s+with|\.|,|$)',
+    ]
+
     def parse_response_email(self, email_data: dict) -> dict:
         """
         Parse an email to detect if it's a response to a job application.
@@ -920,7 +938,12 @@ class JobEmailParser:
         # Fall back to standard extraction if response patterns fail
         if not company:
             company = self._extract_company(subject, body, from_address)
-        position = self._extract_position(subject, body)
+
+        # Try to extract position - use response-specific patterns first
+        position = self._extract_position_from_response(subject, body)
+        # Fall back to standard extraction if response patterns fail
+        if not position:
+            position = self._extract_position(subject, body)
 
         # Detect response type
         response_type = self._detect_response_type(subject, body, from_address)
@@ -993,6 +1016,62 @@ class JobEmailParser:
                         return cleaned
 
         return None
+
+    def _extract_position_from_response(self, subject: str, body: str) -> Optional[str]:
+        """Extract position/job title from response emails using response-specific patterns."""
+
+        # Try response-specific patterns on subject first
+        for pattern in self.RESPONSE_POSITION_PATTERNS:
+            match = re.search(pattern, subject, re.IGNORECASE | re.MULTILINE)
+            if match:
+                position = match.group(1).strip()
+                position = self._clean_position_name(position)
+                if position and len(position) > 2 and len(position) < 100:
+                    if self._looks_like_position(position):
+                        return position
+
+        # Try response-specific patterns on body
+        for pattern in self.RESPONSE_POSITION_PATTERNS:
+            match = re.search(pattern, body[:5000], re.IGNORECASE | re.MULTILINE)
+            if match:
+                position = match.group(1).strip()
+                position = self._clean_position_name(position)
+                if position and len(position) > 2 and len(position) < 100:
+                    if self._looks_like_position(position):
+                        return position
+
+        return None
+
+    def _clean_position_name(self, position: str) -> str:
+        """Clean up extracted position name."""
+        if not position:
+            return ""
+        # Remove trailing punctuation
+        position = re.sub(r'[\.\,\!\?\:\;]+$', '', position).strip()
+        # Remove leading/trailing quotes
+        position = position.strip('"\'')
+        return position
+
+    def _looks_like_position(self, position: str) -> bool:
+        """Check if the extracted text looks like a valid job position."""
+        if not position or len(position) < 3:
+            return False
+
+        position_lower = position.lower()
+
+        # Words that should NOT be in a job title
+        invalid_words = ['our', 'your', 'we', 'you', 'the', 'this', 'that', 'with',
+                        'from', 'hello', 'hi', 'dear', 'thanks', 'thank', 'please',
+                        'noreply', 'no-reply', 'no reply', 'donotreply']
+        words = position_lower.split()
+        if any(word in invalid_words for word in words):
+            return False
+
+        # Must have at least some letters
+        if not any(c.isalpha() for c in position):
+            return False
+
+        return True
 
     def _is_employer_message(self, subject: str, body: str, from_address: str) -> bool:
         """
