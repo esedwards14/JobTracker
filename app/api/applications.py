@@ -219,25 +219,15 @@ def bulk_delete_applications():
             JobApplication.user_id == user_id
         ).all()
 
-        app_ids = [app.id for app in applications]
-        if not app_ids:
+        if not applications:
             return jsonify({'error': 'No matching applications found'}), 404
 
-        # Delete related records first (cascade doesn't work with bulk delete)
-        Contact.query.filter(Contact.application_id.in_(app_ids)).delete(synchronize_session=False)
-        InterviewStage.query.filter(InterviewStage.application_id.in_(app_ids)).delete(synchronize_session=False)
-        ParsedEmail.query.filter(ParsedEmail.application_id.in_(app_ids)).delete(synchronize_session=False)
+        # Delete each application (this triggers ORM cascade for related records)
+        count = 0
+        for app in applications:
+            db.session.delete(app)
+            count += 1
 
-        # Delete from application_tags junction table
-        db.session.execute(
-            db.text('DELETE FROM application_tags WHERE application_id IN :ids'),
-            {'ids': tuple(app_ids)}
-        )
-
-        # Now delete the applications
-        count = JobApplication.query.filter(
-            JobApplication.id.in_(app_ids)
-        ).delete(synchronize_session=False)
         db.session.commit()
 
         return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
