@@ -824,6 +824,11 @@ def preview_response_emails():
             from_addr = response.get('email_from', '')
             body_preview = response.get('body_preview', '')
 
+            # Skip emails without valid company OR position - must have at least one
+            has_valid_info = (company != 'Unknown Company') or (position != 'Unknown Position')
+            if not has_valid_info:
+                continue
+
             # Find potential matching applications using improved logic
             apps = find_matching_applications(company, position, from_addr, body_preview, user_id)
 
