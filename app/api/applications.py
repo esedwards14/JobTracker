@@ -195,23 +195,57 @@ def delete_all_applications():
 def bulk_delete_applications():
     """Delete multiple applications by ID."""
     from app.services.user_service import get_current_user_id
+    from app.models import Contact, InterviewStage, ParsedEmail
     user_id = get_current_user_id()
+
+    if not user_id:
+        return jsonify({'error': 'Please sign in first'}), 401
 
     data = request.json
     if not data or 'ids' not in data or not isinstance(data['ids'], list):
         return jsonify({'error': 'ids field is required and must be a list'}), 400
 
     ids = data['ids']
+    if len(ids) == 0:
+        return jsonify({'error': 'No applications selected'}), 400
+
     if len(ids) > 500:
         return jsonify({'error': 'Cannot delete more than 500 applications at once'}), 400
 
-    count = JobApplication.query.filter(
-        JobApplication.id.in_(ids),
-        JobApplication.user_id == user_id
-    ).delete(synchronize_session=False)
-    db.session.commit()
+    try:
+        # Get the applications that will be deleted (to ensure user owns them)
+        applications = JobApplication.query.filter(
+            JobApplication.id.in_(ids),
+            JobApplication.user_id == user_id
+        ).all()
 
-    return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
+        app_ids = [app.id for app in applications]
+        if not app_ids:
+            return jsonify({'error': 'No matching applications found'}), 404
+
+        # Delete related records first (cascade doesn't work with bulk delete)
+        Contact.query.filter(Contact.application_id.in_(app_ids)).delete(synchronize_session=False)
+        InterviewStage.query.filter(InterviewStage.application_id.in_(app_ids)).delete(synchronize_session=False)
+        ParsedEmail.query.filter(ParsedEmail.application_id.in_(app_ids)).delete(synchronize_session=False)
+
+        # Delete from application_tags junction table
+        db.session.execute(
+            db.text('DELETE FROM application_tags WHERE application_id IN :ids'),
+            {'ids': tuple(app_ids)}
+        )
+
+        # Now delete the applications
+        count = JobApplication.query.filter(
+            JobApplication.id.in_(app_ids)
+        ).delete(synchronize_session=False)
+        db.session.commit()
+
+        return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to delete: {str(e)}'}), 500
 
 
 @api_bp.route('/applications/bulk/status', methods=['PATCH'])
