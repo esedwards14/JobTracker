@@ -597,6 +597,19 @@ async function previewResponses() {
 
                 const typeLabel = r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown';
 
+                // Safely format date
+                let formattedDate = '';
+                if (r.email_date) {
+                    try {
+                        const d = new Date(r.email_date);
+                        if (!isNaN(d.getTime())) {
+                            formattedDate = d.toLocaleDateString();
+                        }
+                    } catch (e) {
+                        formattedDate = '';
+                    }
+                }
+
                 // Check if it's a personal email (potential connection)
                 const isPersonal = r.is_personal_email && r.sender_info && r.sender_info.name;
                 const connectionBtn = isPersonal && !r.existing_contact_id ? `
@@ -617,7 +630,7 @@ async function previewResponses() {
                     <div class="p-3 border rounded ${typeColor}">
                         <div class="flex items-center justify-between mb-1">
                             <span class="font-medium">${typeLabel}</span>
-                            <span class="text-xs">${r.email_date ? new Date(r.email_date).toLocaleDateString() : ''}</span>
+                            <span class="text-xs">${formattedDate}</span>
                         </div>
                         <div class="text-sm mb-1">
                             <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
