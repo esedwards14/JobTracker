@@ -589,7 +589,16 @@ async function previewResponses() {
             body: JSON.stringify({ days_back: parseInt(daysBack) })
         });
 
-        const data = await response.json();
+        // Get raw text first for debugging
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseErr) {
+            console.error('JSON parse error:', parseErr, 'Response:', responseText);
+            preview.innerHTML = `<div class="text-red-500">Preview failed: Invalid JSON response. Status: ${response.status}. Response: ${responseText.substring(0, 500)}</div>`;
+            return;
+        }
 
         if (response.ok) {
             if (data.responses.length === 0) {
