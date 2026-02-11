@@ -277,6 +277,10 @@ class JobEmailParser:
 
         text_lower = text.lower().strip()
 
+        # Reject anything containing noreply/no-reply - never valid
+        if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
+            return False
+
         # Reject common generic names and job platform/ATS names
         generic_names = [
             'indeed', 'linkedin', 'hr team', 'recruiting', 'talent', 'careers',
@@ -285,11 +289,10 @@ class JobEmailParser:
             'greenhouse', 'lever', 'workday', 'myworkday', 'myworkdayjobs',
             'icims', 'smartrecruiters', 'workable', 'jobvite', 'taleo',
             'ashby', 'bamboohr', 'zoho', 'breezy', 'jazz', 'recruiterbox',
-            'adobe acrobat sign', 'noreply', 'no-reply', 'notifications',
-            'alerts', 'updates', 'human resources', 'hr', 'adobesign',
-            'adobe sign', 'successfactors', 'adp', 'paylocity', 'paycom',
-            'ultipro', 'ceridian', 'phenom', 'avature', 'beamery',
-            'eightfold', 'hirevue', 'calendly', 'goodtime',
+            'adobe acrobat sign', 'notifications', 'alerts', 'updates',
+            'human resources', 'hr', 'adobesign', 'adobe sign', 'successfactors',
+            'adp', 'paylocity', 'paycom', 'ultipro', 'ceridian', 'phenom',
+            'avature', 'beamery', 'eightfold', 'hirevue', 'calendly', 'goodtime',
         ]
         if text_lower in generic_names:
             return False
@@ -398,6 +401,12 @@ class JobEmailParser:
 
         # Reject if too short or too long
         if len(text) < 3 or len(text) > 100:
+            return False
+
+        text_lower = text.lower()
+
+        # Reject anything containing noreply/no-reply - never valid
+        if 'noreply' in text_lower or 'no-reply' in text_lower or 'no_reply' in text_lower:
             return False
 
         # Reject if it looks like a company or contains bad patterns

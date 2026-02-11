@@ -81,6 +81,10 @@ def has_personal_name(from_address: str) -> bool:
     if not name_lower or len(name_lower) < 2:
         return False
 
+    # Reject anything containing noreply - never a real person
+    if 'noreply' in name_lower or 'no-reply' in name_lower or 'no_reply' in name_lower or 'donotreply' in name_lower:
+        return False
+
     # Split name into individual words for word-level checks
     name_words = set(name_lower.split())
 
