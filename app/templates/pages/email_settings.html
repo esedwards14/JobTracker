@@ -256,18 +256,6 @@ function showError(message) {
 }
 
 {% if settings and settings.refresh_token %}
-// Safe date formatting helper
-function formatDate(dateStr) {
-    if (!dateStr) return '';
-    try {
-        const d = new Date(dateStr);
-        if (!isNaN(d.getTime())) {
-            return d.toLocaleDateString();
-        }
-    } catch (e) {}
-    return '';
-}
-
 // Sync emails
 async function syncEmails() {
     const btn = document.getElementById('sync-btn');
@@ -332,7 +320,7 @@ async function loadPendingEmails() {
                                 ${Math.round(email.confidence * 100)}%
                             </span>
                             <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">${email.platform}</span>
-                            <span class="text-xs text-gray-400">${formatDate(email.email_date)}</span>
+                            <span class="text-xs text-gray-400">${email.email_date ? new Date(email.email_date).toLocaleDateString() : ''}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <div>
@@ -589,16 +577,7 @@ async function previewResponses() {
             body: JSON.stringify({ days_back: parseInt(daysBack) })
         });
 
-        // Get raw text first for debugging
-        const responseText = await response.text();
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (parseErr) {
-            console.error('JSON parse error:', parseErr, 'Response:', responseText);
-            preview.innerHTML = `<div class="text-red-500">Preview failed: Invalid JSON response. Status: ${response.status}. Response: ${responseText.substring(0, 500)}</div>`;
-            return;
-        }
+        const data = await response.json();
 
         if (response.ok) {
             if (data.responses.length === 0) {
@@ -617,7 +596,6 @@ async function previewResponses() {
                 }[r.response_type] || 'bg-gray-100 text-gray-800';
 
                 const typeLabel = r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown';
-                const formattedDate = formatDate(r.email_date);
 
                 // Check if it's a personal email (potential connection)
                 const isPersonal = r.is_personal_email && r.sender_info && r.sender_info.name;
@@ -639,7 +617,7 @@ async function previewResponses() {
                     <div class="p-3 border rounded ${typeColor}">
                         <div class="flex items-center justify-between mb-1">
                             <span class="font-medium">${typeLabel}</span>
-                            <span class="text-xs">${formattedDate}</span>
+                            <span class="text-xs">${r.email_date ? new Date(r.email_date).toLocaleDateString() : ''}</span>
                         </div>
                         <div class="text-sm mb-1">
                             <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
@@ -664,11 +642,7 @@ async function previewResponses() {
 
             preview.innerHTML = html;
         } else {
-            let errHtml = `<div class="text-red-500">${data.error}</div>`;
-            if (data.traceback) {
-                errHtml += `<pre class="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded overflow-auto max-h-48">${data.traceback}</pre>`;
-            }
-            preview.innerHTML = errHtml;
+            preview.innerHTML = `<div class="text-red-500">${data.error}</div>`;
         }
     } catch (err) {
         preview.innerHTML = `<div class="text-red-500">Preview failed: ${err.message}</div>`;

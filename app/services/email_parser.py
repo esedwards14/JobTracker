@@ -136,10 +136,6 @@ class JobEmailParser:
         body = email_data.get('body_text', '')
         date = email_data.get('date')
 
-        # Ensure date is timezone-aware for consistent comparisons
-        if date and hasattr(date, 'tzinfo') and date.tzinfo is None:
-            date = date.replace(tzinfo=timezone.utc)
-
         # Detect platform
         platform = self.detect_platform(from_address, subject)
 
@@ -277,45 +273,19 @@ class JobEmailParser:
 
         text_lower = text.lower().strip()
 
-        # Reject anything containing noreply/no-reply variations - never valid
-        noreply_patterns = ['noreply', 'no-reply', 'no_reply', 'no reply', 'donotreply', 'do-not-reply', 'do not reply']
-        if any(pattern in text_lower for pattern in noreply_patterns):
-            return False
-
-        # Words that would never be part of a company name
-        invalid_company_words = [
-            'our', 'your', 'their', 'my', 'we', 'you', 'they',  # Pronouns/possessives
-            'please', 'thank', 'thanks', 'hello', 'hi',  # Greetings/politeness
-            'click', 'view', 'see', 'read', 'check', 'visit',  # Action verbs
-            'unsubscribe', 'subscribe', 'confirm', 'verify',  # Email actions
-            'regarding', 'subject', 'attached', 'enclosed',  # Email formalities
-        ]
-        words = text_lower.split()
-        if any(word in invalid_company_words for word in words):
-            return False
-
-        # Reject common generic names and job platform/ATS names
+        # Reject common generic names and job platform names
         generic_names = [
             'indeed', 'linkedin', 'hr team', 'recruiting', 'talent', 'careers',
             'indeed apply', 'indeed job', 'linkedin jobs', 'glassdoor',
             'ziprecruiter', 'monster', 'careerbuilder', 'handshake',
-            'greenhouse', 'lever', 'workday', 'myworkday', 'myworkdayjobs',
-            'icims', 'smartrecruiters', 'workable', 'jobvite', 'taleo',
-            'ashby', 'bamboohr', 'zoho', 'breezy', 'jazz', 'recruiterbox',
-            'adobe acrobat sign', 'notifications', 'alerts', 'updates',
-            'human resources', 'hr', 'adobesign', 'adobe sign', 'successfactors',
-            'adp', 'paylocity', 'paycom', 'ultipro', 'ceridian', 'phenom',
-            'avature', 'beamery', 'eightfold', 'hirevue', 'calendly', 'goodtime',
+            'greenhouse', 'lever', 'workday', 'icims', 'smartrecruiters',
+            'workable', 'jobvite', 'taleo', 'ashby', 'bamboohr', 'zoho',
+            'breezy', 'jazz', 'recruiterbox', 'adobe acrobat sign',
+            'noreply', 'no-reply', 'notifications', 'alerts', 'updates',
+            'human resources', 'hr', 'adobesign', 'adobe sign',
         ]
         if text_lower in generic_names:
             return False
-
-        # Also reject if it starts with or contains these platform names
-        platform_prefixes = ['myworkday', 'workday', 'indeed', 'linkedin', 'glassdoor',
-                            'greenhouse', 'lever', 'icims', 'taleo', 'successfactors']
-        for prefix in platform_prefixes:
-            if text_lower.startswith(prefix) or text_lower == prefix:
-                return False
 
         # Reject if it looks like a job title (common position keywords)
         position_keywords = [
@@ -416,31 +386,6 @@ class JobEmailParser:
         if len(text) < 3 or len(text) > 100:
             return False
 
-        text_lower = text.lower()
-
-        # Reject anything containing noreply/no-reply variations - never valid
-        noreply_patterns = ['noreply', 'no-reply', 'no_reply', 'no reply', 'donotreply', 'do-not-reply', 'do not reply']
-        if any(pattern in text_lower for pattern in noreply_patterns):
-            return False
-
-        # Words that would never appear in a job title - reject if text contains these
-        invalid_title_words = [
-            'our', 'your', 'their', 'my', 'we', 'you', 'they', 'i',  # Pronouns/possessives
-            'please', 'thank', 'thanks', 'sorry', 'hello', 'hi',  # Greetings/politeness
-            'click', 'view', 'see', 'read', 'check', 'visit',  # Action verbs (email CTAs)
-            'email', 'message', 'notification', 'update', 'alert',  # Email terms
-            'unsubscribe', 'subscribe', 'confirm', 'verify',  # Email actions
-            'password', 'login', 'account', 'profile',  # Account terms
-            'attached', 'enclosed', 'regarding', 'subject',  # Email formalities
-            'sincerely', 'regards', 'best', 'cheers',  # Sign-offs
-            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',  # Days
-            'january', 'february', 'march', 'april', 'may', 'june',  # Months
-            'july', 'august', 'september', 'october', 'november', 'december',
-        ]
-        words = text_lower.split()
-        if any(word in invalid_title_words for word in words):
-            return False
-
         # Reject if it looks like a company or contains bad patterns
         bad_patterns = [
             r'^the\s',
@@ -486,8 +431,6 @@ class JobEmailParser:
             r'be considered',
             r'training program',
             r'one of our',
-            r'^a\s+',  # "a Software Engineer" - starts with article
-            r'^an\s+',  # "an Analyst" - starts with article
         ]
 
         # Position keywords - if text contains these, it's likely a position
@@ -572,15 +515,12 @@ class JobEmailParser:
 
     def _extract_company_from_domain(self, from_address: str) -> Optional[str]:
         """Extract company name from email domain as last resort."""
-        # Skip known job platform domains and ATS providers
+        # Skip known job platform domains
         skip_domains = ['indeed', 'linkedin', 'handshake', 'greenhouse', 'lever',
-                       'workday', 'myworkday', 'myworkdayjobs', 'gmail', 'outlook',
-                       'yahoo', 'hotmail', 'icims', 'smartrecruiters', 'jobvite',
-                       'taleo', 'noreply', 'no-reply', 'notifications', 'mail',
-                       'email', 'e', 'workable', 'bamboohr', 'zoho', 'breezy',
-                       'jazz', 'ashby', 'recruiterbox', 'candidates', 'successfactors',
-                       'adp', 'paylocity', 'paycom', 'ultipro', 'ceridian', 'phenom',
-                       'avature', 'beamery', 'eightfold', 'hirevue', 'calendly', 'goodtime']
+                       'workday', 'gmail', 'outlook', 'yahoo', 'hotmail', 'icims',
+                       'smartrecruiters', 'jobvite', 'taleo', 'noreply', 'no-reply',
+                       'notifications', 'mail', 'email', 'e', 'workable', 'bamboohr',
+                       'zoho', 'breezy', 'jazz', 'ashby', 'recruiterbox', 'candidates']
 
         # Try to get domain from email
         match = re.search(r'@([^.>]+)', from_address)
@@ -766,11 +706,7 @@ class JobEmailParser:
 
         # Filter to only job application emails and sort by confidence
         results = [r for r in results if r['is_job_email']]
-        try:
-            aware_min = datetime.min.replace(tzinfo=timezone.utc)
-            results.sort(key=lambda x: (x['confidence'], x.get('email_date') or aware_min), reverse=True)
-        except Exception as e:
-            print(f"Warning: Could not sort parsed emails by date: {e}")
+        results.sort(key=lambda x: (x['confidence'], x['email_date'] or datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
 
         return results
 
@@ -935,10 +871,6 @@ class JobEmailParser:
     # Additional patterns for extracting company from RESPONSE emails
     # These are patterns more common in rejection/interview emails vs confirmation emails
     RESPONSE_COMPANY_PATTERNS = [
-        # "Position Filled: Job Title with Company" - common rejection format
-        r'[Pp]osition [Ff]illed:.+?with\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.|,|\n)',
-        # "with Company" at end of subject/line
-        r'with\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.|,|\n)',
         # "Update from Company" or "Update on your application to Company"
         r'[Uu]pdate (?:from|on your.{0,30}(?:at|to|with))\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.)',
         # "Thank you for your interest in Company"
@@ -965,20 +897,6 @@ class JobEmailParser:
         r'we at\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s+|\.|,|!)',
     ]
 
-    # Additional patterns for extracting position from RESPONSE emails
-    RESPONSE_POSITION_PATTERNS = [
-        # "Position Filled: Job Title with Company"
-        r'[Pp]osition [Ff]illed:\s*([A-Za-z0-9\s&\-\.\']+?)\s+with\s+',
-        # "regarding the Job Title position"
-        r'regarding the\s+([A-Za-z0-9\s&\-\.\']+?)\s+(?:position|role)',
-        # "for the Job Title role"
-        r'for the\s+([A-Za-z0-9\s&\-\.\']+?)\s+(?:position|role)',
-        # "Job Title position at"
-        r'([A-Za-z0-9\s&\-\.\']+?)\s+(?:position|role)\s+(?:at|with)',
-        # "your application for Job Title"
-        r'application for\s+(?:the\s+)?([A-Za-z0-9\s&\-\.\']+?)(?:\s+position|\s+role|\s+at|\s+with|\.|,|$)',
-    ]
-
     def parse_response_email(self, email_data: dict) -> dict:
         """
         Parse an email to detect if it's a response to a job application.
@@ -994,10 +912,6 @@ class JobEmailParser:
         body = email_data.get('body_text', '')
         date = email_data.get('date')
 
-        # Ensure date is timezone-aware for consistent comparisons
-        if date and hasattr(date, 'tzinfo') and date.tzinfo is None:
-            date = date.replace(tzinfo=timezone.utc)
-
         # Detect platform
         platform = self.detect_platform(from_address, subject)
 
@@ -1006,12 +920,7 @@ class JobEmailParser:
         # Fall back to standard extraction if response patterns fail
         if not company:
             company = self._extract_company(subject, body, from_address)
-
-        # Try to extract position - use response-specific patterns first
-        position = self._extract_position_from_response(subject, body)
-        # Fall back to standard extraction if response patterns fail
-        if not position:
-            position = self._extract_position(subject, body)
+        position = self._extract_position(subject, body)
 
         # Detect response type
         response_type = self._detect_response_type(subject, body, from_address)
@@ -1082,31 +991,6 @@ class JobEmailParser:
                     cleaned = self._clean_company_name(sender_name)
                     if cleaned and self._looks_like_company_name(cleaned):
                         return cleaned
-
-        return None
-
-    def _extract_position_from_response(self, subject: str, body: str) -> Optional[str]:
-        """Extract position/job title from response emails using response-specific patterns."""
-
-        # Try response-specific patterns on subject first
-        for pattern in self.RESPONSE_POSITION_PATTERNS:
-            match = re.search(pattern, subject, re.IGNORECASE | re.MULTILINE)
-            if match:
-                position = match.group(1).strip()
-                position = self._clean_position_name(position)
-                if position and len(position) > 2 and len(position) < 100:
-                    if self._looks_like_position(position):
-                        return position
-
-        # Try response-specific patterns on body
-        for pattern in self.RESPONSE_POSITION_PATTERNS:
-            match = re.search(pattern, body[:5000], re.IGNORECASE | re.MULTILINE)
-            if match:
-                position = match.group(1).strip()
-                position = self._clean_position_name(position)
-                if position and len(position) > 2 and len(position) < 100:
-                    if self._looks_like_position(position):
-                        return position
 
         return None
 
@@ -1305,11 +1189,7 @@ class JobEmailParser:
                 print(f"Error parsing response email: {e}")
                 continue
 
-        # Sort by date (newest first) - with defensive fallback
-        try:
-            aware_min = datetime.min.replace(tzinfo=timezone.utc)
-            results.sort(key=lambda x: x.get('email_date') or aware_min, reverse=True)
-        except Exception as e:
-            print(f"Warning: Could not sort response emails by date: {e}")
+        # Sort by date (newest first)
+        results.sort(key=lambda x: x['email_date'] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
         return results

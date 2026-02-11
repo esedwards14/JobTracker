@@ -2,7 +2,7 @@
 
 import re
 from flask import request, jsonify, redirect, session, url_for
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.api import api_bp
 from app.extensions import db
@@ -11,19 +11,6 @@ from app.services.email_connector import GmailOAuthConnector
 from app.services.email_parser import JobEmailParser
 from app.services.google_oauth import get_authorization_url, exchange_code_for_tokens
 from app.services.user_service import get_current_user_id
-
-
-def safe_isoformat(dt):
-    """Safely convert a datetime to ISO format string for JSON serialization."""
-    if dt is None:
-        return None
-    try:
-        # Ensure timezone-aware
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.isoformat()
-    except Exception:
-        return None
 
 
 def is_personal_email(from_address: str) -> bool:
@@ -79,11 +66,6 @@ def has_personal_name(from_address: str) -> bool:
 
     # Must have at least one word
     if not name_lower or len(name_lower) < 2:
-        return False
-
-    # Reject anything containing noreply variations - never a real person
-    noreply_patterns = ['noreply', 'no-reply', 'no_reply', 'no reply', 'donotreply', 'do-not-reply', 'do not reply']
-    if any(pattern in name_lower for pattern in noreply_patterns):
         return False
 
     # Split name into individual words for word-level checks
@@ -638,13 +620,10 @@ def scan_response_emails():
             newly_created = False
 
             # If no matching application found, create a new one (but avoid duplicates)
-            # Only create if we have a valid company or position (not just "Unknown")
-            has_valid_info = (company and company != 'Unknown Company') or (position and position != 'Unknown Position')
-
-            if not applications and has_valid_info:
+            if not applications:
                 # Create a key to check for duplicates
                 app_key = f"{normalize_company_name(company).lower()}|{position.lower()}"
-
+                
                 # Only create if we haven't created one with this company+position combo
                 if app_key not in created_app_keys:
                     # Also check if it already exists in the database
@@ -781,9 +760,8 @@ def scan_response_emails():
 
     except Exception as e:
         import traceback
-        tb = traceback.format_exc()
-        print(tb)
-        return jsonify({'error': f'Scan failed: {str(e)}', 'traceback': tb}), 500
+        traceback.print_exc()
+        return jsonify({'error': f'Scan failed: {str(e)}'}), 500
 
 
 @api_bp.route('/email/response-preview', methods=['POST'])
@@ -850,11 +828,8 @@ def preview_response_emails():
             app_key = f"{normalize_company_name(company).lower()}|{position.lower()}"
             would_be_duplicate = app_key in created_app_keys
 
-            # Only create new application if we have a valid company or position (not just "Unknown")
-            has_valid_info = (company and company != 'Unknown Company') or (position and position != 'Unknown Position')
-
-            # If no matches, will create a new application (unless it would be a duplicate or missing info)
-            will_create_new = len(matching_apps) == 0 and not would_be_duplicate and has_valid_info
+            # If no matches, will create a new application (unless it would be a duplicate)
+            will_create_new = len(matching_apps) == 0 and not would_be_duplicate
 
             if will_create_new:
                 created_app_keys.add(app_key)
@@ -874,7 +849,7 @@ def preview_response_emails():
             preview.append({
                 'email_subject': response.get('email_subject', '')[:100],
                 'email_from': response.get('email_from', ''),
-                'email_date': safe_isoformat(response.get('email_date')),
+                'email_date': response.get('email_date').isoformat() if response.get('email_date') else None,
                 'company': company,
                 'position': position,
                 'response_type': response_type,
@@ -893,9 +868,8 @@ def preview_response_emails():
 
     except Exception as e:
         import traceback
-        tb = traceback.format_exc()
-        print(tb)
-        return jsonify({'error': f'Preview failed: {str(e)}', 'traceback': tb}), 500
+        traceback.print_exc()
+        return jsonify({'error': f'Preview failed: {str(e)}'}), 500
 
 
 @api_bp.route('/email/scan-contacts', methods=['POST'])
@@ -1011,9 +985,8 @@ def scan_contacts_from_emails():
 
     except Exception as e:
         import traceback
-        tb = traceback.format_exc()
-        print(tb)
-        return jsonify({'error': f'Contact scan failed: {str(e)}', 'traceback': tb}), 500
+        traceback.print_exc()
+        return jsonify({'error': f'Contact scan failed: {str(e)}'}), 500
 
 
 @api_bp.route('/email/save-connection', methods=['POST'])
