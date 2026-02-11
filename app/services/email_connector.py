@@ -240,7 +240,7 @@ class GmailOAuthConnector:
             # Get from address
             from_header = headers.get('from', '')
 
-            # Get date - handle various formats
+            # Get date - handle various formats, always return timezone-aware
             date_str = headers.get('date', '')
             msg_date = None
             if date_str:
@@ -261,6 +261,11 @@ class GmailOAuthConnector:
                                 msg_date = dateutil_parser.parse(date_match.group(1))
                             except Exception:
                                 msg_date = None
+
+                # Ensure all dates are timezone-aware to prevent comparison errors
+                if msg_date and msg_date.tzinfo is None:
+                    from datetime import timezone
+                    msg_date = msg_date.replace(tzinfo=timezone.utc)
 
             # Get body text
             body_text = self._get_body_text(msg['payload'])
