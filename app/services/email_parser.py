@@ -136,6 +136,10 @@ class JobEmailParser:
         body = email_data.get('body_text', '')
         date = email_data.get('date')
 
+        # Ensure date is timezone-aware for consistent comparisons
+        if date and hasattr(date, 'tzinfo') and date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
+
         # Detect platform
         platform = self.detect_platform(from_address, subject)
 
@@ -915,6 +919,10 @@ class JobEmailParser:
         from_address = email_data.get('from_address', '')
         body = email_data.get('body_text', '')
         date = email_data.get('date')
+
+        # Ensure date is timezone-aware for consistent comparisons
+        if date and hasattr(date, 'tzinfo') and date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
 
         # Detect platform
         platform = self.detect_platform(from_address, subject)
