@@ -706,7 +706,11 @@ class JobEmailParser:
 
         # Filter to only job application emails and sort by confidence
         results = [r for r in results if r['is_job_email']]
-        results.sort(key=lambda x: (x['confidence'], x['email_date'] or datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
+        try:
+            aware_min = datetime.min.replace(tzinfo=timezone.utc)
+            results.sort(key=lambda x: (x['confidence'], x.get('email_date') or aware_min), reverse=True)
+        except Exception as e:
+            print(f"Warning: Could not sort parsed emails by date: {e}")
 
         return results
 
@@ -1189,7 +1193,11 @@ class JobEmailParser:
                 print(f"Error parsing response email: {e}")
                 continue
 
-        # Sort by date (newest first)
-        results.sort(key=lambda x: x['email_date'] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        # Sort by date (newest first) - with defensive fallback
+        try:
+            aware_min = datetime.min.replace(tzinfo=timezone.utc)
+            results.sort(key=lambda x: x.get('email_date') or aware_min, reverse=True)
+        except Exception as e:
+            print(f"Warning: Could not sort response emails by date: {e}")
 
         return results

@@ -760,8 +760,9 @@ def scan_response_emails():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return jsonify({'error': f'Scan failed: {str(e)}'}), 500
+        tb = traceback.format_exc()
+        print(tb)
+        return jsonify({'error': f'Scan failed: {str(e)}', 'traceback': tb}), 500
 
 
 @api_bp.route('/email/response-preview', methods=['POST'])

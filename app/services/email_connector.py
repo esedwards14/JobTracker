@@ -224,9 +224,12 @@ class GmailOAuthConnector:
                 break
 
         # Sort by date descending (use a timezone-aware min date as fallback)
-        from datetime import timezone
-        aware_min = datetime.min.replace(tzinfo=timezone.utc)
-        emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)
+        try:
+            from datetime import timezone
+            aware_min = datetime.min.replace(tzinfo=timezone.utc)
+            emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)
+        except Exception as e:
+            print(f"Warning: Could not sort emails by date: {e}")
         return emails[:limit]
 
     def _parse_message(self, msg: dict) -> Optional[dict]:
