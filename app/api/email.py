@@ -968,7 +968,12 @@ def scan_contacts_from_emails():
                 domain_match = re.search(r'@([^.]+)', contact_email)
                 if domain_match:
                     domain = domain_match.group(1)
-                    skip_domains = ['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'icloud', 'mail']
+                    skip_domains = ['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'icloud', 'mail',
+                                    'indeed', 'indeedemail', 'linkedin', 'greenhouse', 'lever',
+                                    'workday', 'myworkdayjobs', 'icims', 'smartrecruiters',
+                                    'jobvite', 'taleo', 'workable', 'workablemail', 'ashby',
+                                    'bamboohr', 'breezy', 'jazz', 'applytojob', 'zoho',
+                                    'noreply', 'no-reply', 'handshake', 'joinhandshake']
                     if domain.lower() not in skip_domains:
                         app_company = domain.capitalize()
 

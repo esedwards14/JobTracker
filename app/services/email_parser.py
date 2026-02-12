@@ -1204,12 +1204,19 @@ class JobEmailParser:
             for pattern in application_reference_patterns
         )
 
+        # Check for scheduling tool links (strong interview signal)
+        scheduling_tools = ['calendly.com', 'goodtime.io', 'doodle.com']
+        has_scheduling_tool = any(tool in text for tool in scheduling_tools)
+
         # For interview status, require either:
         # - 3+ interview patterns (strong signal)
         # - OR 2+ interview patterns AND reference to your application
+        # - OR scheduling tool link + at least 1 interview pattern
         if interview_count >= 3:
             return 'interviewing'
         if interview_count >= 2 and has_application_reference:
+            return 'interviewing'
+        if has_scheduling_tool and interview_count >= 1:
             return 'interviewing'
 
         # Check for rejection (skip if from personal email - likely a personal reply)
@@ -1254,7 +1261,31 @@ class JobEmailParser:
 
         has_app_keyword = any(kw in text for kw in application_keywords)
 
-        return (is_from_job_platform or is_from_careers_email) and has_app_keyword
+        if (is_from_job_platform or is_from_careers_email) and has_app_keyword:
+            return True
+
+        # Also accept emails from direct company domains with strong interview signals
+        # (e.g., recruiter at company sends Calendly interview link)
+        personal_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
+                          'aol.com', 'icloud.com', 'me.com', 'live.com', 'msn.com']
+        is_personal_domain = any(domain in from_lower for domain in personal_domains)
+
+        if not is_personal_domain and not is_from_job_platform:
+            # Direct company email - check for strong interview scheduling signals
+            scheduling_signals = [
+                'calendly.com', 'goodtime.io', 'doodle.com',
+                'schedule an interview', 'schedule your interview',
+                'interview scheduled', 'interview invitation',
+            ]
+            has_scheduling = any(signal in text for signal in scheduling_signals)
+
+            interview_keywords = ['interview', 'schedule', 'meeting']
+            has_interview_keyword = any(kw in text for kw in interview_keywords)
+
+            if has_scheduling and has_interview_keyword:
+                return True
+
+        return False
 
     def parse_response_emails(self, emails: List[dict]) -> List[dict]:
         """Parse multiple emails looking for job application responses."""
