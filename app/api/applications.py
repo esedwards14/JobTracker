@@ -183,12 +183,32 @@ def delete_application(id):
 def delete_all_applications():
     """Delete all applications for current user."""
     from app.services.user_service import get_current_user_id
+    from app.models import Contact, InterviewStage, ParsedEmail
+    from app.models.tag import application_tags
     user_id = get_current_user_id()
-    count = JobApplication.query.filter_by(user_id=user_id).count()
-    JobApplication.query.filter_by(user_id=user_id).delete()
-    db.session.commit()
 
-    return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
+    try:
+        app_ids = [a.id for a in JobApplication.query.filter_by(user_id=user_id).with_entities(JobApplication.id).all()]
+        count = len(app_ids)
+
+        if app_ids:
+            # Delete related records first (bulk delete bypasses ORM cascades)
+            InterviewStage.query.filter(InterviewStage.application_id.in_(app_ids)).delete(synchronize_session=False)
+            Contact.query.filter(Contact.application_id.in_(app_ids)).delete(synchronize_session=False)
+            # Unlink parsed emails (don't delete them, just clear the reference)
+            ParsedEmail.query.filter(ParsedEmail.application_id.in_(app_ids)).update(
+                {ParsedEmail.application_id: None, ParsedEmail.status: 'pending'}, synchronize_session=False)
+            # Delete tag associations
+            db.session.execute(application_tags.delete().where(application_tags.c.application_id.in_(app_ids)))
+            # Now delete applications
+            JobApplication.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        db.session.commit()
+        return jsonify({'message': f'Deleted {count} applications', 'deleted': count}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete applications: {str(e)}'}), 500
 
 
 @api_bp.route('/applications/bulk/delete', methods=['POST'])
