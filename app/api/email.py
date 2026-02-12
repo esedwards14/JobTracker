@@ -87,7 +87,8 @@ def has_personal_name(from_address: str) -> bool:
     # Words that indicate this is NOT a person's name (checked as whole words)
     non_person_words = {
         # Platform names
-        'indeed', 'linkedin', 'greenhouse', 'lever', 'workday', 'icims',
+        'indeed', 'linkedin', 'greenhouse', 'lever', 'workday', 'myworkday',
+        'myworkdayjobs', 'icims',
         'handshake', 'glassdoor', 'ziprecruiter', 'monster', 'careerbuilder',
         'smartrecruiters', 'jobvite', 'workable', 'ashby', 'bamboohr',
         # Business/generic terms (only match as whole words)
@@ -131,7 +132,11 @@ def extract_sender_info(from_address: str) -> dict:
     # Try to extract "Name <email>" format
     match = re.match(r'^"?([^"<]+?)"?\s*<([^>]+)>', from_address)
     if match:
-        result['name'] = match.group(1).strip().strip('"\'')
+        name = match.group(1).strip().strip('"\'')
+        # Handle "Name | Company" format - extract just the name part
+        if ' | ' in name:
+            name = name.split(' | ')[0].strip()
+        result['name'] = name
         result['email'] = match.group(2).strip()
     else:
         # Just an email address
@@ -250,6 +255,7 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
             domain = domain_match.group(1).lower()
             skip_domains = ['indeed', 'linkedin', 'greenhouse', 'lever', 'gmail',
                            'outlook', 'yahoo', 'hotmail', 'icims', 'workday',
+                           'myworkday', 'myworkdayjobs',
                            'smartrecruiters', 'jobvite', 'taleo', 'ashby', 'workable',
                            'bamboohr', 'breezy', 'jazz', 'zoho', 'noreply', 'mail']
             if domain not in skip_domains and len(domain) > 2:

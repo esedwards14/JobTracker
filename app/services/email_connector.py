@@ -72,6 +72,8 @@ class GmailOAuthConnector:
             f'after:{after_date} subject:application',
             # Interview-related
             f'after:{after_date} subject:interview',
+            # Scheduling emails (Calendly, etc.) - catches direct recruiter scheduling
+            f'after:{after_date} calendly.com OR goodtime.io OR subject:schedule',
             # Indeed (most common job platform)
             f'after:{after_date} from:indeed.com OR from:indeedemail.com',
             # LinkedIn

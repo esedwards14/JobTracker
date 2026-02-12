@@ -203,6 +203,10 @@ class JobEmailParser:
             if ' @ ' in sender_name:
                 sender_name = sender_name.split(' @ ')[0].strip()
 
+            # If sender name contains | (like "Lauren Macaluso | Quartile"), extract the company part
+            if ' | ' in sender_name:
+                sender_name = sender_name.split(' | ')[-1].strip()
+
             # Exclude generic sender names and job platforms
             skip_names = ['indeed', 'linkedin', 'indeed apply', 'linkedin jobs', 'noreply',
                          'no-reply', 'jobs', 'careers', 'recruiting', 'talent', 'hr',
@@ -278,7 +282,8 @@ class JobEmailParser:
             'indeed', 'linkedin', 'hr team', 'recruiting', 'talent', 'careers',
             'indeed apply', 'indeed job', 'linkedin jobs', 'glassdoor',
             'ziprecruiter', 'monster', 'careerbuilder', 'handshake',
-            'greenhouse', 'lever', 'workday', 'icims', 'smartrecruiters',
+            'greenhouse', 'lever', 'workday', 'myworkday', 'myworkdayjobs',
+            'icims', 'smartrecruiters',
             'workable', 'jobvite', 'taleo', 'ashby', 'bamboohr', 'zoho',
             'breezy', 'jazz', 'recruiterbox', 'adobe acrobat sign',
             'noreply', 'no-reply', 'notifications', 'alerts', 'updates',
@@ -517,7 +522,8 @@ class JobEmailParser:
         """Extract company name from email domain as last resort."""
         # Skip known job platform domains
         skip_domains = ['indeed', 'linkedin', 'handshake', 'greenhouse', 'lever',
-                       'workday', 'gmail', 'outlook', 'yahoo', 'hotmail', 'icims',
+                       'workday', 'myworkday', 'myworkdayjobs', 'gmail', 'outlook',
+                       'yahoo', 'hotmail', 'icims',
                        'smartrecruiters', 'jobvite', 'taleo', 'noreply', 'no-reply',
                        'notifications', 'mail', 'email', 'e', 'workable', 'bamboohr',
                        'zoho', 'breezy', 'jazz', 'ashby', 'recruiterbox', 'candidates']
@@ -995,6 +1001,10 @@ class JobEmailParser:
             # If sender name contains @ (like "TEKsystems @ icims"), extract the first part
             if ' @ ' in sender_name:
                 sender_name = sender_name.split(' @ ')[0].strip()
+
+            # If sender name contains | (like "Lauren Macaluso | Quartile"), extract the company part
+            if ' | ' in sender_name:
+                sender_name = sender_name.split(' | ')[-1].strip()
 
             # Skip generic sender names and job platforms
             skip_names = ['indeed', 'linkedin', 'indeed apply', 'linkedin jobs', 'noreply',
