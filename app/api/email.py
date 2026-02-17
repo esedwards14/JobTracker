@@ -496,7 +496,7 @@ def import_parsed_email(id):
         position=data.get('position') or parsed.position or 'Unknown Position',
         date_applied=parsed.email_date.date() if parsed.email_date else None,
         source='email',
-        notes=f"Imported from email: {parsed.email_subject}"
+        notes="Imported from email"
     )
     db.session.add(application)
 
@@ -549,7 +549,7 @@ def import_all_pending():
                 position=parsed.position or 'Unknown Position',
                 date_applied=parsed.email_date.date() if parsed.email_date else None,
                 source='email',
-                notes=f"Imported from email: {parsed.email_subject}"
+                notes="Imported from email"
             )
             db.session.add(application)
             parsed.status = 'imported'
@@ -667,7 +667,7 @@ def scan_response_emails():
                             status=response_type,
                             response_received=True,
                             response_date=email_date.date() if email_date else None,
-                            notes=f"Created from response email: {response.get('email_subject', '')[:100]}"
+                            notes="Imported from email"
                         )
                         db.session.add(new_app)
                         applications = [new_app]
