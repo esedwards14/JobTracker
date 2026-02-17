@@ -46,7 +46,7 @@
                         <span class="ml-2.5 text-xl logo-text">Job Tracker</span>
                     </a>
                 </div>
-                <div class="flex items-center space-x-1">
+                <div class="flex items-center">
                     <a href="{{ url_for('views.dashboard') }}"
                        class="nav-link text-sm font-medium
                               {% if request.endpoint == 'views.dashboard' %}active{% endif %}">
@@ -67,12 +67,10 @@
                               {% if request.endpoint == 'views.email_settings' %}active{% endif %}">
                         Email Import
                     </a>
-                    <div class="pl-3">
-                        <a href="{{ url_for('views.new_application') }}"
-                           class="btn-primary">
-                            + Add Application
-                        </a>
-                    </div>
+                    <a href="{{ url_for('views.new_application') }}"
+                       class="btn-primary ml-4">
+                        + Add Application
+                    </a>
                 </div>
             </div>
         </div>
