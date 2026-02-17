@@ -5,52 +5,52 @@
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Page header -->
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Email Integration</h1>
-        <p class="mt-1 text-sm text-gray-500">Connect your Gmail to automatically import job applications from confirmation emails</p>
+    <div class="page-header fade-in">
+        <h1>Email Integration</h1>
+        <p class="mt-1 text-sm">Connect your Gmail to automatically import job applications from confirmation emails</p>
     </div>
 
     <!-- Connection Settings -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-4 py-2 border-b flex items-center justify-between">
-            <h2 class="text-base font-medium text-gray-900">Gmail Connection</h2>
+    <div class="glass-card fade-in">
+        <div class="px-4 py-2 border-b flex items-center justify-between" style="border-color: var(--border-glass);">
+            <h2 class="text-base font-semibold" style="color: var(--text-primary);">Gmail Connection</h2>
             {% if settings and settings.refresh_token %}
             <button onclick="disconnectGmail()"
-                    class="px-2 py-0.5 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50">
+                    class="btn btn-danger text-xs px-2 py-0.5">
                 Disconnect
             </button>
             {% endif %}
         </div>
         <div class="px-4 py-3">
             {% if settings and settings.refresh_token %}
-            <!-- Connected State - compact -->
+            <!-- Connected State -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <svg class="h-4 w-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-4 w-4 flex-shrink-0" style="color: var(--success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Connected as {{ settings.email_address }}</p>
+                        <p class="text-sm font-medium" style="color: var(--text-primary);">Connected as {{ settings.email_address }}</p>
                         {% if settings.last_sync %}
-                        <p class="text-xs text-gray-400">Last synced: {{ settings.last_sync.strftime('%b %d at %I:%M %p') }}</p>
+                        <p class="text-xs" style="color: var(--text-muted);">Last synced: {{ settings.last_sync.strftime('%b %d at %I:%M %p') }}</p>
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% else %}
-            <!-- Not Connected State - compact -->
+            <!-- Not Connected State -->
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center space-x-3 min-w-0">
-                    <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5 flex-shrink-0" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Gmail not connected</p>
-                        <p class="text-xs text-gray-500">Sign in to import job application emails</p>
+                        <p class="text-sm font-medium" style="color: var(--text-primary);">Gmail not connected</p>
+                        <p class="text-xs" style="color: var(--text-muted);">Sign in to import job application emails</p>
                     </div>
                 </div>
                 <button onclick="connectGmail()"
-                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0">
+                        class="btn btn-glass flex-shrink-0">
                     <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -60,21 +60,21 @@
                     Sign in with Google
                 </button>
             </div>
-            <p class="mt-2 text-xs text-gray-400">Read-only access. No passwords stored.</p>
+            <p class="mt-2 text-xs" style="color: var(--text-muted);">Read-only access. No passwords stored.</p>
 
-            <div id="oauth-error" class="mt-2 hidden p-2 text-sm bg-red-50 border border-red-200 rounded text-red-700"></div>
+            <div id="oauth-error" class="mt-2 hidden p-2 text-sm flash-error"></div>
             {% endif %}
         </div>
     </div>
 
     <!-- Sync Section (only show when connected) -->
         {% if settings and settings.refresh_token %}
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-medium text-gray-900">Sync Emails</h2>
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--border-glass);">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Sync Emails</h2>
             <button onclick="syncEmails()"
                     id="sync-btn"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    class="btn-primary">
                 <span id="sync-btn-text">Sync Now</span>
                 <span id="sync-spinner" class="hidden">
                     <svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24">
@@ -86,20 +86,20 @@
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Scan your inbox for job application confirmation emails from:</p>
+            <p class="mb-4" style="color: var(--text-secondary);">Scan your inbox for job application confirmation emails from:</p>
             <div class="flex flex-wrap gap-2 mb-4">
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Indeed</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">LinkedIn</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Handshake</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Greenhouse</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Lever</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Workday</span>
-                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">+ Company Websites</span>
+                <span class="platform-badge">Indeed</span>
+                <span class="platform-badge">LinkedIn</span>
+                <span class="platform-badge">Handshake</span>
+                <span class="platform-badge">Greenhouse</span>
+                <span class="platform-badge">Lever</span>
+                <span class="platform-badge">Workday</span>
+                <span class="platform-badge" style="background: rgba(255,255,255,0.03); color: var(--text-muted); border-color: var(--border-glass);">+ Company Websites</span>
             </div>
 
             <div class="flex items-center space-x-4">
-                <label for="days_back" class="text-sm font-medium text-gray-700">Look back:</label>
-                <select id="days_back" class="rounded-md border-gray-300 shadow-sm">
+                <label for="days_back" class="text-sm font-medium" style="color: var(--text-secondary);">Look back:</label>
+                <select id="days_back">
                     <option value="7">7 days</option>
                     <option value="14">14 days</option>
                     <option value="30" selected>30 days</option>
@@ -112,40 +112,40 @@
         </div>
     </div>
 
-    <!-- Pending Emails (moved above responses) -->
-    <div class="bg-white rounded-lg shadow mt-4">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-medium text-gray-900">Pending Imports <span id="pending-count" class="text-gray-500 font-normal text-base"></span></h2>
+    <!-- Pending Emails -->
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--border-glass);">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Pending Imports <span id="pending-count" style="color: var(--text-muted); font-weight: 400;"></span></h2>
             <div class="flex items-center space-x-3">
                 <button id="pending-toggle" onclick="togglePending()" aria-expanded="false"
-                        class="px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-100 hover:bg-gray-200">
-                    ▸
+                        class="btn btn-glass px-2 py-1 text-sm">
+                    &#9656;
                 </button>
                 <button onclick="importAll()"
                         id="import-all-btn"
-                        class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+                        class="btn btn-success text-sm">
                     Import All High Confidence
                 </button>
             </div>
         </div>
         <div id="pending-emails" class="divide-y hidden">
-            <div class="p-6 text-center text-gray-500">
+            <div class="p-6 text-center" style="color: var(--text-muted);">
                 <p>Click "Sync Now" to scan for job application emails</p>
             </div>
         </div>
     </div>
 
     <!-- Scan for Responses -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--border-glass);">
             <div>
-                <h2 class="text-lg font-medium text-gray-900">Scan for Responses</h2>
-                <p class="text-sm text-gray-500">Find rejections, interview requests, and offers in your inbox</p>
+                <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Scan for Responses</h2>
+                <p class="text-sm" style="color: var(--text-muted);">Find rejections, interview requests, and offers in your inbox</p>
             </div>
             <div class="flex space-x-2">
                 <button onclick="scanContacts()"
                         id="scan-contacts-btn"
-                        class="px-4 py-2 border border-purple-300 text-purple-700 rounded-md hover:bg-purple-50">
+                        class="btn btn-purple">
                     <span id="scan-contacts-text">Scan Contacts</span>
                     <span id="scan-contacts-spinner" class="hidden">
                         <svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24">
@@ -156,12 +156,12 @@
                 </button>
                 <button onclick="previewResponses()"
                         id="preview-responses-btn"
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                        class="btn btn-glass">
                     Preview
                 </button>
                 <button onclick="scanResponses()"
                         id="scan-responses-btn"
-                        class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                        class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;">
                     <span id="scan-responses-text">Scan & Update</span>
                     <span id="scan-responses-spinner" class="hidden">
                         <svg class="animate-spin h-5 w-5 inline" fill="none" viewBox="0 0 24 24">
@@ -173,11 +173,11 @@
             </div>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Automatically detect and update application statuses based on emails:</p>
+            <p class="mb-4" style="color: var(--text-secondary);">Automatically detect and update application statuses based on emails:</p>
             <div class="flex flex-wrap gap-2 mb-4">
-                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">Rejections</span>
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Interview Requests</span>
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Offers</span>
+                <span class="status-pill status-rejected">Rejections</span>
+                <span class="status-pill status-interviewing">Interview Requests</span>
+                <span class="status-pill status-offered">Offers</span>
             </div>
             <div id="responses-message" class="hidden"></div>
             <div id="responses-preview" class="hidden mt-4 max-h-96 overflow-y-auto"></div>
@@ -185,41 +185,40 @@
     </div>
 
     <!-- Manage Applications -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b">
-            <h2 class="text-lg font-medium text-gray-900">Manage Data</h2>
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b" style="border-color: var(--border-glass);">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Manage Data</h2>
         </div>
         <div class="p-6 space-y-4">
             <div>
-                <p class="text-gray-600 mb-2">Delete all imported applications:</p>
+                <p class="mb-2" style="color: var(--text-secondary);">Delete all imported applications:</p>
                 <div class="flex items-center space-x-4">
                     <button onclick="deleteAllApplications()"
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                            class="btn btn-danger">
                         Delete All Applications
                     </button>
-                    <span id="delete-count" class="text-sm text-gray-500"></span>
+                    <span id="delete-count" class="text-sm" style="color: var(--text-muted);"></span>
                 </div>
             </div>
             <div>
-                <p class="text-gray-600 mb-2">Clear email cache to re-scan (needed after changing filters):</p>
+                <p class="mb-2" style="color: var(--text-secondary);">Clear email cache to re-scan (needed after changing filters):</p>
                 <div class="flex items-center space-x-4">
                     <button onclick="clearParsedEmails()"
-                            class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+                            class="btn btn-orange">
                         Clear Email Cache
                     </button>
-                    <span id="cache-count" class="text-sm text-gray-500"></span>
+                    <span id="cache-count" class="text-sm" style="color: var(--text-muted);"></span>
                 </div>
             </div>
             <div id="delete-message" class="mt-4 hidden"></div>
         </div>
     </div>
 
-    <!-- Duplicate pending imports removed -->
     {% endif %}
 </div>
 
 <script>
-// Safe date formatting helper - prevents "The string did not match the expected pattern" error
+// Safe date formatting helper
 function formatDate(dateStr) {
     if (!dateStr) return '';
     try {
@@ -240,7 +239,6 @@ async function connectGmail() {
         const data = await response.json();
 
         if (data.authorization_url) {
-            // Redirect to Google OAuth
             window.location.href = data.authorization_url;
         } else if (data.error) {
             showError(data.error);
@@ -320,49 +318,49 @@ async function loadPendingEmails() {
         countEl.textContent = count === 0 ? '(0)' : `(${count})`;
 
         if (count === 0) {
-            container.innerHTML = '<div class="p-6 text-center text-gray-500">No pending emails to import</div>';
+            container.innerHTML = '<div class="p-6 text-center" style="color: var(--text-muted);">No pending emails to import</div>';
             return;
         }
 
         const sorted = [...data.emails].sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
         container.innerHTML = sorted.map(email => `
-            <div class="p-4 hover:bg-gray-50 border-b" id="email-${email.id}">
+            <div class="p-4 hover:bg-white/[0.02] transition-colors" id="email-${email.id}" style="border-bottom: 1px solid var(--border-glass);">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         <div class="flex items-center space-x-2 mb-2">
-                            <span class="px-2 py-0.5 text-xs rounded-full ${email.confidence >= 0.7 ? 'bg-green-100 text-green-800' : email.confidence >= 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                            <span class="status-pill text-xs ${email.confidence >= 0.7 ? 'confidence-high' : email.confidence >= 0.5 ? 'confidence-medium' : 'confidence-low'}">
                                 ${Math.round(email.confidence * 100)}%
                             </span>
-                            <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">${email.platform}</span>
-                            <span class="text-xs text-gray-400">${formatDate(email.email_date)}</span>
+                            <span class="platform-badge text-xs" style="padding: 0.15rem 0.5rem;">${email.platform}</span>
+                            <span class="text-xs" style="color: var(--text-muted);">${formatDate(email.email_date)}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <div>
-                                <label class="text-xs text-gray-500">Company</label>
+                                <label class="text-xs" style="color: var(--text-muted); text-transform: none; letter-spacing: normal;">Company</label>
                                 <input type="text"
                                        id="company-${email.id}"
                                        value="${email.company_name || ''}"
                                        placeholder="Enter company name"
-                                       class="w-full text-sm border-gray-300 rounded px-2 py-1 ${!email.company_name ? 'border-red-300 bg-red-50' : ''}">
+                                       style="padding: 0.25rem 0.5rem; font-size: 0.875rem; ${!email.company_name ? 'border-color: rgba(239,68,68,0.3) !important;' : ''}">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-500">Position</label>
+                                <label class="text-xs" style="color: var(--text-muted); text-transform: none; letter-spacing: normal;">Position</label>
                                 <input type="text"
                                        id="position-${email.id}"
                                        value="${email.position || ''}"
                                        placeholder="Enter position"
-                                       class="w-full text-sm border-gray-300 rounded px-2 py-1 ${!email.position ? 'border-red-300 bg-red-50' : ''}">
+                                       style="padding: 0.25rem 0.5rem; font-size: 0.875rem; ${!email.position ? 'border-color: rgba(239,68,68,0.3) !important;' : ''}">
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400">${email.email_subject}</p>
+                        <p class="text-xs" style="color: var(--text-muted);">${email.email_subject}</p>
                     </div>
                     <div class="flex space-x-2 ml-4">
                         <button onclick="importEmail(${email.id})"
-                                class="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                                class="btn-primary text-xs" style="padding: 0.25rem 0.75rem;">
                             Import
                         </button>
                         <button onclick="ignoreEmail(${email.id})"
-                                class="px-3 py-1 text-sm border border-gray-300 text-gray-600 rounded hover:bg-gray-50">
+                                class="btn btn-glass text-xs" style="padding: 0.25rem 0.75rem;">
                             Ignore
                         </button>
                     </div>
@@ -370,7 +368,7 @@ async function loadPendingEmails() {
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = '<div class="p-6 text-center text-red-500">Failed to load emails</div>';
+        container.innerHTML = '<div class="p-6 text-center" style="color: var(--danger);">Failed to load emails</div>';
     }
 }
 
@@ -383,7 +381,7 @@ async function importEmail(id) {
     const position = positionInput ? positionInput.value.trim() : '';
 
     if (!company) {
-        companyInput.classList.add('border-red-500', 'bg-red-50');
+        companyInput.style.borderColor = 'rgba(239,68,68,0.5)';
         companyInput.focus();
         alert('Please enter a company name before importing.');
         return;
@@ -422,14 +420,14 @@ async function importAll() {
     }
 }
 
-// Update pending count display (after import/ignore)
+// Update pending count display
 function updatePendingCount() {
     const container = document.getElementById('pending-emails');
     const countEl = document.getElementById('pending-count');
     const count = container.querySelectorAll('[id^="email-"]').length;
     countEl.textContent = count === 0 ? '(0)' : `(${count})`;
     if (count === 0) {
-        container.innerHTML = '<div class="p-6 text-center text-gray-500">No pending emails to import</div>';
+        container.innerHTML = '<div class="p-6 text-center" style="color: var(--text-muted);">No pending emails to import</div>';
     }
 }
 
@@ -441,14 +439,14 @@ function togglePending() {
     if (!container) return;
     const isHidden = container.classList.toggle('hidden');
     btn.setAttribute('aria-expanded', String(!isHidden));
-    btn.textContent = isHidden ? '▸' : '▾';
+    btn.innerHTML = isHidden ? '&#9656;' : '&#9662;';
 }
 
 // Helper to show messages
 function showMessage(elementId, message, type) {
     const el = document.getElementById(elementId);
     el.innerHTML = message;
-    el.className = `mt-4 p-3 rounded-md ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    el.className = `mt-4 p-3 rounded-lg ${type === 'success' ? 'flash-success' : 'flash-error'}`;
     el.classList.remove('hidden');
 }
 
@@ -520,7 +518,7 @@ async function loadParsedCount() {
     }
 }
 
-// Scan for response emails (rejections, interviews, offers)
+// Scan for response emails
 async function scanResponses() {
     const btn = document.getElementById('scan-responses-btn');
     const btnText = document.getElementById('scan-responses-text');
@@ -542,20 +540,20 @@ async function scanResponses() {
 
         if (response.ok) {
             if (data.updates.length > 0) {
-                let html = `<div class="mb-2 font-medium text-green-800">Updated ${data.updates.length} applications:</div>`;
+                let html = `<div class="mb-2 font-medium" style="color: var(--success);">Updated ${data.updates.length} applications:</div>`;
                 html += '<div class="space-y-2">';
                 data.updates.forEach(update => {
                     const statusColor = {
-                        'rejected': 'bg-red-100 text-red-800',
-                        'interviewing': 'bg-blue-100 text-blue-800',
-                        'offered': 'bg-green-100 text-green-800'
-                    }[update.new_status] || 'bg-gray-100 text-gray-800';
+                        'rejected': 'status-rejected',
+                        'interviewing': 'status-interviewing',
+                        'offered': 'status-offered'
+                    }[update.new_status] || 'status-applied';
 
                     html += `
-                        <div class="p-2 bg-gray-50 rounded text-sm">
-                            <span class="font-medium">${update.company}</span> - ${update.position}
-                            <span class="px-2 py-0.5 ${statusColor} rounded-full text-xs ml-2">
-                                ${update.old_status} → ${update.new_status}
+                        <div class="p-2 rounded-lg text-sm" style="background: var(--bg-glass);">
+                            <span class="font-medium" style="color: var(--text-primary);">${update.company}</span> - ${update.position}
+                            <span class="status-pill ${statusColor} ml-2">
+                                ${update.old_status} &rarr; ${update.new_status}
                             </span>
                         </div>
                     `;
@@ -577,10 +575,10 @@ async function scanResponses() {
     }
 }
 
-// Preview response emails without updating
+// Preview response emails
 async function previewResponses() {
     const preview = document.getElementById('responses-preview');
-    preview.innerHTML = '<div class="text-center py-4"><svg class="animate-spin h-6 w-6 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
+    preview.innerHTML = '<div class="text-center py-4"><svg class="animate-spin h-6 w-6 mx-auto" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
     preview.classList.remove('hidden');
 
     try {
@@ -595,28 +593,27 @@ async function previewResponses() {
 
         if (response.ok) {
             if (data.responses.length === 0) {
-                preview.innerHTML = '<div class="text-center text-gray-500 py-4">No response emails found</div>';
+                preview.innerHTML = '<div class="text-center py-4" style="color: var(--text-muted);">No response emails found</div>';
                 return;
             }
 
-            let html = `<div class="mb-2 text-sm text-gray-600">Found ${data.total_found} response emails:</div>`;
+            let html = `<div class="mb-2 text-sm" style="color: var(--text-secondary);">Found ${data.total_found} response emails:</div>`;
             html += '<div class="space-y-2">';
 
             data.responses.forEach((r, index) => {
-                const typeColor = {
-                    'rejected': 'bg-red-100 text-red-800 border-red-200',
-                    'interviewing': 'bg-blue-100 text-blue-800 border-blue-200',
-                    'offered': 'bg-green-100 text-green-800 border-green-200'
-                }[r.response_type] || 'bg-gray-100 text-gray-800';
+                const typeClass = {
+                    'rejected': 'status-rejected',
+                    'interviewing': 'status-interviewing',
+                    'offered': 'status-offered'
+                }[r.response_type] || 'status-applied';
 
                 const typeLabel = r.response_type ? r.response_type.charAt(0).toUpperCase() + r.response_type.slice(1) : 'Unknown';
 
-                // Check if it's a personal email (potential connection)
                 const isPersonal = r.is_personal_email && r.sender_info && r.sender_info.name;
                 const connectionBtn = isPersonal && !r.existing_contact_id ? `
                     <button onclick="saveConnection(${index})"
                             id="save-conn-${index}"
-                            class="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded hover:bg-purple-200"
+                            class="ml-2 btn btn-purple text-xs" style="padding: 0.15rem 0.5rem;"
                             data-name="${escapeAttr(r.sender_info.name)}"
                             data-email="${escapeAttr(r.sender_info.email || '')}"
                             data-company="${escapeAttr(r.company || '')}"
@@ -625,30 +622,30 @@ async function previewResponses() {
                             data-app-id="${r.matching_applications.length > 0 ? r.matching_applications[0].id : ''}">
                         + Save as Connection
                     </button>
-                ` : (r.existing_contact_id ? '<span class="ml-2 text-xs text-purple-600">Already a connection</span>' : '');
+                ` : (r.existing_contact_id ? '<span class="ml-2 text-xs" style="color: var(--purple);">Already a connection</span>' : '');
 
                 html += `
-                    <div class="p-3 border rounded ${typeColor}">
+                    <div class="p-3 rounded-lg glass-card" style="border: 1px solid var(--border-glass);">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="font-medium">${typeLabel}</span>
-                            <span class="text-xs">${formatDate(r.email_date)}</span>
+                            <span class="status-pill ${typeClass}">${typeLabel}</span>
+                            <span class="text-xs" style="color: var(--text-muted);">${formatDate(r.email_date)}</span>
                         </div>
-                        <div class="text-sm mb-1">
-                            <strong>Company:</strong> ${r.company || '<span class="text-orange-600">Unknown</span>'}
-                            ${r.position ? `| <strong>Position:</strong> ${r.position}` : ''}
+                        <div class="text-sm mb-1" style="color: var(--text-secondary);">
+                            <strong style="color: var(--text-primary);">${r.company || '<span style="color: var(--warning);">Unknown</span>'}</strong>
+                            ${r.position ? `| <strong style="color: var(--text-primary);">Position:</strong> ${r.position}` : ''}
                         </div>
-                        <div class="text-xs text-gray-500 mb-1 flex items-center flex-wrap">
+                        <div class="text-xs mb-1 flex items-center flex-wrap" style="color: var(--text-muted);">
                             <span>From: ${r.email_from}</span>
-                            ${isPersonal ? '<span class="ml-2 px-1 bg-purple-50 text-purple-700 rounded text-xs">Personal</span>' : ''}
+                            ${isPersonal ? '<span class="ml-2 status-pill" style="background: rgba(139,92,246,0.1); color: var(--purple); font-size: 0.65rem; padding: 0.1rem 0.4rem;">Personal</span>' : ''}
                             ${connectionBtn}
                         </div>
-                        <div class="text-xs text-gray-600 truncate">${r.email_subject}</div>
+                        <div class="text-xs truncate" style="color: var(--text-muted);">${r.email_subject}</div>
                         ${r.matching_applications.length > 0 ? `
                             <div class="mt-2 text-xs">
-                                <span class="text-green-700">Matches ${r.matching_applications.length} application(s):</span>
-                                ${r.matching_applications.map(a => `<span class="ml-1 px-1 bg-white rounded">${a.company} (${a.status})</span>`).join('')}
+                                <span style="color: var(--success);">Matches ${r.matching_applications.length} application(s):</span>
+                                ${r.matching_applications.map(a => `<span class="ml-1 px-1 rounded" style="background: var(--bg-glass);">${a.company} (${a.status})</span>`).join('')}
                             </div>
-                        ` : (r.would_be_duplicate ? '<div class="mt-2 text-xs text-gray-500">Skipped (duplicate response email)</div>' : (r.will_create_new ? '<div class="mt-2 text-xs text-blue-600">Will create new application</div>' : '<div class="mt-2 text-xs text-orange-600">No matching applications found</div>')) }
+                        ` : (r.would_be_duplicate ? '<div class="mt-2 text-xs" style="color: var(--text-muted);">Skipped (duplicate response email)</div>' : (r.will_create_new ? '<div class="mt-2 text-xs" style="color: var(--info);">Will create new application</div>' : '<div class="mt-2 text-xs" style="color: var(--warning);">No matching applications found</div>')) }
                     </div>
                 `;
             });
@@ -656,10 +653,10 @@ async function previewResponses() {
 
             preview.innerHTML = html;
         } else {
-            preview.innerHTML = `<div class="text-red-500">${data.error}</div>`;
+            preview.innerHTML = `<div style="color: var(--danger);">${data.error}</div>`;
         }
     } catch (err) {
-        preview.innerHTML = `<div class="text-red-500">Preview failed: ${err.message}</div>`;
+        preview.innerHTML = `<div style="color: var(--danger);">Preview failed: ${err.message}</div>`;
     }
 }
 
@@ -702,23 +699,24 @@ async function saveConnection(index) {
 
         if (response.ok) {
             btn.textContent = 'Saved!';
-            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded';
+            btn.className = 'ml-2 btn btn-success text-xs';
+            btn.style.padding = '0.15rem 0.5rem';
         } else if (response.status === 409) {
             btn.textContent = 'Already exists';
-            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded';
+            btn.className = 'ml-2 status-pill confidence-medium text-xs';
         } else {
             btn.textContent = 'Error';
-            btn.className = 'ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded';
+            btn.className = 'ml-2 status-pill confidence-low text-xs';
             console.error(data.error);
         }
     } catch (err) {
         btn.textContent = 'Error';
-        btn.className = 'ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded';
+        btn.className = 'ml-2 status-pill confidence-low text-xs';
         console.error(err);
     }
 }
 
-// Scan for contacts from already-imported emails
+// Scan for contacts from emails
 async function scanContacts() {
     const btn = document.getElementById('scan-contacts-btn');
     const btnText = document.getElementById('scan-contacts-text');
@@ -764,7 +762,7 @@ function showResponsesMessage(message, type) {
     } else {
         el.innerHTML = message;
     }
-    el.className = `mt-4 p-3 rounded-md ${type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-100 text-red-800'}`;
+    el.className = `mt-4 p-3 rounded-lg ${type === 'success' ? 'flash-success' : 'flash-error'}`;
     el.classList.remove('hidden');
 }
 

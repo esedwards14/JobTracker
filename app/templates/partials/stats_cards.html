@@ -1,59 +1,59 @@
 <!-- Total Applications -->
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center">
-        <div class="flex-shrink-0 bg-indigo-100 rounded-md p-3">
-            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<div class="stat-card stat-total glass-card-glow">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="stat-label">Total Applications</p>
+            <p class="stat-value mt-1 counter-animate">{{ stats.total_applications }}</p>
+        </div>
+        <div class="stat-icon">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-        </div>
-        <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Applications</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.total_applications }}</p>
         </div>
     </div>
 </div>
 
 <!-- Response Rate -->
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center">
-        <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<div class="stat-card stat-response glass-card-glow">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="stat-label">Response Rate</p>
+            <p class="stat-value mt-1 counter-animate">{{ stats.response_rate }}%</p>
+        </div>
+        <div class="stat-icon">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-        </div>
-        <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Response Rate</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.response_rate }}%</p>
         </div>
     </div>
 </div>
 
 <!-- Interview Rate -->
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center">
-        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<div class="stat-card stat-interview glass-card-glow">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="stat-label">Interview Rate</p>
+            <p class="stat-value mt-1 counter-animate">{{ stats.interview_rate }}%</p>
+        </div>
+        <div class="stat-icon">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-        </div>
-        <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Interview Rate</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.interview_rate }}%</p>
         </div>
     </div>
 </div>
 
 <!-- This Week -->
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center">
-        <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
-            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<div class="stat-card stat-week glass-card-glow">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="stat-label">This Week</p>
+            <p class="stat-value mt-1 counter-animate">{{ stats.recent_applications.last_7_days }}</p>
+        </div>
+        <div class="stat-icon">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-        </div>
-        <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">This Week</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.recent_applications.last_7_days }}</p>
         </div>
     </div>
 </div>

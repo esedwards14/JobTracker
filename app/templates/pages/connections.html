@@ -5,15 +5,15 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Page header -->
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center fade-in page-header">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Connections</h1>
-            <p class="mt-1 text-sm text-gray-500">Recruiters, hiring managers, and other contacts from your job search</p>
+            <h1>Connections</h1>
+            <p class="mt-1 text-sm">Recruiters, hiring managers, and other contacts from your job search</p>
         </div>
         <div class="flex space-x-2">
             <button onclick="scanContacts()"
                     id="scan-contacts-btn"
-                    class="border border-purple-300 text-purple-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-50">
+                    class="btn btn-purple">
                 <span id="scan-contacts-text">Scan Contacts</span>
                 <span id="scan-contacts-spinner" class="hidden">
                     <svg class="animate-spin h-4 w-4 inline" fill="none" viewBox="0 0 24 24">
@@ -24,27 +24,25 @@
                 </span>
             </button>
             <button onclick="openAddModal()"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                    class="btn-primary">
                 + Add Connection
             </button>
         </div>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="glass-card p-4 fade-in">
         <div class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
-                <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <label for="search-input" class="block text-sm mb-1">Search</label>
                 <input type="text"
                        id="search-input"
                        placeholder="Search name, company, email..."
-                       onkeyup="filterContacts()"
-                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                       onkeyup="filterContacts()">
             </div>
             <div class="w-40">
-                <label for="source-filter" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
-                <select id="source-filter" onchange="filterContacts()"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="source-filter" class="block text-sm mb-1">Source</label>
+                <select id="source-filter" onchange="filterContacts()">
                     <option value="">All Sources</option>
                     <option value="email_scan">From Email</option>
                     <option value="manual">Manual</option>
@@ -54,14 +52,14 @@
     </div>
 
     <!-- Scan message -->
-    <div id="scan-message" class="hidden rounded-md p-3"></div>
+    <div id="scan-message" class="hidden rounded-lg p-3"></div>
 
     <!-- Connections List -->
-    <div class="bg-white rounded-lg shadow">
-        <div id="connections-list" class="divide-y divide-gray-200">
+    <div class="glass-card fade-in">
+        <div id="connections-list" class="divide-y">
             <!-- Loading state -->
-            <div class="p-8 text-center text-gray-500">
-                <svg class="animate-spin h-8 w-8 mx-auto mb-2 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div class="p-8 text-center" style="color: var(--text-muted);">
+                <svg class="animate-spin h-8 w-8 mx-auto mb-2" style="color: var(--accent);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -72,63 +70,55 @@
 </div>
 
 <!-- Add/Edit Modal -->
-<div id="contact-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 id="modal-title" class="text-lg font-medium text-gray-900">Add Connection</h3>
+<div id="contact-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50">
+    <div class="modal-content max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b" style="border-color: var(--border-glass);">
+            <h3 id="modal-title" class="text-lg font-semibold" style="color: var(--text-primary);">Add Connection</h3>
         </div>
         <form id="contact-form" class="p-6 space-y-4">
             <input type="hidden" id="contact-id" value="">
 
             <div>
-                <label for="contact-name" class="block text-sm font-medium text-gray-700">Name *</label>
-                <input type="text" id="contact-name" required
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-name" class="block text-sm">Name *</label>
+                <input type="text" id="contact-name" required class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-company" class="block text-sm font-medium text-gray-700">Company</label>
-                <input type="text" id="contact-company"
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-company" class="block text-sm">Company</label>
+                <input type="text" id="contact-company" class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-title" class="block text-sm font-medium text-gray-700">Title</label>
-                <input type="text" id="contact-title" placeholder="e.g., Recruiter, Hiring Manager"
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-title" class="block text-sm">Title</label>
+                <input type="text" id="contact-title" placeholder="e.g., Recruiter, Hiring Manager" class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="contact-email"
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-email" class="block text-sm">Email</label>
+                <input type="email" id="contact-email" class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                <input type="tel" id="contact-phone"
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-phone" class="block text-sm">Phone</label>
+                <input type="tel" id="contact-phone" class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-linkedin" class="block text-sm font-medium text-gray-700">LinkedIn URL</label>
-                <input type="url" id="contact-linkedin" placeholder="https://linkedin.com/in/..."
-                       class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="contact-linkedin" class="block text-sm">LinkedIn URL</label>
+                <input type="url" id="contact-linkedin" placeholder="https://linkedin.com/in/..." class="mt-1 w-full">
             </div>
 
             <div>
-                <label for="contact-notes" class="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea id="contact-notes" rows="3"
-                          class="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                <label for="contact-notes" class="block text-sm">Notes</label>
+                <textarea id="contact-notes" rows="3" class="mt-1 w-full"></textarea>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
                 <button type="button" onclick="closeModal()"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        class="btn btn-glass">
                     Cancel
                 </button>
-                <button type="submit"
-                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                <button type="submit" class="btn-primary">
                     Save
                 </button>
             </div>
@@ -139,7 +129,6 @@
 <script>
 let allContacts = [];
 
-// Load contacts on page load
 document.addEventListener('DOMContentLoaded', loadContacts);
 
 async function loadContacts() {
@@ -151,7 +140,7 @@ async function loadContacts() {
     } catch (error) {
         console.error('Error loading contacts:', error);
         document.getElementById('connections-list').innerHTML = `
-            <div class="p-8 text-center text-red-500">
+            <div class="p-8 text-center" style="color: var(--danger);">
                 Failed to load connections. Please try again.
             </div>
         `;
@@ -182,38 +171,37 @@ function renderContacts(contacts) {
 
     if (contacts.length === 0) {
         container.innerHTML = `
-            <div class="p-8 text-center text-gray-500">
-                <svg class="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="empty-state">
+                <svg class="h-12 w-12 mx-auto mb-4" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p class="text-lg font-medium">No connections yet</p>
-                <p class="mt-1">Add recruiters and hiring managers you've connected with</p>
+                <p class="text-lg font-medium" style="color: var(--text-primary);">No connections yet</p>
+                <p class="mt-1" style="color: var(--text-muted);">Add recruiters and hiring managers you've connected with</p>
             </div>
         `;
         return;
     }
 
     container.innerHTML = contacts.map(contact => `
-        <div class="p-4 hover:bg-gray-50 flex items-start justify-between">
+        <div class="p-4 hover:bg-white/[0.02] transition-colors flex items-start justify-between">
             <div class="flex items-start space-x-4">
-                <!-- Avatar -->
-                <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <span class="text-indigo-600 font-semibold text-lg">${getInitials(contact.name)}</span>
+                <div class="avatar h-12 w-12 flex-shrink-0 text-lg">
+                    ${getInitials(contact.name)}
                 </div>
 
                 <div>
                     <div class="flex items-center space-x-2">
-                        <h3 class="font-medium text-gray-900">${escapeHtml(contact.name)}</h3>
-                        ${contact.source === 'email_scan' ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">From Email</span>' : ''}
+                        <h3 class="font-medium" style="color: var(--text-primary);">${escapeHtml(contact.name)}</h3>
+                        ${contact.source === 'email_scan' ? '<span class="platform-badge text-xs" style="padding: 0.1rem 0.5rem;">From Email</span>' : ''}
                     </div>
 
-                    ${contact.title ? `<p class="text-sm text-gray-600">${escapeHtml(contact.title)}</p>` : ''}
-                    ${contact.company ? `<p class="text-sm text-gray-500">${escapeHtml(contact.company)}</p>` : ''}
+                    ${contact.title ? `<p class="text-sm" style="color: var(--text-secondary);">${escapeHtml(contact.title)}</p>` : ''}
+                    ${contact.company ? `<p class="text-sm" style="color: var(--text-muted);">${escapeHtml(contact.company)}</p>` : ''}
 
-                    <div class="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
+                    <div class="mt-2 flex flex-wrap gap-3 text-sm" style="color: var(--text-muted);">
                         ${contact.email ? `
-                            <a href="mailto:${escapeHtml(contact.email)}" class="flex items-center hover:text-indigo-600">
+                            <a href="mailto:${escapeHtml(contact.email)}" class="flex items-center hover:opacity-80" style="color: var(--accent-hover);">
                                 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
@@ -221,7 +209,7 @@ function renderContacts(contacts) {
                             </a>
                         ` : ''}
                         ${contact.phone ? `
-                            <a href="tel:${escapeHtml(contact.phone)}" class="flex items-center hover:text-indigo-600">
+                            <a href="tel:${escapeHtml(contact.phone)}" class="flex items-center hover:opacity-80" style="color: var(--accent-hover);">
                                 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
@@ -229,7 +217,7 @@ function renderContacts(contacts) {
                             </a>
                         ` : ''}
                         ${contact.linkedin_url ? `
-                            <a href="${escapeHtml(contact.linkedin_url)}" target="_blank" class="flex items-center hover:text-indigo-600">
+                            <a href="${escapeHtml(contact.linkedin_url)}" target="_blank" class="flex items-center hover:opacity-80" style="color: var(--accent-hover);">
                                 <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                                 </svg>
@@ -239,24 +227,24 @@ function renderContacts(contacts) {
                     </div>
 
                     ${contact.email_subject ? `
-                        <p class="mt-2 text-xs text-gray-400">
+                        <p class="mt-2 text-xs" style="color: var(--text-muted);">
                             Re: ${escapeHtml(contact.email_subject.substring(0, 60))}${contact.email_subject.length > 60 ? '...' : ''}
                         </p>
                     ` : ''}
 
-                    ${contact.notes ? `<p class="mt-2 text-sm text-gray-600">${escapeHtml(contact.notes)}</p>` : ''}
+                    ${contact.notes ? `<p class="mt-2 text-sm" style="color: var(--text-secondary);">${escapeHtml(contact.notes)}</p>` : ''}
                 </div>
             </div>
 
             <div class="flex space-x-2">
                 <button onclick="editContact(${contact.id})"
-                        class="text-gray-400 hover:text-indigo-600 p-1">
+                        class="p-1 hover:opacity-80 transition-opacity" style="color: var(--text-muted);">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                 </button>
                 <button onclick="deleteContact(${contact.id})"
-                        class="text-gray-400 hover:text-red-600 p-1">
+                        class="p-1 hover:opacity-80 transition-opacity" style="color: var(--danger);">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -310,10 +298,7 @@ async function deleteContact(id) {
     if (!confirm('Are you sure you want to delete this connection?')) return;
 
     try {
-        const response = await fetch(`/api/v1/contacts/${id}`, {
-            method: 'DELETE'
-        });
-
+        const response = await fetch(`/api/v1/contacts/${id}`, { method: 'DELETE' });
         if (response.ok) {
             loadContacts();
         } else {
@@ -325,7 +310,6 @@ async function deleteContact(id) {
     }
 }
 
-// Form submission
 document.getElementById('contact-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -363,12 +347,10 @@ document.getElementById('contact-form').addEventListener('submit', async functio
     }
 });
 
-// Close modal on escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
 });
 
-// Scan contacts from emails
 async function scanContacts() {
     const btn = document.getElementById('scan-contacts-btn');
     const btnText = document.getElementById('scan-contacts-text');
@@ -394,18 +376,18 @@ async function scanContacts() {
                 msg += ` (${data.skipped_existing} already existed)`;
             }
             msgEl.textContent = msg;
-            msgEl.className = 'rounded-md p-3 bg-green-100 text-green-800';
+            msgEl.className = 'rounded-lg p-3 flash-success';
             if (data.contacts_created > 0) {
                 loadContacts();
             }
         } else {
             msgEl.textContent = data.error || 'Scan failed';
-            msgEl.className = 'rounded-md p-3 bg-red-100 text-red-800';
+            msgEl.className = 'rounded-lg p-3 flash-error';
         }
     } catch (err) {
         const msgEl = document.getElementById('scan-message');
         msgEl.textContent = 'Contact scan failed: ' + err.message;
-        msgEl.className = 'rounded-md p-3 bg-red-100 text-red-800';
+        msgEl.className = 'rounded-lg p-3 flash-error';
     } finally {
         btn.disabled = false;
         btnText.classList.remove('hidden');
@@ -413,7 +395,6 @@ async function scanContacts() {
     }
 }
 
-// Close modal on backdrop click
 document.getElementById('contact-modal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });

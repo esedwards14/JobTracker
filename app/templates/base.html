@@ -5,407 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Job Tracker{% endblock %}</title>
 
-    <!-- Tailwind CSS CDN (enable class-based dark mode) -->
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
     <script>
         window.tailwind = window.tailwind || {};
-        tailwind.config = {
-            darkMode: 'class'
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- HTMX JSON encoding extension -->
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
 
-    <!-- Custom styles -->
+    <!-- Modern theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
+
+    <!-- HTMX loading indicator (minimal inline) -->
     <style>
-        /* HTMX loading indicator */
-        .htmx-request .htmx-indicator {
-            display: inline-block;
-        }
-        .htmx-indicator {
-            display: none;
-        }
-
-        /* Status colors */
-        .status-applied { background-color: #E5E7EB; color: #374151; }
-        .status-interviewing { background-color: #DBEAFE; color: #1E40AF; }
-        .status-offered { background-color: #D1FAE5; color: #065F46; }
-        .status-rejected { background-color: #FEE2E2; color: #991B1B; }
-        .status-withdrawn { background-color: #FEF3C7; color: #92400E; }
-        .status-follow_up { background-color: #F3E8FF; color: #7E22CE; }
-
-        /* Status labels - dark mode (distinct colors for each status) */
-        .dark .status-applied { background-color: #3a3d42; color: #c4c8cc; }
-        .dark .status-interviewing { background-color: #1e3550; color: #7ab8e8; }
-        .dark .status-offered { background-color: #1a3a2a; color: #6bda9a; }
-        .dark .status-rejected { background-color: #3a2525; color: #e88a8a; }
-        .dark .status-withdrawn { background-color: #3a3020; color: #e8c86a; }
-        .dark .status-follow_up { background-color: #2a2048; color: #b89ae8; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-indicator { display: none; }
     </style>
 
     {% block extra_head %}{% endblock %}
-    <!-- Dark-mode CSS: layered grayscale palette for subtle surfaces -->
-    <style>
-        .dark {
-            --bg: #202225;           /* page background (soft dark) */
-            --surface: #141617;      /* primary card/panel (slightly lighter) */
-            --surface-2: #1a1c1e;    /* secondary panels */
-            --muted-surface: #0c0d0e; /* inputs/very dark */
-            --border: #26282a;      /* soft gray lines (not white) */
-            --text: #E6E6E6;
-            --muted-text: #A0A0A0;
-            --accent: #9AA8B6;
-        }
-
-        /* Page background and base text */
-        .dark body { background-color: var(--bg); color: var(--text); }
-
-        /* Cards and panels use distinct grayscale surfaces */
-        .dark .bg-white { background-color: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
-        .dark .bg-gray-50 { background-color: var(--surface-2) !important; }
-
-        /* Make rounded containers stand out more with soft shadow */
-        .dark .rounded-lg { box-shadow: 0 8px 20px rgba(2,6,23,0.25), 0 1px 0 rgba(255,255,255,0.01); }
-
-        /* Muted surface and utility colors */
-        .dark .bg-gray-100 { background-color: #111214 !important; color: var(--text) !important; }
-        .dark .bg-blue-100 { background-color: #0f1316 !important; }
-        /* Dashboard stats card icon backgrounds - blend with dark mode */
-        .dark .bg-indigo-100 { background-color: #1e2834 !important; }
-        .dark .bg-green-100 { background-color: #1a2320 !important; }
-        .dark .bg-purple-100 { background-color: #1e1e2a !important; }
-        .dark .bg-yellow-100 { background-color: #2a2820 !important; }
-        .dark .bg-red-50 { background-color: #2a2222 !important; }
-        .dark .bg-green-50 { background-color: #1a2320 !important; }
-
-        /* Navbar and footer */
-        .dark nav { background-color: var(--surface) !important; border-color: var(--border) !important; }
-        .dark footer { background-color: var(--surface-2) !important; border-color: var(--border) !important; }
-
-        /* Text colors */
-        .dark .text-gray-900 { color: var(--text) !important; }
-        .dark .text-gray-700 { color: var(--text) !important; }
-        .dark .text-gray-600 { color: var(--muted-text) !important; }
-        .dark .text-gray-500 { color: var(--muted-text) !important; }
-        .dark .text-gray-400 { color: var(--muted-text) !important; }
-        .dark .text-gray-800 { color: var(--text) !important; }
-        .dark a { color: var(--text); }
-
-        /* Link hover states */
-        .dark .hover\:text-indigo-800:hover { color: #9FB6C9 !important; }
-        .dark .hover\:text-indigo-900:hover { color: #9FB6C9 !important; }
-        .dark .hover\:text-red-800:hover { color: #c99a9a !important; }
-        .dark .hover\:text-red-900:hover { color: #c99a9a !important; }
-
-        /* Nav tabs: keep text readable on hover (override hover:text-gray-900 which goes dark) */
-        .dark nav a.text-gray-600 { color: var(--muted-text) !important; }
-        .dark nav a.text-gray-600:hover,
-        .dark nav a.hover\:text-gray-900:hover { color: var(--text) !important; }
-
-        /* Muted borders and separators */
-        .dark .border-gray-200 { border-color: var(--border) !important; }
-        .dark .shadow { box-shadow: none !important; }
-
-        /* Inputs, selects */
-        .dark input:not([type="checkbox"]), .dark select, .dark textarea {
-            background-color: var(--muted-surface) !important;
-            color: var(--text) !important;
-            border-color: var(--border) !important;
-        }
-        .dark input:not([type="checkbox"]):focus, .dark select:focus, .dark textarea:focus {
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 0 1px var(--accent) !important;
-        }
-
-        /* Table header - slightly lighter surface */
-        .dark thead th { background-color: #232426 !important; color: var(--muted-text) !important; }
-
-        /* Buttons and accents - vivid, eye-catching */
-        .dark .bg-indigo-600 { background-color: #5b8fd9 !important; }
-        .dark .bg-red-600 { background-color: #d96a6a !important; }
-        .dark .bg-green-600 { background-color: #52c178 !important; }
-        .dark .bg-purple-600 { background-color: #9d6dd9 !important; }
-        .dark .bg-orange-600 { background-color: #d9a052 !important; }
-        .dark .text-indigo-600 { color: #9FB6C9 !important; }
-        /* Dashboard stats icons - muted for dark mode */
-        .dark .text-green-600 { color: #7a9a8a !important; }
-        .dark .text-blue-600 { color: #7a8fa0 !important; }
-        .dark .text-purple-600 { color: #8a8fa8 !important; }
-
-        /* Hover utility adjustments for dark mode (class-based utilities) */
-        .dark .hover\:bg-gray-50:hover { background-color: var(--surface-2) !important; }
-        .dark .hover\:bg-gray-100:hover { background-color: #131416 !important; }
-
-        /* Ensure all border/divider lines are soft gray (replace white lines) */
-        .dark .border, .dark .border-white,
-        .dark .border-gray-100, .dark .border-gray-200,
-        .dark .border-gray-300, .dark .border-gray-400,
-        .dark .border-b, .dark .border-t, .dark .border-l, .dark .border-r {
-            border-color: var(--border) !important;
-        }
-
-        /* Specific utilities and separators */
-        .dark .divide-y > * + * { border-top-color: var(--border) !important; }
-        .dark hr { border-color: var(--border) !important; }
-        .dark nav, .dark footer { border-color: var(--border) !important; }
-        .dark .ring-1, .dark .ring { box-shadow: none !important; }
-
-        /* Select/dropdown - flat, blends with page, subtle border to stand out */
-        .dark select {
-            background-color: var(--surface-2) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border) !important;
-            box-shadow: none !important;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23A0A0A0'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.5rem center;
-            background-size: 1.25rem;
-            padding-right: 2rem;
-        }
-        .dark select option {
-            background-color: var(--surface) !important;
-            color: var(--text) !important;
-        }
-
-        /* Status dropdown on applications tab - colored by selected status */
-        .dark select.status-applied { background-color: #3a3d42 !important; color: #c4c8cc !important; }
-        .dark select.status-interviewing { background-color: #1e3550 !important; color: #7ab8e8 !important; }
-        .dark select.status-offered { background-color: #1a3a2a !important; color: #6bda9a !important; }
-        .dark select.status-rejected { background-color: #3a2525 !important; color: #e88a8a !important; }
-        .dark select.status-withdrawn { background-color: #3a3020 !important; color: #e8c86a !important; }
-        .dark select.status-follow_up { background-color: #2a2048 !important; color: #b89ae8 !important; }
-
-        /* Logo - dark mode gradient to match nav */
-        .dark .logo-mark {
-            background: linear-gradient(135deg, #2a3a4a 0%, #1a2a3a 100%) !important;
-        }
-
-        /* Remove small utility shadows that create 'glass' effect */
-        .dark .shadow-sm, .dark .shadow { box-shadow: none !important; }
-
-        /* Loading skeletons / animate-pulse */
-        .dark .bg-gray-200 { background-color: var(--surface-2) !important; }
-
-        /* Flash messages */
-        .dark .bg-red-100 { background-color: #2a2222 !important; color: #c99a9a !important; }
-        .dark .bg-green-100 { background-color: #1a2320 !important; color: #7a9a8a !important; }
-        .dark .text-red-700 { color: #c99a9a !important; }
-        .dark .text-green-700 { color: #7a9a8a !important; }
-
-        /* Badge/pill styles (email settings, interview outcomes, etc) */
-        .dark .bg-blue-100.text-blue-800,
-        .dark .text-blue-800 { color: #7a9bb8 !important; }
-        .dark .bg-green-100.text-green-800,
-        .dark .text-green-800 { color: #7a9a8a !important; }
-        .dark .bg-red-100.text-red-800,
-        .dark .text-red-800 { color: #b88a8a !important; }
-        .dark .bg-yellow-100.text-yellow-800,
-        .dark .text-yellow-800 { color: #b8a87a !important; }
-        .dark .bg-gray-100.text-gray-800,
-        .dark .text-gray-800 { color: var(--muted-text) !important; }
-        .dark .text-red-600 { color: #b88a8a !important; }
-        .dark .text-red-500 { color: #b88a8a !important; }
-        .dark .text-green-600 { color: #7a9a8a !important; }
-        .dark .text-orange-600 { color: #b89a7a !important; }
-
-        /* Secondary buttons (border, outline style) */
-        .dark .border-red-300 { border-color: #5a3a3a !important; }
-        .dark .border-red-200 { border-color: #4a2a2a !important; }
-        .dark .hover\:bg-red-50:hover { background-color: #2a2222 !important; }
-
-        /* Primary button hover - slightly lighter lift */
-        .dark .hover\:bg-indigo-700:hover { background-color: #6e9ee8 !important; }
-        .dark .hover\:bg-red-700:hover { background-color: #e87a7a !important; }
-        .dark .hover\:bg-green-700:hover { background-color: #66d18a !important; }
-        .dark .hover\:bg-purple-700:hover { background-color: #ad7de8 !important; }
-        .dark .hover\:bg-orange-700:hover { background-color: #e8b066 !important; }
-        .dark .hover\:bg-gray-200:hover { background-color: #232426 !important; }
-
-        /* Pagination */
-        .dark .bg-indigo-50 { background-color: #1e2834 !important; }
-        .dark .text-indigo-600 { color: #9FB6C9 !important; }
-
-        /* Modal overlay and content */
-        .dark [class*="bg-white"].rounded-lg.shadow-xl { background-color: var(--surface) !important; border: 1px solid var(--border) !important; }
-        .dark .hover\:text-gray-600:hover { color: var(--text) !important; }
-
-        /* Form labels and placeholders */
-        .dark label { color: var(--text) !important; }
-        .dark ::placeholder { color: var(--muted-text) !important; }
-
-        /* Status breakdown progress bar track and bars - brighter for visibility */
-        .dark .bg-gray-800 { background-color: #1a1c1e !important; }
-        .dark .bg-gray-500 { background-color: #6b7280 !important; }
-        .dark .bg-blue-500 { background-color: #5a8ab8 !important; }
-        .dark .bg-green-500 { background-color: #5a9a7a !important; }
-        .dark .bg-red-500 { background-color: #b86a6a !important; }
-        .dark .bg-yellow-500 { background-color: #b8a85a !important; }
-
-        /* Tags with custom colors - tone down for dark mode */
-        .dark .tag-pill { filter: brightness(0.85) saturate(0.9); }
-
-        /* Pending imports - brighter percentage badges */
-        .dark #pending-emails .text-green-800 { color: #7ee8a8 !important; }
-        .dark #pending-emails .text-yellow-800 { color: #e8d87a !important; }
-        .dark #pending-emails .text-red-800 { color: #e8a8a8 !important; }
-
-        /* Allow table cells to wrap nicely */
-        .break-words { word-wrap: break-word; word-break: break-word; }
-
-        /* Bulk selection - selected row highlight */
-        .dark .bg-indigo-50\/50 { background-color: rgba(30, 50, 70, 0.35) !important; }
-
-        /* Bulk action bar */
-        .dark #bulk-action-bar > div { background-color: var(--surface) !important; border-color: var(--border) !important; }
-        .dark #bulk-action-bar .bg-gray-100 { background-color: var(--surface-2) !important; }
-        .dark #bulk-action-bar .hover\:bg-gray-200:hover { background-color: #2a2c2e !important; }
-        .dark #bulk-action-bar .bg-red-50 { background-color: #2a2222 !important; }
-        .dark #bulk-action-bar .hover\:bg-red-100:hover { background-color: #3a2828 !important; }
-        .dark #bulk-action-bar .hover\:bg-gray-100:hover { background-color: var(--surface-2) !important; }
-        .dark #bulk-action-bar .w-px { background-color: var(--border) !important; }
-
-        /* Bulk dropdowns */
-        .dark #bulk-status-dropdown,
-        .dark #bulk-tag-dropdown { background-color: var(--surface) !important; border-color: var(--border) !important; }
-        .dark #bulk-status-dropdown button:hover,
-        .dark #bulk-tag-dropdown button:hover { background-color: var(--surface-2) !important; }
-        .dark #bulk-tag-dropdown .border-b { border-color: var(--border) !important; }
-        .dark #bulk-tag-dropdown input[type="text"] {
-            background-color: var(--muted-surface) !important;
-            border-color: var(--border) !important;
-            color: var(--text) !important;
-        }
-        .dark #bulk-tag-dropdown input[type="color"] {
-            background-color: transparent !important;
-            border: none !important;
-        }
-
-        /* Bulk delete modal */
-        .dark #bulk-delete-modal .bg-white { background-color: var(--surface) !important; border: 1px solid var(--border) !important; }
-        .dark #bulk-delete-modal .bg-red-100 { background-color: #2a2222 !important; }
-        .dark #bulk-delete-modal .border-gray-300 { border-color: var(--border) !important; }
-        .dark #bulk-delete-modal .hover\:bg-gray-50:hover { background-color: var(--surface-2) !important; }
-
-        /* Bulk toast */
-        .dark #bulk-toast > div { background-color: var(--surface-2) !important; border: 1px solid var(--border) !important; }
-
-        /* Checkbox styling for dark mode */
-        .dark .row-checkbox,
-        .dark #select-all-checkbox {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background-color: var(--muted-surface) !important;
-            border: 1.5px solid #3a3d42 !important;
-            border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-            transition: background-color 0.15s, border-color 0.15s;
-        }
-        .dark .row-checkbox:hover,
-        .dark #select-all-checkbox:hover {
-            border-color: #5b8fd9 !important;
-        }
-        .dark .row-checkbox:checked,
-        .dark #select-all-checkbox:checked {
-            background-color: #5b8fd9 !important;
-            border-color: #5b8fd9 !important;
-        }
-        .dark .row-checkbox:checked::after,
-        .dark #select-all-checkbox:checked::after {
-            content: '';
-            position: absolute;
-            left: 4px;
-            top: 1px;
-            width: 5px;
-            height: 9px;
-            border: solid #fff;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-        }
-        .dark #select-all-checkbox:indeterminate {
-            background-color: #5b8fd9 !important;
-            border-color: #5b8fd9 !important;
-        }
-        .dark #select-all-checkbox:indeterminate::after {
-            content: '';
-            position: absolute;
-            left: 3px;
-            top: 6px;
-            width: 8px;
-            height: 0;
-            border: solid #fff;
-            border-width: 0 0 2px 0;
-            transform: none;
-        }
-        .dark .row-checkbox:focus,
-        .dark #select-all-checkbox:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(91, 143, 217, 0.3) !important;
-        }
-    </style>
-
 </head>
-<body class="min-h-screen dark">
+<body class="min-h-screen dark flex flex-col">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b">
+    <nav class="glass-nav border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{{ url_for('views.dashboard') }}" class="flex items-center">
-                        <!-- Logo: briefcase icon -->
-                        <div class="logo-mark h-8 w-8 flex items-center justify-center rounded-md overflow-hidden" style="background: linear-gradient(135deg, #3b5a7a 0%, #2b4a62 100%);">
+                    <a href="{{ url_for('views.dashboard') }}" class="flex items-center group">
+                        <div class="logo-mark h-9 w-9 flex items-center justify-center rounded-lg overflow-hidden">
                             <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
                             </svg>
                         </div>
-                        <span class="ml-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Job Tracker</span>
+                        <span class="ml-2.5 text-xl logo-text">Job Tracker</span>
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-1">
                     <a href="{{ url_for('views.dashboard') }}"
-                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
-                              {% if request.endpoint == 'views.dashboard' %}text-indigo-600{% endif %}">
+                       class="nav-link text-sm font-medium
+                              {% if request.endpoint == 'views.dashboard' %}active{% endif %}">
                         Dashboard
                     </a>
                     <a href="{{ url_for('views.applications') }}"
-                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
-                              {% if request.endpoint == 'views.applications' %}text-indigo-600{% endif %}">
+                       class="nav-link text-sm font-medium
+                              {% if request.endpoint == 'views.applications' %}active{% endif %}">
                         Applications
                     </a>
                     <a href="{{ url_for('views.connections') }}"
-                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
-                              {% if request.endpoint == 'views.connections' %}text-indigo-600{% endif %}">
+                       class="nav-link text-sm font-medium
+                              {% if request.endpoint == 'views.connections' %}active{% endif %}">
                         Connections
                     </a>
                     <a href="{{ url_for('views.email_settings') }}"
-                       class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium
-                              {% if request.endpoint == 'views.email_settings' %}text-indigo-600{% endif %}">
+                       class="nav-link text-sm font-medium
+                              {% if request.endpoint == 'views.email_settings' %}active{% endif %}">
                         Email Import
                     </a>
-                    <a href="{{ url_for('views.new_application') }}"
-                       class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
-                        + Add Application
-                    </a>
+                    <div class="pl-3">
+                        <a href="{{ url_for('views.new_application') }}"
+                           class="btn-primary">
+                            + Add Application
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 relative z-10 w-full">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -416,11 +94,14 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t bg-white mt-auto">
+    <footer class="glass-footer mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <p class="text-center text-gray-500 text-sm">Job Application Tracker</p>
+            <p class="text-center text-sm">Job Application Tracker</p>
         </div>
     </footer>
+
+    <!-- Animations JS -->
+    <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

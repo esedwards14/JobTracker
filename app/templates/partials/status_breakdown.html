@@ -1,22 +1,23 @@
-<div class="space-y-3">
+<div class="space-y-4">
     {% set total = stats.total_applications %}
     {% set statuses = [
-        ('Applied', stats.status_breakdown.applied, 'bg-gray-500'),
-        ('Rejected', stats.status_breakdown.rejected, 'bg-red-500'),
-        ('Interviewing', stats.status_breakdown.interviewing, 'bg-blue-500'),
-        ('Offered', stats.status_breakdown.offered, 'bg-green-500'),
-        ('Follow Up', stats.status_breakdown.follow_up, 'bg-purple-500'),
-        ('Withdrawn', stats.status_breakdown.withdrawn, 'bg-yellow-500')
+        ('Applied', stats.status_breakdown.applied, 'progress-applied'),
+        ('Rejected', stats.status_breakdown.rejected, 'progress-rejected'),
+        ('Interviewing', stats.status_breakdown.interviewing, 'progress-interviewing'),
+        ('Offered', stats.status_breakdown.offered, 'progress-offered'),
+        ('Follow Up', stats.status_breakdown.follow_up, 'progress-follow_up'),
+        ('Withdrawn', stats.status_breakdown.withdrawn, 'progress-withdrawn')
     ] %}
 
-    {% for name, count, color in statuses %}
+    {% for name, count, bar_class in statuses %}
     <div>
-        <div class="flex justify-between text-sm mb-1">
-            <span class="font-medium text-gray-400">{{ name }}</span>
-            <span class="text-gray-500">{{ count }} ({{ ((count / total * 100) if total > 0 else 0)|round|int }}%)</span>
+        <div class="flex justify-between text-sm mb-1.5">
+            <span class="font-medium" style="color: var(--text-secondary);">{{ name }}</span>
+            <span style="color: var(--text-muted);">{{ count }} ({{ ((count / total * 100) if total > 0 else 0)|round|int }}%)</span>
         </div>
-        <div class="w-full bg-gray-800 rounded-full h-2">
-            <div class="{{ color }} h-2 rounded-full transition-all duration-300"
+        <div class="progress-track">
+            <div class="progress-bar {{ bar_class }}"
+                 data-width="{{ ((count / total * 100) if total > 0 else 0)|round|int }}%"
                  style="width: {{ ((count / total * 100) if total > 0 else 0)|round|int }}%"></div>
         </div>
     </div>
@@ -24,5 +25,8 @@
 </div>
 
 {% if total == 0 %}
-<p class="text-center text-gray-500 mt-4">No applications yet. <a href="{{ url_for('views.new_application') }}" class="text-indigo-600 hover:text-indigo-800">Add your first one!</a></p>
+<p class="text-center mt-4" style="color: var(--text-muted);">
+    No applications yet.
+    <a href="{{ url_for('views.new_application') }}" style="color: var(--accent-hover);">Add your first one!</a>
+</p>
 {% endif %}

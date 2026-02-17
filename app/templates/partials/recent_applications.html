@@ -1,35 +1,35 @@
 {% if applications %}
 <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <table class="modern-table">
+        <thead>
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Applied</th>
+                <th class="text-left">Company</th>
+                <th class="text-left">Position</th>
+                <th class="text-left">Status</th>
+                <th class="text-left">Date Applied</th>
             </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
             {% for app in applications %}
-            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('views.application_detail', id=app.id) }}'">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="font-medium text-gray-900">{{ app.company_name }}</div>
+            <tr class="cursor-pointer" onclick="window.location='{{ url_for('views.application_detail', id=app.id) }}'">
+                <td class="whitespace-nowrap">
+                    <span class="font-medium" style="color: var(--text-primary);">{{ app.company_name }}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ app.position }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full status-{{ app.status }}">
-                        {{ app.status|title }}
+                <td class="whitespace-nowrap" style="color: var(--text-secondary);">{{ app.position }}</td>
+                <td class="whitespace-nowrap">
+                    <span class="status-pill status-{{ app.status }}">
+                        {{ app.status|replace('_', ' ')|title }}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ app.date_applied.strftime('%b %d, %Y') }}</td>
+                <td class="whitespace-nowrap" style="color: var(--text-muted);">{{ app.date_applied.strftime('%b %d, %Y') }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% else %}
-<div class="p-6 text-center text-gray-500">
+<div class="empty-state">
     <p>No applications yet.</p>
-    <a href="{{ url_for('views.new_application') }}" class="text-indigo-600 hover:text-indigo-800 mt-2 inline-block">Add your first application</a>
+    <a href="{{ url_for('views.new_application') }}" class="mt-2 inline-block" style="color: var(--accent-hover);">Add your first application</a>
 </div>
 {% endif %}

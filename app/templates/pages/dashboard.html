@@ -3,69 +3,59 @@
 {% block title %}Dashboard - Job Tracker{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-8">
     <!-- Page header -->
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-500">Overview of your job search progress</p>
+    <div class="page-header fade-in">
+        <h1>Dashboard</h1>
+        <p class="mt-1 text-sm">Overview of your job search progress</p>
     </div>
 
     <!-- Stats cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children"
          hx-get="{{ url_for('views.stats_partial') }}"
          hx-trigger="load"
          hx-swap="innerHTML">
         <!-- Loading placeholder -->
-        <div class="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-            <div class="h-8 bg-gray-200 rounded w-1/4"></div>
+        {% for _ in range(4) %}
+        <div class="glass-card p-6">
+            <div class="h-4 skeleton w-1/2 mb-3"></div>
+            <div class="h-8 skeleton w-1/4"></div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-            <div class="h-8 bg-gray-200 rounded w-1/4"></div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-            <div class="h-8 bg-gray-200 rounded w-1/4"></div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-            <div class="h-8 bg-gray-200 rounded w-1/4"></div>
-        </div>
+        {% endfor %}
     </div>
 
     <!-- Status breakdown -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b">
-            <h2 class="text-lg font-medium text-gray-900">Application Status</h2>
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b" style="border-color: var(--border-glass);">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Application Status</h2>
         </div>
         <div class="p-6"
              hx-get="{{ url_for('views.status_breakdown_partial') }}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div class="animate-pulse space-y-3">
-                <div class="h-6 bg-gray-200 rounded w-full"></div>
-                <div class="h-6 bg-gray-200 rounded w-4/5"></div>
-                <div class="h-6 bg-gray-200 rounded w-3/5"></div>
+            <div class="space-y-3">
+                <div class="h-6 skeleton w-full"></div>
+                <div class="h-6 skeleton w-4/5"></div>
+                <div class="h-6 skeleton w-3/5"></div>
             </div>
         </div>
     </div>
 
     <!-- Recent applications -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-medium text-gray-900">Recent Applications</h2>
-            <a href="{{ url_for('views.applications') }}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+    <div class="glass-card fade-in">
+        <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--border-glass);">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Recent Applications</h2>
+            <a href="{{ url_for('views.applications') }}" class="text-sm font-medium" style="color: var(--accent-hover);">
                 View all &rarr;
             </a>
         </div>
         <div hx-get="{{ url_for('views.recent_applications_partial') }}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div class="p-6 animate-pulse space-y-4">
-                <div class="h-12 bg-gray-200 rounded"></div>
-                <div class="h-12 bg-gray-200 rounded"></div>
-                <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="p-6 space-y-4">
+                <div class="h-12 skeleton"></div>
+                <div class="h-12 skeleton"></div>
+                <div class="h-12 skeleton"></div>
             </div>
         </div>
     </div>
