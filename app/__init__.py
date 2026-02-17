@@ -30,4 +30,25 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
 
+        # One-time cleanup: strip email subjects from imported application notes
+        try:
+            from app.models import JobApplication
+            updated = JobApplication.query.filter(
+                JobApplication.notes.like('Imported from email:%'),
+                JobApplication.notes != 'Imported from email'
+            ).update(
+                {JobApplication.notes: 'Imported from email'},
+                synchronize_session=False
+            )
+            updated += JobApplication.query.filter(
+                JobApplication.notes.like('Created from response email:%')
+            ).update(
+                {JobApplication.notes: 'Imported from email'},
+                synchronize_session=False
+            )
+            if updated:
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     return app
