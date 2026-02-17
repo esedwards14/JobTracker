@@ -7,11 +7,11 @@
     <!-- Page header -->
     <div class="page-header fade-in">
         <h1>Dashboard</h1>
-        <p class="mt-1 text-sm">Overview of your job search progress</p>
+        <p>Overview of your job search progress</p>
     </div>
 
     <!-- Stats cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children"
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children"
          hx-get="{{ url_for('views.stats_partial') }}"
          hx-trigger="load"
          hx-swap="innerHTML">

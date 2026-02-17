@@ -1,5 +1,6 @@
 /* ============================================
-   Modern UI - Glassmorphism & Animations
+   Modern UI - Glassmorphism & Editorial Design
+   Inspired by seccosquared.com spacing/typography
    ============================================ */
 
 /* CSS Custom Properties */
@@ -32,7 +33,7 @@
     --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
     --gradient-2: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
     --gradient-3: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-    --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-glass);
+    --shadow-card: 0 2px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-glass);
     --shadow-glow: 0 0 30px var(--accent-glow);
     --radius: 12px;
     --radius-sm: 8px;
@@ -54,15 +55,20 @@
 
 html {
     scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
     background-color: var(--bg-primary) !important;
     color: var(--text-primary) !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
     overflow-x: hidden;
     min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
 /* Background gradient mesh */
@@ -81,7 +87,7 @@ body::before {
     z-index: 0;
 }
 
-/* Parallax background particles (CSS-only) */
+/* Parallax background particles */
 .parallax-bg {
     position: fixed;
     top: 0;
@@ -139,7 +145,7 @@ body::before {
 }
 
 /* ============================================
-   Navigation - Glassmorphism
+   Navigation - Glassmorphism + Editorial
    ============================================ */
 nav.glass-nav {
     background: rgba(10, 10, 15, 0.8) !important;
@@ -159,6 +165,11 @@ nav.glass-nav.scrolled {
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 60px rgba(99, 102, 241, 0.05) !important;
 }
 
+/* Make nav taller */
+nav .h-16 {
+    height: 5rem !important;
+}
+
 /* Logo */
 .logo-mark {
     background: var(--gradient-1) !important;
@@ -168,7 +179,6 @@ nav.glass-nav.scrolled {
 
 .logo-mark:hover {
     box-shadow: 0 4px 20px var(--accent-glow);
-    transform: scale(1.05);
 }
 
 .logo-text {
@@ -177,22 +187,43 @@ nav.glass-nav.scrolled {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: 700;
+    font-size: 1.375rem !important;
+    letter-spacing: -0.02em;
 }
 
-/* Nav links */
+/* Nav links - editorial underline style like seccosquared */
 nav a.nav-link {
     color: var(--text-secondary) !important;
     position: relative;
     z-index: 2;
-    transition: var(--transition-fast);
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-xs);
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    margin: 0 1.25rem;
+    border-radius: 0;
     display: inline-block;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.01em;
+}
+
+nav a.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--accent-hover);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 nav a.nav-link:hover {
     color: var(--text-primary) !important;
-    background: var(--bg-glass-hover);
+    background: transparent;
+}
+
+nav a.nav-link:hover::after {
+    width: 100%;
 }
 
 nav a.nav-link.active {
@@ -200,15 +231,8 @@ nav a.nav-link.active {
 }
 
 nav a.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 2px;
+    width: 100%;
     background: var(--gradient-1);
-    border-radius: 1px;
 }
 
 /* Primary CTA button */
@@ -216,10 +240,10 @@ nav a.nav-link.active::after {
     background: var(--gradient-1) !important;
     color: white !important;
     border: none !important;
-    padding: 0.5rem 1.25rem;
+    padding: 0.75rem 1.75rem;
     border-radius: var(--radius-sm);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     transition: var(--transition);
     box-shadow: 0 2px 12px var(--accent-glow);
     position: relative;
@@ -228,15 +252,16 @@ nav a.nav-link.active::after {
     display: inline-flex;
     align-items: center;
     text-decoration: none;
+    letter-spacing: -0.01em;
 }
 
 .btn-primary:hover {
-    box-shadow: 0 4px 20px var(--accent-glow) !important;
+    box-shadow: 0 4px 24px var(--accent-glow) !important;
     filter: brightness(1.1);
 }
 
 /* ============================================
-   Glass Cards
+   Glass Cards - spacious
    ============================================ */
 .glass-card {
     background: var(--bg-card) !important;
@@ -329,27 +354,60 @@ nav a.nav-link.active::after {
 .stagger-children.visible > *:nth-child(8) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
 
 /* ============================================
-   Page Headers
+   Page Headers - Editorial scale
    ============================================ */
 .page-header h1 {
-    font-size: 1.75rem;
+    font-size: 2.75rem;
     font-weight: 700;
     color: var(--text-primary);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
 }
 
 .page-header p {
     color: var(--text-muted) !important;
+    font-size: 1.125rem;
+    margin-top: 0.75rem;
+}
+
+/* General h1/h2 sizing overrides for editorial feel */
+h1 {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--text-primary);
+}
+
+h2 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
 }
 
 /* ============================================
-   Stats Cards
+   Main Content - More breathing room
+   ============================================ */
+main.py-8 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* More space between sections */
+.space-y-6 > * + * {
+    margin-top: 2rem !important;
+}
+
+/* ============================================
+   Stats Cards - Bigger, more spacious
    ============================================ */
 .stat-card {
     background: var(--bg-card) !important;
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-glass) !important;
     border-radius: var(--radius) !important;
-    padding: 1.5rem;
+    padding: 2rem;
     transition: var(--transition);
     position: relative;
     overflow: hidden;
@@ -361,32 +419,28 @@ nav a.nav-link.active::after {
 }
 
 .stat-card .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: var(--transition);
 }
 
-.stat-card:hover .stat-icon {
-    opacity: 0.9;
-}
-
 .stat-card .stat-value {
-    font-size: 1.75rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
+    letter-spacing: -0.03em;
 }
 
 .stat-card .stat-label {
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     font-weight: 500;
+    margin-top: 0.25rem;
 }
 
 /* Stat card accent colors */
@@ -406,11 +460,11 @@ nav a.nav-link.active::after {
 .status-pill {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
+    padding: 0.375rem 1rem;
     border-radius: 9999px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     transition: var(--transition-fast);
 }
 
@@ -456,7 +510,7 @@ nav a.nav-link.active::after {
 .progress-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    height: 8px;
+    height: 10px;
     overflow: hidden;
 }
 
@@ -467,8 +521,6 @@ nav a.nav-link.active::after {
     position: relative;
 }
 
-
-
 .progress-applied { background: linear-gradient(90deg, #64748b, #94a3b8); }
 .progress-interviewing { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
 .progress-offered { background: linear-gradient(90deg, #10b981, #34d399); }
@@ -477,21 +529,22 @@ nav a.nav-link.active::after {
 .progress-follow_up { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
 
 /* ============================================
-   Buttons
+   Buttons - Larger, more presence
    ============================================ */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1.25rem;
     border-radius: var(--radius-sm);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     transition: var(--transition);
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    letter-spacing: -0.01em;
 }
 
 .btn-glass {
@@ -550,7 +603,7 @@ nav a.nav-link.active::after {
 }
 
 /* ============================================
-   Inputs & Forms
+   Inputs & Forms - Bigger, more spacious
    ============================================ */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
@@ -559,16 +612,17 @@ textarea {
     border: 1px solid var(--border-glass) !important;
     border-radius: var(--radius-sm) !important;
     color: var(--text-primary) !important;
-    padding: 0.625rem 0.875rem;
+    padding: 0.875rem 1rem;
     transition: var(--transition-fast);
-    font-size: 0.875rem;
+    font-size: 1rem;
+    width: 100%;
 }
 
 input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-card) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
     outline: none !important;
     background: rgba(255, 255, 255, 0.05) !important;
 }
@@ -584,9 +638,9 @@ select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235a5a6e'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") !important;
     background-repeat: no-repeat !important;
-    background-position: right 0.5rem center !important;
+    background-position: right 0.75rem center !important;
     background-size: 1.25rem !important;
-    padding-right: 2.25rem !important;
+    padding-right: 2.5rem !important;
 }
 
 select option {
@@ -597,7 +651,7 @@ select option {
 label {
     color: var(--text-secondary) !important;
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.9375rem;
 }
 
 /* Checkbox */
@@ -605,8 +659,8 @@ input[type="checkbox"] {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     background: rgba(255, 255, 255, 0.03) !important;
     border: 1.5px solid var(--border-glass) !important;
     border-radius: 5px;
@@ -627,8 +681,8 @@ input[type="checkbox"]:checked {
 input[type="checkbox"]:checked::after {
     content: '';
     position: absolute;
-    left: 5px;
-    top: 1px;
+    left: 6px;
+    top: 2px;
     width: 5px;
     height: 10px;
     border: solid white;
@@ -641,7 +695,7 @@ input[type="checkbox"]:focus {
 }
 
 /* ============================================
-   Tables
+   Tables - More spacious rows
    ============================================ */
 .modern-table {
     width: 100%;
@@ -652,11 +706,11 @@ input[type="checkbox"]:focus {
 .modern-table thead th {
     background: rgba(255, 255, 255, 0.02) !important;
     color: var(--text-muted) !important;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-glass) !important;
 }
 
@@ -669,13 +723,14 @@ input[type="checkbox"]:focus {
 }
 
 .modern-table tbody td {
-    padding: 0.875rem 1rem;
+    padding: 1.125rem 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
     color: var(--text-primary);
+    font-size: 0.9375rem;
 }
 
 /* ============================================
-   Modals
+   Modals - More spacious
    ============================================ */
 .modal-overlay {
     background: rgba(0, 0, 0, 0.6) !important;
@@ -695,8 +750,8 @@ input[type="checkbox"]:focus {
    ============================================ */
 .tag-pill {
     border-radius: 9999px;
-    padding: 0.2rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     backdrop-filter: blur(4px);
     transition: var(--transition-fast);
@@ -710,9 +765,9 @@ input[type="checkbox"]:focus {
    Platform Badges (Email Settings)
    ============================================ */
 .platform-badge {
-    padding: 0.375rem 0.875rem;
+    padding: 0.5rem 1rem;
     border-radius: 9999px;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 500;
     background: rgba(99, 102, 241, 0.08);
     color: var(--accent-hover);
@@ -729,16 +784,17 @@ input[type="checkbox"]:focus {
    ============================================ */
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 4rem 2rem;
 }
 
 .empty-state svg {
     color: var(--text-muted);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .empty-state p {
     color: var(--text-muted);
+    font-size: 1.0625rem;
 }
 
 /* ============================================
@@ -749,6 +805,8 @@ input[type="checkbox"]:focus {
     border: 1px solid rgba(16, 185, 129, 0.2) !important;
     color: #34d399 !important;
     border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    font-size: 0.9375rem;
 }
 
 .flash-error {
@@ -756,10 +814,12 @@ input[type="checkbox"]:focus {
     border: 1px solid rgba(239, 68, 68, 0.2) !important;
     color: #f87171 !important;
     border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    font-size: 0.9375rem;
 }
 
 /* ============================================
-   Footer
+   Footer - Editorial style
    ============================================ */
 footer.glass-footer {
     background: rgba(10, 10, 15, 0.6) !important;
@@ -771,15 +831,21 @@ footer.glass-footer {
 
 footer.glass-footer p {
     color: var(--text-muted) !important;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
+}
+
+footer .py-4 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
 }
 
 /* ============================================
-   Links
+   Links - Editorial underline style
    ============================================ */
 a {
     color: var(--accent-hover);
     transition: var(--transition-fast);
+    text-decoration: none;
 }
 
 a:hover {
@@ -821,10 +887,6 @@ a:hover {
     transition: var(--transition);
 }
 
-.avatar:hover {
-    opacity: 0.9;
-}
-
 /* ============================================
    Dividers
    ============================================ */
@@ -844,9 +906,9 @@ hr {
    Pagination
    ============================================ */
 .pagination-btn {
-    padding: 0.375rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: var(--radius-xs);
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 500;
     transition: var(--transition-fast);
     background: transparent;
@@ -920,8 +982,69 @@ hr {
 }
 
 /* ============================================
+   Glass card padding overrides - bigger cards
+   ============================================ */
+.glass-card .p-6,
+.glass-card.p-6,
+.stat-card .p-6 {
+    padding: 2rem !important;
+}
+
+.glass-card .p-4,
+.glass-card.p-4 {
+    padding: 1.5rem !important;
+}
+
+.glass-card .px-6 {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+
+.glass-card .py-4 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+}
+
+/* Detail page section headings */
+.glass-card h2 {
+    font-size: 1.25rem !important;
+    letter-spacing: -0.02em;
+}
+
+/* Interview/detail items padding */
+.glass-card .p-4:not(.glass-card) {
+    padding: 1.25rem 2rem !important;
+}
+
+/* ============================================
+   Sidebar details - bigger text
+   ============================================ */
+dl .text-sm {
+    font-size: 0.875rem !important;
+}
+
+dd {
+    font-size: 1rem;
+}
+
+/* ============================================
+   Application detail - bigger position/company
+   ============================================ */
+.text-2xl {
+    font-size: 2rem !important;
+    letter-spacing: -0.02em;
+}
+
+.text-lg {
+    font-size: 1.1875rem !important;
+}
+
+.text-sm {
+    font-size: 0.875rem !important;
+}
+
+/* ============================================
    Override Tailwind dark mode defaults
-   (ensures our theme takes priority)
    ============================================ */
 .dark body { background-color: var(--bg-primary) !important; }
 .dark .bg-white { background-color: var(--bg-card) !important; border: 1px solid var(--border-glass) !important; }
@@ -1032,4 +1155,31 @@ hr {
 /* Logo dark mode */
 .dark .logo-mark {
     background: var(--gradient-1) !important;
+}
+
+/* ============================================
+   Responsive adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem !important;
+    }
+
+    .page-header h1 {
+        font-size: 2.25rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 2rem;
+    }
+
+    nav a.nav-link {
+        font-size: 0.875rem !important;
+        margin: 0 0.5rem;
+    }
+
+    .glass-card .p-6,
+    .glass-card.p-6 {
+        padding: 1.25rem !important;
+    }
 }

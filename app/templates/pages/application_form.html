@@ -3,10 +3,10 @@
 {% block title %}{% if application %}Edit Application{% else %}New Application{% endif %} - Job Tracker{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-3xl mx-auto">
     <!-- Page header -->
-    <div class="mb-6 fade-in page-header">
-        <a href="{{ url_for('views.applications') }}" class="text-sm mb-2 inline-block" style="color: var(--accent-hover);">
+    <div class="mb-8 fade-in page-header">
+        <a href="{{ url_for('views.applications') }}" class="mb-3 inline-block" style="color: var(--accent-hover);">
             &larr; Back to Applications
         </a>
         <h1>
@@ -16,7 +16,7 @@
 
     <!-- Form -->
     <div class="glass-card fade-in">
-        <form method="POST" class="p-6 space-y-6">
+        <form method="POST" class="p-6 space-y-8">
             <!-- Company & Position -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
