@@ -77,6 +77,8 @@ class JobEmailParser:
     BODY_POSITION_PATTERNS = [
         # "for the following role(s): Position" (common in ATS emails) - PRIORITY
         r'(?:following role|following position|following job)(?:\(s\))?:\s*\n?\s*(.+?)(?:\s*\(|\n|$)',
+        # "job application - 12345 - Job Title" (IBM format)
+        r'job application\s*-\s*\d+\s*-\s*(.+?)(?:\.|!|\n|$)',
         # "position of Position" (e.g., "applying for the position of Account Coordinator")
         r'position of\s+([A-Z][A-Za-z0-9\s\-/]+?)(?:\.|,|!|\s+at|\s+with|\n)',
         # "interest in the Position position/role"
