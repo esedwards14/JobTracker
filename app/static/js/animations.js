@@ -80,7 +80,7 @@
 
                 const orbs = bg.querySelectorAll('.orb');
                 orbs.forEach((orb, i) => {
-                    const speed = (i + 1) * 8;
+                    const speed = (i + 1) * 3;
                     orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
                 });
             });
@@ -133,30 +133,6 @@
         }, { threshold: 0.5 });
 
         counters.forEach(counter => counterObserver.observe(counter));
-    }
-
-    // ==========================================
-    // Smooth card hover tilt (subtle)
-    // ==========================================
-    function initCardTilt() {
-        const cards = document.querySelectorAll('.glass-card-glow');
-
-        cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / rect.width;
-                const y = (e.clientY - rect.top) / rect.height;
-
-                const rotateX = (y - 0.5) * -4;
-                const rotateY = (x - 0.5) * 4;
-
-                card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = '';
-            });
-        });
     }
 
     // ==========================================
@@ -244,7 +220,6 @@
         initPageTransitions();
         initScrollAnimations();
         initCounterAnimations();
-        initCardTilt();
         initHtmxAnimations();
         initProgressBars();
     }
