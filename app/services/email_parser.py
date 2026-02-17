@@ -79,6 +79,8 @@ class JobEmailParser:
         r'(?:following role|following position|following job)(?:\(s\))?:\s*\n?\s*(.+?)(?:\s*\(|\n|$)',
         # "job application - 12345 - Job Title" (IBM format)
         r'job application\s*-\s*\d+\s*-\s*(.+?)(?:\.|!|\n|$)',
+        # "application for the Position position/role" (e.g., "Your application for the Technical Sales Representative position")
+        r'application for\s+(?:the\s+)?(.+?)\s+(?:position|role)(?:\s|\.|\,|!|$)',
         # "position of Position" (e.g., "applying for the position of Account Coordinator")
         r'position of\s+([A-Z][A-Za-z0-9\s\-/]+?)(?:\.|,|!|\s+at|\s+with|\n)',
         # "interest in the Position position/role"
