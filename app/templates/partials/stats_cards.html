@@ -1,5 +1,10 @@
 <!-- Total Applications -->
-<div class="stat-card stat-total glass-card-glow">
+<div class="stat-card stat-total glass-card-glow cursor-pointer"
+     data-stat="total"
+     hx-get="{{ url_for('views.stats_total_breakdown') }}"
+     hx-target="#stat-breakdown"
+     hx-swap="innerHTML"
+     onclick="toggleStatCard(this, event)">
     <div class="flex items-center justify-between">
         <div>
             <p class="stat-label">Total Applications</p>
@@ -14,7 +19,12 @@
 </div>
 
 <!-- Response Rate -->
-<div class="stat-card stat-response glass-card-glow">
+<div class="stat-card stat-response glass-card-glow cursor-pointer"
+     data-stat="response"
+     hx-get="{{ url_for('views.stats_response_breakdown') }}"
+     hx-target="#stat-breakdown"
+     hx-swap="innerHTML"
+     onclick="toggleStatCard(this, event)">
     <div class="flex items-center justify-between">
         <div>
             <p class="stat-label">Response Rate</p>
@@ -29,7 +39,12 @@
 </div>
 
 <!-- Interview Rate -->
-<div class="stat-card stat-interview glass-card-glow">
+<div class="stat-card stat-interview glass-card-glow cursor-pointer"
+     data-stat="interview"
+     hx-get="{{ url_for('views.stats_interview_breakdown') }}"
+     hx-target="#stat-breakdown"
+     hx-swap="innerHTML"
+     onclick="toggleStatCard(this, event)">
     <div class="flex items-center justify-between">
         <div>
             <p class="stat-label">Interview Rate</p>
@@ -44,7 +59,12 @@
 </div>
 
 <!-- This Week -->
-<div class="stat-card stat-week glass-card-glow">
+<div class="stat-card stat-week glass-card-glow cursor-pointer"
+     data-stat="weekly"
+     hx-get="{{ url_for('views.stats_weekly_breakdown') }}"
+     hx-target="#stat-breakdown"
+     hx-swap="innerHTML"
+     onclick="toggleStatCard(this, event)">
     <div class="flex items-center justify-between">
         <div>
             <p class="stat-label">This Week</p>

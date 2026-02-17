@@ -273,6 +273,112 @@ def stats_partial():
     return render_template('partials/stats_cards.html', stats=stats)
 
 
+@views_bp.route('/partials/stats/total-breakdown')
+def stats_total_breakdown():
+    """Return breakdown of all applications."""
+    from app.services.user_service import get_current_user_id
+
+    user_id = get_current_user_id()
+    applications = JobApplication.query.filter_by(user_id=user_id)\
+        .order_by(JobApplication.date_applied.desc()).all()
+
+    return render_template('partials/stat_breakdown.html',
+        title='All Applications',
+        subtitle=f'{len(applications)} total',
+        applications=applications,
+        show_status=True,
+        show_response=False,
+        show_interviews=False,
+    )
+
+
+@views_bp.route('/partials/stats/response-breakdown')
+def stats_response_breakdown():
+    """Return breakdown of response rate."""
+    from app.services.user_service import get_current_user_id
+
+    user_id = get_current_user_id()
+    responded = JobApplication.query.filter_by(user_id=user_id, response_received=True)\
+        .order_by(JobApplication.response_date.desc()).all()
+    awaiting = JobApplication.query.filter_by(user_id=user_id, response_received=False)\
+        .order_by(JobApplication.date_applied.desc()).all()
+
+    total = len(responded) + len(awaiting)
+    rate = round(len(responded) / total * 100, 1) if total > 0 else 0
+
+    return render_template('partials/stat_breakdown.html',
+        title='Response Rate Breakdown',
+        subtitle=f'{len(responded)} of {total} ({rate}%)',
+        sections=[
+            {'label': 'Responded', 'applications': responded, 'count': len(responded)},
+            {'label': 'Awaiting Response', 'applications': awaiting, 'count': len(awaiting)},
+        ],
+        show_status=True,
+        show_response=True,
+        show_interviews=False,
+    )
+
+
+@views_bp.route('/partials/stats/interview-breakdown')
+def stats_interview_breakdown():
+    """Return breakdown of interview rate."""
+    from app.services.user_service import get_current_user_id
+
+    user_id = get_current_user_id()
+
+    # Apps with interviews
+    with_interviews = JobApplication.query.filter_by(user_id=user_id)\
+        .join(InterviewStage)\
+        .order_by(JobApplication.date_applied.desc()).all()
+
+    # Apps without interviews
+    apps_with_interview_ids = [a.id for a in with_interviews]
+    base = JobApplication.query.filter_by(user_id=user_id)
+    if apps_with_interview_ids:
+        without_interviews = base.filter(
+            ~JobApplication.id.in_(apps_with_interview_ids)
+        ).order_by(JobApplication.date_applied.desc()).all()
+    else:
+        without_interviews = base.order_by(JobApplication.date_applied.desc()).all()
+
+    total = len(with_interviews) + len(without_interviews)
+    rate = round(len(with_interviews) / total * 100, 1) if total > 0 else 0
+
+    return render_template('partials/stat_breakdown.html',
+        title='Interview Rate Breakdown',
+        subtitle=f'{len(with_interviews)} of {total} ({rate}%)',
+        sections=[
+            {'label': 'Has Interviews', 'applications': with_interviews, 'count': len(with_interviews)},
+            {'label': 'No Interviews', 'applications': without_interviews, 'count': len(without_interviews)},
+        ],
+        show_status=True,
+        show_response=False,
+        show_interviews=True,
+    )
+
+
+@views_bp.route('/partials/stats/weekly-breakdown')
+def stats_weekly_breakdown():
+    """Return breakdown of applications from the last 7 days."""
+    from datetime import timedelta
+    from app.services.user_service import get_current_user_id
+
+    user_id = get_current_user_id()
+    week_ago = date.today() - timedelta(days=7)
+    applications = JobApplication.query.filter_by(user_id=user_id)\
+        .filter(JobApplication.date_applied >= week_ago)\
+        .order_by(JobApplication.date_applied.desc()).all()
+
+    return render_template('partials/stat_breakdown.html',
+        title='Applied This Week',
+        subtitle=f'{len(applications)} applications in the last 7 days',
+        applications=applications,
+        show_status=True,
+        show_response=False,
+        show_interviews=False,
+    )
+
+
 @views_bp.route('/partials/status-breakdown')
 def status_breakdown_partial():
     """Return status breakdown as HTML partial."""

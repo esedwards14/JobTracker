@@ -24,6 +24,9 @@
         {% endfor %}
     </div>
 
+    <!-- Stat breakdown (HTMX target) -->
+    <div id="stat-breakdown" class="stagger-children"></div>
+
     <!-- Status breakdown -->
     <div class="glass-card fade-in">
         <div class="px-6 py-4 border-b" style="border-color: var(--border-glass);">
@@ -60,4 +63,63 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    var activeStatCard = null;
+
+    function toggleStatCard(card, event) {
+        var stat = card.getAttribute('data-stat');
+
+        if (activeStatCard === stat) {
+            // Clicking same card — collapse
+            event.preventDefault();
+            closeStatBreakdown();
+            return;
+        }
+
+        // Remove active from all cards
+        document.querySelectorAll('.stat-card').forEach(function(c) {
+            c.classList.remove('stat-card-active');
+        });
+
+        // Set new active
+        card.classList.add('stat-card-active');
+        activeStatCard = stat;
+    }
+
+    function closeStatBreakdown() {
+        var target = document.getElementById('stat-breakdown');
+        if (target) {
+            gsap.to(target, {
+                opacity: 0,
+                y: -10,
+                duration: 0.3,
+                ease: 'power2.in',
+                onComplete: function() {
+                    target.innerHTML = '';
+                    gsap.set(target, { opacity: 1, y: 0 });
+                }
+            });
+        }
+        document.querySelectorAll('.stat-card').forEach(function(c) {
+            c.classList.remove('stat-card-active');
+        });
+        activeStatCard = null;
+    }
+
+    // Animate breakdown in after HTMX swap
+    document.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target && e.detail.target.id === 'stat-breakdown') {
+            var content = e.detail.target.querySelector('#stat-breakdown-content');
+            if (content) {
+                gsap.fromTo(content,
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+                );
+            }
+        }
+    });
+</script>
 {% endblock %}

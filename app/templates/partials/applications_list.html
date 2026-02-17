@@ -48,7 +48,7 @@
                 </td>
                 <td class="px-4 py-4 break-words max-w-xs">
                     <select onchange="updateStatus({{ app.id }}, this.value, this)"
-                            class="text-xs font-medium rounded-full px-2 py-1 border-0 cursor-pointer status-{{ app.status }}">
+                            class="inline-status-select font-medium cursor-pointer status-{{ app.status }}">
                         <option value="applied" {% if app.status == 'applied' %}selected{% endif %}>Applied</option>
                         <option value="interviewing" {% if app.status == 'interviewing' %}selected{% endif %}>Interviewing</option>
                         <option value="offered" {% if app.status == 'offered' %}selected{% endif %}>Offered</option>
