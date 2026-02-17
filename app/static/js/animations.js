@@ -1,40 +1,191 @@
 /* ============================================
-   Modern Animations & Interactions
+   GSAP ScrollTrigger Animations
+   Inspired by seccosquared.com scroll feel
    ============================================ */
 
 (function() {
     'use strict';
 
-    // ==========================================
-    // Scroll-based Reveal Animations
-    // ==========================================
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px 0px -50px 0px',
-        threshold: 0.1
-    };
+    // Wait for GSAP to be available
+    if (typeof gsap === 'undefined') {
+        console.warn('GSAP not loaded');
+        return;
+    }
 
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                // Unobserve after revealing (animate once)
-                revealObserver.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+    gsap.registerPlugin(ScrollTrigger);
 
-    function initScrollAnimations() {
-        const animatedElements = document.querySelectorAll(
-            '.fade-in, .fade-in-left, .fade-in-right, .scale-in, .stagger-children'
+    // ==========================================
+    // Page entrance animation
+    // ==========================================
+    function initPageEntrance() {
+        const main = document.querySelector('main');
+        if (!main) return;
+
+        gsap.fromTo(main,
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
         );
-        animatedElements.forEach(el => {
-            revealObserver.observe(el);
+    }
+
+    // ==========================================
+    // Scroll-driven section reveals
+    // Each section slides up and fades in as you scroll
+    // Scrubbed to scroll position for that "advancing" feel
+    // ==========================================
+    function initScrollReveal() {
+        // Fade-in elements: scrubbed to scroll position
+        document.querySelectorAll('.fade-in').forEach(el => {
+            gsap.fromTo(el,
+                { y: 60, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 90%',
+                        end: 'top 50%',
+                        scrub: 0.8,
+                    }
+                }
+            );
+        });
+
+        // Fade-in-left
+        document.querySelectorAll('.fade-in-left').forEach(el => {
+            gsap.fromTo(el,
+                { x: -60, opacity: 0 },
+                {
+                    x: 0,
+                    opacity: 1,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 90%',
+                        end: 'top 50%',
+                        scrub: 0.8,
+                    }
+                }
+            );
+        });
+
+        // Fade-in-right (sidebar)
+        document.querySelectorAll('.fade-in-right').forEach(el => {
+            gsap.fromTo(el,
+                { x: 60, opacity: 0 },
+                {
+                    x: 0,
+                    opacity: 1,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 90%',
+                        end: 'top 50%',
+                        scrub: 0.8,
+                    }
+                }
+            );
+        });
+
+        // Scale-in
+        document.querySelectorAll('.scale-in').forEach(el => {
+            gsap.fromTo(el,
+                { scale: 0.9, opacity: 0 },
+                {
+                    scale: 1,
+                    opacity: 1,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 90%',
+                        end: 'top 60%',
+                        scrub: 0.8,
+                    }
+                }
+            );
         });
     }
 
     // ==========================================
-    // Navbar scroll effect
+    // Stagger children - cards animate in sequence
+    // ==========================================
+    function initStaggerAnimations() {
+        document.querySelectorAll('.stagger-children').forEach(parent => {
+            const children = parent.children;
+            if (children.length === 0) return;
+
+            gsap.fromTo(children,
+                { y: 40, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    stagger: 0.12,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: parent,
+                        start: 'top 85%',
+                        end: 'top 40%',
+                        scrub: 0.6,
+                    }
+                }
+            );
+        });
+    }
+
+    // ==========================================
+    // Text line reveal - lines slide up from below
+    // Like seccosquared's animated-line effect
+    // ==========================================
+    function initTextReveals() {
+        document.querySelectorAll('.reveal-text').forEach(el => {
+            gsap.fromTo(el,
+                { yPercent: 100, opacity: 0 },
+                {
+                    yPercent: 0,
+                    opacity: 1,
+                    duration: 1.2,
+                    ease: 'power4.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 95%',
+                        end: 'top 70%',
+                        scrub: 0.5,
+                    }
+                }
+            );
+        });
+    }
+
+    // ==========================================
+    // Glass cards - parallax depth on scroll
+    // Cards move at slightly different speeds
+    // ==========================================
+    function initParallaxCards() {
+        document.querySelectorAll('.glass-card').forEach((card, i) => {
+            const speed = (i % 3 + 1) * 8;
+            gsap.fromTo(card,
+                { y: speed },
+                {
+                    y: -speed,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top bottom',
+                        end: 'bottom top',
+                        scrub: true,
+                    }
+                }
+            );
+        });
+    }
+
+    // ==========================================
+    // Navbar scroll effect - still glass-based
     // ==========================================
     function initNavScroll() {
         const nav = document.querySelector('nav');
@@ -42,23 +193,22 @@
 
         nav.classList.add('glass-nav');
 
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const currentScroll = window.scrollY;
-            if (currentScroll > 20) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
+        ScrollTrigger.create({
+            start: 20,
+            onUpdate: (self) => {
+                if (self.scroll() > 20) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
             }
-            lastScroll = currentScroll;
-        }, { passive: true });
+        });
     }
 
     // ==========================================
     // Parallax background orbs
     // ==========================================
     function initParallaxBackground() {
-        // Only add if not already present
         if (document.querySelector('.parallax-bg')) return;
 
         const bg = document.createElement('div');
@@ -70,7 +220,22 @@
         `;
         document.body.prepend(bg);
 
-        // Subtle mouse-driven parallax for orbs
+        // Orbs move with scroll (parallax depth)
+        const orbs = bg.querySelectorAll('.orb');
+        orbs.forEach((orb, i) => {
+            gsap.to(orb, {
+                y: (i + 1) * -100,
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: document.body,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: true,
+                }
+            });
+        });
+
+        // Subtle mouse-driven parallax
         let animFrame;
         document.addEventListener('mousemove', (e) => {
             if (animFrame) cancelAnimationFrame(animFrame);
@@ -78,10 +243,14 @@
                 const x = (e.clientX / window.innerWidth - 0.5) * 2;
                 const y = (e.clientY / window.innerHeight - 0.5) * 2;
 
-                const orbs = bg.querySelectorAll('.orb');
                 orbs.forEach((orb, i) => {
                     const speed = (i + 1) * 3;
-                    orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+                    gsap.to(orb, {
+                        x: x * speed,
+                        duration: 0.8,
+                        ease: 'power2.out',
+                        overwrite: 'auto'
+                    });
                 });
             });
         }, { passive: true });
@@ -93,122 +262,109 @@
     function animateCounter(element, target, duration) {
         if (isNaN(target)) return;
 
-        const start = 0;
-        const startTime = performance.now();
+        const obj = { val: 0 };
         const isPercent = element.textContent.includes('%');
         const suffix = isPercent ? '%' : '';
 
-        function update(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            // Ease out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(start + (target - start) * eased);
-
-            element.textContent = current + suffix;
-
-            if (progress < 1) {
-                requestAnimationFrame(update);
+        gsap.to(obj, {
+            val: target,
+            duration: duration / 1000,
+            ease: 'power2.out',
+            onUpdate: () => {
+                element.textContent = Math.round(obj.val) + suffix;
             }
-        }
-
-        requestAnimationFrame(update);
+        });
     }
 
     function initCounterAnimations() {
-        const counters = document.querySelectorAll('.counter-animate');
-        const counterObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const el = entry.target;
-                    const text = el.textContent.trim();
-                    const value = parseInt(text.replace(/[^0-9]/g, ''));
-                    if (!isNaN(value)) {
-                        animateCounter(el, value, 800);
-                    }
-                    counterObserver.unobserve(el);
-                }
-            });
-        }, { threshold: 0.5 });
+        document.querySelectorAll('.counter-animate').forEach(counter => {
+            const text = counter.textContent.trim();
+            const value = parseInt(text.replace(/[^0-9]/g, ''));
+            if (isNaN(value)) return;
 
-        counters.forEach(counter => counterObserver.observe(counter));
+            ScrollTrigger.create({
+                trigger: counter,
+                start: 'top 80%',
+                onEnter: () => animateCounter(counter, value, 1200),
+                once: true,
+            });
+        });
     }
 
     // ==========================================
-    // HTMX content load animation
+    // Progress bar animation - scrubbed
+    // ==========================================
+    function initProgressBars() {
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            const targetWidth = bar.dataset.width || bar.style.width;
+            bar.style.width = '0%';
+
+            gsap.to(bar, {
+                width: targetWidth,
+                duration: 1.5,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: bar,
+                    start: 'top 85%',
+                    once: true,
+                }
+            });
+        });
+    }
+
+    // ==========================================
+    // Page header - big heading parallax
+    // Header text moves slower than the page
+    // ==========================================
+    function initHeaderParallax() {
+        document.querySelectorAll('.page-header h1').forEach(h1 => {
+            gsap.fromTo(h1,
+                { y: 0 },
+                {
+                    y: -30,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: h1,
+                        start: 'top 80%',
+                        end: 'bottom top',
+                        scrub: true,
+                    }
+                }
+            );
+        });
+    }
+
+    // ==========================================
+    // HTMX content load - reinitialize animations
     // ==========================================
     function initHtmxAnimations() {
         document.addEventListener('htmx:afterSwap', function(e) {
-            // Re-initialize scroll animations for new content
             setTimeout(() => {
-                initScrollAnimations();
+                ScrollTrigger.refresh();
+                initScrollReveal();
+                initStaggerAnimations();
                 initCounterAnimations();
-            }, 50);
+                initProgressBars();
+                initTextReveals();
+            }, 100);
         });
 
         document.addEventListener('htmx:beforeSwap', function(e) {
             const target = e.detail.target;
             if (target) {
-                target.style.opacity = '0.5';
-                target.style.transition = 'opacity 0.2s';
+                gsap.to(target, { opacity: 0.5, duration: 0.2 });
             }
         });
 
         document.addEventListener('htmx:afterSwap', function(e) {
             const target = e.detail.target;
             if (target) {
-                target.style.opacity = '0';
-                target.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                requestAnimationFrame(() => {
-                    target.style.opacity = '1';
-                });
+                gsap.fromTo(target,
+                    { opacity: 0 },
+                    { opacity: 1, duration: 0.4, ease: 'power2.out' }
+                );
             }
         });
-    }
-
-    // ==========================================
-    // Page transition animation
-    // ==========================================
-    function initPageTransitions() {
-        // Fade in on load
-        const main = document.querySelector('main');
-        if (main) {
-            main.style.opacity = '0';
-            main.style.transform = 'translateY(10px)';
-            main.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    main.style.opacity = '1';
-                    main.style.transform = 'translateY(0)';
-                });
-            });
-        }
-    }
-
-    // ==========================================
-    // Progress bar animation
-    // ==========================================
-    function initProgressBars() {
-        const bars = document.querySelectorAll('.progress-bar');
-        const barObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const bar = entry.target;
-                    const width = bar.dataset.width || bar.style.width;
-                    bar.style.width = '0%';
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            bar.style.width = width;
-                        });
-                    });
-                    barObserver.unobserve(bar);
-                }
-            });
-        }, { threshold: 0.2 });
-
-        bars.forEach(bar => barObserver.observe(bar));
     }
 
     // ==========================================
@@ -217,14 +373,17 @@
     function init() {
         initParallaxBackground();
         initNavScroll();
-        initPageTransitions();
-        initScrollAnimations();
+        initPageEntrance();
+        initScrollReveal();
+        initStaggerAnimations();
+        initTextReveals();
+        initParallaxCards();
+        initHeaderParallax();
         initCounterAnimations();
         initHtmxAnimations();
         initProgressBars();
     }
 
-    // Run on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

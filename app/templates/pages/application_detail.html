@@ -10,8 +10,8 @@
             <a href="{{ url_for('views.applications') }}" class="text-sm mb-2 inline-block" style="color: var(--accent-hover);">
                 &larr; Back to Applications
             </a>
-            <h1 class="text-2xl font-bold" style="color: var(--text-primary);">{{ application.position }}</h1>
-            <p class="text-lg" style="color: var(--text-secondary);">{{ application.company_name }}</p>
+            <h1 class="text-2xl font-bold reveal-text" style="color: var(--text-primary);">{{ application.position }}</h1>
+            <p class="text-lg reveal-text" style="color: var(--text-secondary);">{{ application.company_name }}</p>
         </div>
         <div class="flex space-x-3">
             <a href="{{ url_for('views.edit_application', id=application.id) }}"
