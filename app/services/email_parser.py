@@ -818,6 +818,8 @@ class JobEmailParser:
         r'invited you to apply',
         r'inviting you to apply',
         r'invitation to apply',
+        r'(you|you\'ve) (been )?invited to apply',
+        r'invited (for|to) (the )?(position|role|interview)',
         r'invited you to interview',
         r'invitation to interview',
         r'employer is interested',
@@ -830,6 +832,12 @@ class JobEmailParser:
         r'view (this )?message',
         r'view the full message',
         r'an employer.{0,30}(messaged|contacted|reached out)',
+        # Indeed-specific "employer reached out" formats
+        r'(a |an )?hiring manager.{0,50}(interested|connect|invite|message)',
+        r'employer.{0,30}(interested in you|wants to hire|reached out)',
+        r'(apply|applying) (for|to) (this|the) (position|role|job)',
+        r'interested in hiring you',
+        r'express(ed)? interest in you',
     ]
 
     # Recruiter outreach patterns - these indicate someone is reaching out about a NEW position
@@ -1183,7 +1191,24 @@ class JobEmailParser:
         subject_lower = subject.lower()
         from_lower = from_address.lower()
 
-        # FIRST: Check if this is an employer message through a job platform
+        # FIRST: Skip job alert / promotional / digest emails from job platforms.
+        # These sometimes contain "unfortunately" or "thank you" in footers/boilerplate
+        # and must be excluded before any rejection pattern matching.
+        job_platform_domains = [
+            'indeed.com', 'indeedemail.com', 'linkedin.com', 'linkedin.email',
+            'glassdoor.com', 'ziprecruiter.com', 'handshake.com', 'joinhandshake.com',
+        ]
+        is_from_platform = any(d in from_lower for d in job_platform_domains)
+        job_alert_subjects = [
+            'job alert', 'jobs for you', 'jobs matching', 'job recommendations',
+            'new jobs', 'jobs you might like', 'daily digest', 'weekly digest',
+            'job matches', 'recommended jobs', 'top jobs', 'jobs near',
+            'apply now', 'new job', 'hiring near',
+        ]
+        if is_from_platform and any(kw in subject_lower for kw in job_alert_subjects):
+            return None
+
+        # SECOND: Check if this is an employer message through a job platform
         # (Indeed, LinkedIn, etc.) - skip these, follow_up is set manually
         if self._is_employer_message(subject, body, from_address):
             return None

@@ -246,8 +246,9 @@ class GmailOAuthConnector:
         after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
 
         search_queries = [
-            # Explicit rejection body language — most reliable signal
-            f'after:{after_date} "unfortunately"',
+            # Explicit rejection body language — require job context alongside "unfortunately"
+            # to avoid false positives from Indeed/LinkedIn footers in non-response emails
+            f'after:{after_date} "unfortunately" (application OR candidacy OR position OR "moving forward")',
             f'after:{after_date} "regret to inform"',
             f'after:{after_date} "not moving forward"',
             f'after:{after_date} "not selected"',
