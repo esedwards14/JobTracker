@@ -265,6 +265,12 @@ class GmailOAuthConnector:
             f'after:{after_date} subject:interview from:careers@ OR from:recruiting@ OR from:hr@ OR from:talent@ OR from:hiring@',
             # ATS platforms not already covered by fetch_job_emails
             f'after:{after_date} from:icims.com OR from:taleo.net OR from:ashbyhq.com OR from:bamboohr.com OR from:smartrecruiters.com OR from:jobvite.com',
+            # Video/meeting invite links — strongest signal of an actual interview
+            f'after:{after_date} meet.google.com',
+            f'after:{after_date} zoom.us',
+            f'after:{after_date} teams.microsoft.com/l/meetup',
+            # Google Calendar invites sent as .ics attachments
+            f'after:{after_date} filename:ics subject:(interview OR meeting OR call)',
         ]
 
         emails = []
@@ -371,9 +377,11 @@ class GmailOAuthConnector:
             return None
 
     def _get_body_text(self, payload: dict) -> str:
-        """Extract text body from message payload (plain text preferred, HTML as fallback)."""
+        """Extract text body from message payload (plain text preferred, HTML as fallback).
+        Also extracts text/calendar (ICS) parts which signal interview invitations."""
         plain_text = ''
         html_text = ''
+        calendar_text = ''
 
         if 'body' in payload and payload['body'].get('data'):
             content = base64.urlsafe_b64decode(payload['body']['data']).decode('utf-8', errors='ignore')
@@ -382,6 +390,8 @@ class GmailOAuthConnector:
                 plain_text = content
             elif mime_type == 'text/html':
                 html_text = content
+            elif mime_type == 'text/calendar':
+                calendar_text = content
             else:
                 plain_text = content
 
@@ -395,17 +405,30 @@ class GmailOAuthConnector:
                 elif mime_type == 'text/html' and part.get('body', {}).get('data'):
                     html_text = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', errors='ignore')
 
+                elif mime_type == 'text/calendar' and part.get('body', {}).get('data'):
+                    # Calendar invite (.ics) — extract SUMMARY and DESCRIPTION
+                    # which typically contain the meeting title and details
+                    calendar_text = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', errors='ignore')
+
                 elif mime_type.startswith('multipart/'):
                     nested = self._get_body_text(part)
                     if nested and not plain_text:
                         plain_text = nested
 
-        # Prefer plain text, but extract from HTML if needed
+        # Build final text: plain > html > nothing, then append calendar info
         if plain_text:
-            return plain_text
+            body = plain_text
         elif html_text:
-            return self._html_to_text(html_text)
-        return ''
+            body = self._html_to_text(html_text)
+        else:
+            body = ''
+
+        # Append calendar invite content — this surfaces the meeting invite signal
+        # to the parser so it can detect interview invitations from .ics attachments
+        if calendar_text:
+            body = body + '\n\n[CALENDAR_INVITE]\n' + calendar_text
+
+        return body
 
     def _html_to_text(self, html: str) -> str:
         """Convert HTML to plain text, preserving important content."""

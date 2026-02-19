@@ -773,6 +773,20 @@ class JobEmailParser:
         r'choose a time',
         r'availability.{0,30}(interview|call|chat|meeting)',
         r'when.{0,20}available.{0,30}(talk|call|chat|meet|interview)',
+        # Video meeting links — direct link in email is a strong interview signal
+        r'meet\.google\.com',
+        r'zoom\.us/(j/|meeting)',
+        r'teams\.microsoft\.com/l/meetup',
+        r'webex\.com/meet',
+        # Google Calendar / .ics invite signals (injected by connector)
+        r'\[CALENDAR_INVITE\]',
+        r'BEGIN:VCALENDAR',
+        r'BEGIN:VEVENT',
+        r'you.{0,10}(invited|been invited).{0,30}(meeting|call|interview)',
+        r'meeting invitation',
+        r'interview invitation',
+        r'join (the |this )?(meeting|call|interview)',
+        r'join (via |with )?(zoom|google meet|teams|webex)',
     ]
 
     # Offer patterns
@@ -1290,6 +1304,13 @@ class JobEmailParser:
                 'calendly.com', 'goodtime.io', 'doodle.com',
                 'schedule an interview', 'schedule your interview',
                 'interview scheduled', 'interview invitation',
+                # Video meeting platforms
+                'meet.google.com', 'zoom.us/j/', 'zoom.us/meeting',
+                'teams.microsoft.com/l/meetup', 'webex.com/meet',
+                # Calendar invite signals
+                '[calendar_invite]', 'begin:vcalendar', 'begin:vevent',
+                'meeting invitation', 'join the meeting', 'join via zoom',
+                'join via google meet', 'join via teams',
             ]
             has_scheduling = any(signal in text for signal in scheduling_signals)
 

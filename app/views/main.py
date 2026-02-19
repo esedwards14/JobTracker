@@ -235,10 +235,19 @@ def stats_partial():
     with_response = base_query.filter_by(response_received=True).count()
     response_rate = (with_response / total * 100) if total > 0 else 0
 
-    # Interview rate - join with applications to filter by user
-    apps_with_interviews = db.session.query(
-        func.count(func.distinct(InterviewStage.application_id))
-    ).join(JobApplication).filter(JobApplication.user_id == user_id).scalar() or 0
+    # Interview rate — count applications that reached interview stage.
+    # Includes: status='interviewing'/'offered' (set by email scan or manually)
+    # OR applications that have at least one InterviewStage record logged.
+    apps_with_interviews = base_query.filter(
+        or_(
+            JobApplication.status.in_(['interviewing', 'offered']),
+            JobApplication.id.in_(
+                db.session.query(InterviewStage.application_id).filter(
+                    InterviewStage.application_id == JobApplication.id
+                )
+            )
+        )
+    ).count()
     interview_rate = (apps_with_interviews / total * 100) if total > 0 else 0
 
     # Recent applications
