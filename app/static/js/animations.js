@@ -114,6 +114,9 @@
                     duration: 0.8,
                     stagger: 0.10,
                     ease: 'back.out(1.3)',
+                    // immediateRender: false prevents GSAP from immediately applying
+                    // the `from` state (blur/invisible) before the trigger fires
+                    immediateRender: false,
                     scrollTrigger: {
                         trigger: parent,
                         start: 'top 85%',
@@ -192,8 +195,9 @@
     function animateCounter(element, target, duration) {
         if (isNaN(target)) return;
         const obj = { val: 0 };
-        const isPercent = element.textContent.includes('%');
-        const suffix = isPercent ? '%' : '';
+        // Read suffix from data attribute (stable) — textContent changes mid-animation
+        const rawTarget = element.dataset.countTarget || '';
+        const suffix = rawTarget.includes('%') ? '%' : '';
         gsap.to(obj, {
             val: target,
             duration: duration / 1000,
@@ -206,8 +210,14 @@
 
     function initCounterAnimations() {
         document.querySelectorAll('.counter-animate').forEach(counter => {
-            const text = counter.textContent.trim();
-            const value = parseInt(text.replace(/[^0-9]/g, ''));
+            // Skip already-initialized counters — prevents duplicate triggers
+            // across multiple htmx:afterSwap events on the same page
+            if (counter.dataset.countInit) return;
+            counter.dataset.countInit = '1';
+
+            // Read from data attribute (stable value) not textContent (changes during animation)
+            const rawTarget = counter.dataset.countTarget ?? counter.textContent.trim();
+            const value = parseFloat(rawTarget.replace(/[^0-9.]/g, ''));
             if (isNaN(value)) return;
             ScrollTrigger.create({
                 trigger: counter,
@@ -260,12 +270,14 @@
 
             // Re-init scroll animations for new content
             setTimeout(() => {
-                ScrollTrigger.refresh();
                 initStaggerAnimations();
                 initScrollReveal();
                 initCounterAnimations();
                 initProgressBars();
                 initTextReveals();
+                // Refresh AFTER creating all triggers so above-fold elements
+                // fire immediately rather than waiting for the next scroll event
+                ScrollTrigger.refresh();
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }, 80);
         });
