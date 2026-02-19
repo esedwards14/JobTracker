@@ -75,12 +75,16 @@ class JobEmailParser:
 
     # Body position patterns (work on both subject and body)
     BODY_POSITION_PATTERNS = [
-        # "for the following role(s): Position" (common in ATS emails) - PRIORITY
-        r'(?:following role|following position|following job)(?:\(s\))?:\s*\n?\s*(.+?)(?:\s*\(|\n|$)',
+        # "for the following role(s)/opportunity: Position" (common in ATS emails, IBM uses "following opportunity") - PRIORITY
+        r'(?:following role|following position|following job|following opportunity)(?:\(s\))?:\s*\n?\s*(.+?)(?:\s*\(|\n|$)',
+        # "Job Title: Software Engineer" (IBM Workday / Taleo field format)
+        r'[Jj]ob\s+[Tt]itle:\s*(.+?)(?:\n|$)',
         # "job application - 12345 - Job Title" (IBM format)
         r'job application\s*-\s*\d+\s*-\s*(.+?)(?:\.|!|\n|$)',
         # "application for the Position position/role" (e.g., "Your application for the Technical Sales Representative position")
         r'application for\s+(?:the\s+)?(.+?)\s+(?:position|role)(?:\s|\.|\,|!|$)',
+        # "candidacy for the Position position/role" (IBM rejection format: "not moving forward with your candidacy for the X position")
+        r'candidacy for\s+(?:the\s+)?(.+?)\s+(?:position|role)',
         # "position of Position" (e.g., "applying for the position of Account Coordinator")
         r'position of\s+([A-Z][A-Za-z0-9\s\-/]+?)(?:\.|,|!|\s+at|\s+with|\n)',
         # "interest in the Position position/role"
@@ -945,6 +949,14 @@ class JobEmailParser:
         r'([A-Za-z0-9\s&\-\.\'\/]+?)\s+(?:position|role)\s+(?:at|with)',
         # "your application for Job Title"
         r'application for\s+(?:the\s+)?([A-Za-z0-9\s&\-\.\'\/]+?)(?:\s+position|\s+role|\s+at|\s+with|\.|,|$)',
+        # "candidacy for the Job Title position" — IBM rejection: "not moving forward with your candidacy for the X position"
+        r'candidacy for\s+(?:the\s+)?([A-Za-z0-9\s&\-\.\'\/]+?)\s+(?:position|role)',
+        # "not selected/moving forward/proceeding ... the Job Title position"
+        r'not (?:be )?(?:selected|moving forward|proceeding|advancing).{0,50}(?:the\s+)?([A-Za-z0-9][A-Za-z0-9\s&\-\.\'\/]{2,60}?)\s+(?:position|role)',
+        # "Job Title: Software Engineer" field label in email
+        r'[Jj]ob\s+[Tt]itle:\s*([A-Za-z0-9][A-Za-z0-9\s&\-\.\'\/]+?)(?:\n|$)',
+        # "for the following opportunity: Job Title" (IBM ATS confirmation)
+        r'following opportunity:\s*\n?\s*([A-Za-z0-9][A-Za-z0-9\s&\-\.\'\/]+?)(?:\s*\(|\n|$)',
     ]
 
     def parse_response_email(self, email_data: dict) -> dict:

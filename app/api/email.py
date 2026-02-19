@@ -187,8 +187,59 @@ def extract_companies_from_text(text: str) -> list:
     return companies
 
 
+def pick_best_match_for_rejection(applications: list, position: str) -> 'Optional[JobApplication]':
+    """
+    From a list of company-matched applications, return the single best match for a
+    rejection email. Avoids marking every application at a company as rejected when
+    only one specific role was rejected.
+
+    Scoring:
+      100 — extracted position exactly matches app.position
+       80 — one is a substring of the other
+     n*20 — n overlapping words between extracted and app position
+       +1 tie-breaker for most recently applied
+    Falls back to the most-recently-applied app if no position info is available.
+    """
+    if not applications:
+        return None
+    if len(applications) == 1:
+        return applications[0]
+
+    if not position:
+        # No position info at all — safest bet is the most recent application
+        return max(applications, key=lambda a: a.date_applied or datetime.min.date())
+
+    position_lower = position.lower()
+    scored = []
+    for app in applications:
+        app_pos = (app.position or '').lower()
+        if not app_pos:
+            score = 0
+        elif position_lower == app_pos:
+            score = 100
+        elif position_lower in app_pos or app_pos in position_lower:
+            score = 80
+        else:
+            pos_words = set(position_lower.split())
+            app_words = set(app_pos.split())
+            overlap = len(pos_words & app_words)
+            score = overlap * 20
+        # Use date_applied as a float for tie-breaking (ordinal of date)
+        date_ord = app.date_applied.toordinal() if app.date_applied else 0
+        scored.append((score, date_ord, app))
+
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    return scored[0][2]
+
+
 def find_matching_applications(company: str, position: str, email_from: str, body_preview: str, user_id: str = None) -> list:
     """Find matching applications using multiple matching strategies."""
+    # Treat placeholder value as no position — prevents "Unknown Position" being used
+    # as a literal search string which would fail all position checks and fall through
+    # to domain matching, returning every application at the same company.
+    if position == 'Unknown Position':
+        position = None
+
     applications = []
 
     # Strategy 1: Direct company name match (with normalization)
@@ -642,16 +693,24 @@ def scan_response_emails():
 
             # Find matching application(s) using improved matching logic
             applications = find_matching_applications(company, position, from_addr, body_preview, user_id)
-            
+
+            # For rejections with multiple company matches, narrow to the single best
+            # position match. This prevents one IBM rejection email from marking every
+            # IBM application as rejected.
+            real_position = position if position != 'Unknown Position' else None
+            if response_type == 'rejected' and len(applications) > 1:
+                best = pick_best_match_for_rejection(applications, real_position)
+                applications = [best] if best else []
+
             # Check if any matched app already has this response (already scanned)
             already_scanned = False
             for app in applications:
-                if (app.response_date and email_date and 
-                    app.response_date == email_date.date() and 
+                if (app.response_date and email_date and
+                    app.response_date == email_date.date() and
                     app.status == response_type):
                     already_scanned = True
                     break
-            
+
             # Skip emails that have already been scanned and processed
             if already_scanned:
                 continue
