@@ -359,7 +359,11 @@ def sync_emails():
 
     try:
         # Connect and fetch emails via OAuth
-        connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
+        connector = GmailOAuthConnector(
+            settings.access_token or '',
+            settings.refresh_token,
+            settings.token_expiry
+        )
         with connector:
             raw_emails = connector.fetch_job_emails(days_back=days_back, limit=100)
 
@@ -579,7 +583,11 @@ def scan_response_emails():
 
     try:
         # Connect and fetch emails via OAuth
-        connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
+        connector = GmailOAuthConnector(
+            settings.access_token or '',
+            settings.refresh_token,
+            settings.token_expiry
+        )
         with connector:
             # Fetch emails that might be responses (broader search)
             raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
@@ -803,7 +811,11 @@ def preview_response_emails():
 
     try:
         # Connect and fetch emails via OAuth
-        connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
+        connector = GmailOAuthConnector(
+            settings.access_token or '',
+            settings.refresh_token,
+            settings.token_expiry
+        )
         with connector:
             raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
 
@@ -918,9 +930,26 @@ def scan_contacts_from_emails():
     days_back = request.json.get('days_back', 90) if request.json else 90
 
     try:
-        connector = GmailOAuthConnector(settings.access_token or '', settings.refresh_token)
+        connector = GmailOAuthConnector(
+            settings.access_token or '',
+            settings.refresh_token,
+            settings.token_expiry
+        )
         with connector:
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
+            # Fetch job platform emails AND broader recruiter/personal emails
+            job_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
+            recruiter_emails = connector.fetch_recruiter_emails(days_back=days_back, limit=100)
+
+            # Merge and deduplicate by message_id
+            seen_msg_ids = set()
+            raw_emails = []
+            for em in job_emails + recruiter_emails:
+                mid = em.get('message_id')
+                if mid and mid in seen_msg_ids:
+                    continue
+                if mid:
+                    seen_msg_ids.add(mid)
+                raw_emails.append(em)
 
             updated_tokens = connector.get_updated_tokens()
             if updated_tokens:
@@ -1017,7 +1046,9 @@ def scan_contacts_from_emails():
             'message': f'Contact scan complete. Saved {contacts_created} new contacts.',
             'contacts_created': contacts_created,
             'skipped_existing': skipped_existing,
-            'total_emails_scanned': len(raw_emails)
+            'total_emails_scanned': len(raw_emails),
+            'job_emails_found': len(job_emails),
+            'recruiter_emails_found': len(recruiter_emails)
         })
 
     except Exception as e:

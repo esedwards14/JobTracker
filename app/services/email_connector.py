@@ -12,16 +12,18 @@ from app.services.google_oauth import get_gmail_service, refresh_access_token
 class GmailOAuthConnector:
     """Connect to Gmail via OAuth to fetch job-related emails."""
 
-    def __init__(self, access_token: str, refresh_token: str):
+    def __init__(self, access_token: str, refresh_token: str, token_expiry=None):
         """
         Initialize Gmail connector with OAuth tokens.
 
         Args:
             access_token: Current access token
             refresh_token: Refresh token for getting new access tokens
+            token_expiry: Token expiry datetime (optional, used for proactive refresh)
         """
         self.access_token = access_token
         self.refresh_token = refresh_token
+        self.token_expiry = token_expiry
         self.service = None
         self.credentials = None
 
@@ -29,7 +31,8 @@ class GmailOAuthConnector:
         """Establish connection to Gmail API."""
         self.service, self.credentials = get_gmail_service(
             self.access_token,
-            self.refresh_token
+            self.refresh_token,
+            self.token_expiry
         )
         return self
 
@@ -133,6 +136,89 @@ class GmailOAuthConnector:
                 break
 
         # Sort by date descending (use a timezone-aware min date as fallback)
+        from datetime import timezone
+        aware_min = datetime.min.replace(tzinfo=timezone.utc)
+        emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)
+        return emails[:limit]
+
+    def fetch_recruiter_emails(self, days_back: int = 90, limit: int = 100) -> List[dict]:
+        """
+        Fetch emails from real people (recruiters, hiring managers) about jobs.
+        Uses broader search queries than fetch_job_emails to find personal contacts.
+
+        Args:
+            days_back: How many days back to search
+            limit: Maximum number of emails to return
+
+        Returns:
+            List of email dictionaries
+        """
+        if not self.service:
+            raise ConnectionError("Not connected. Call connect() first.")
+
+        after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
+
+        # Queries specifically designed to find emails from real people (recruiters/HMs)
+        # Exclude automated job platform emails to focus on personal contacts
+        platform_exclusions = '-from:indeed.com -from:indeedemail.com -from:linkedin.com -from:greenhouse.io -from:lever.co -from:workday.com -from:icims.com -from:smartrecruiters.com -from:workable.com -from:jobvite.com -from:taleo.net -from:ashbyhq.com -from:bamboohr.com -from:noreply'
+
+        search_queries = [
+            # Scheduling tool links — strongest signal of personal recruiter contact
+            f'after:{after_date} calendly.com',
+            f'after:{after_date} goodtime.io',
+            # Interview emails from company domains (not platforms)
+            f'after:{after_date} subject:interview {platform_exclusions}',
+            # Direct recruiter outreach about opportunities
+            f'after:{after_date} (subject:opportunity OR subject:"open role" OR subject:"new role") {platform_exclusions}',
+            # "I came across your profile" / "reaching out" type emails
+            f'after:{after_date} ("reaching out" OR "came across your") {platform_exclusions}',
+            # Application update emails from company HR directly
+            f'after:{after_date} subject:"your application" {platform_exclusions}',
+        ]
+
+        emails = []
+        seen_ids = set()
+
+        for query in search_queries:
+            if len(emails) >= limit:
+                break
+
+            try:
+                results = self.service.users().messages().list(
+                    userId='me',
+                    q=query,
+                    maxResults=25
+                ).execute()
+
+                messages = results.get('messages', [])
+
+                for msg_info in messages:
+                    if msg_info['id'] in seen_ids:
+                        continue
+                    seen_ids.add(msg_info['id'])
+
+                    try:
+                        msg = self.service.users().messages().get(
+                            userId='me',
+                            id=msg_info['id'],
+                            format='full'
+                        ).execute()
+
+                        parsed = self._parse_message(msg)
+                        if parsed:
+                            emails.append(parsed)
+
+                        if len(emails) >= limit:
+                            break
+
+                    except Exception as e:
+                        print(f"Error fetching recruiter message {msg_info['id']}: {e}")
+                        continue
+
+            except Exception as e:
+                print(f"Error with recruiter query '{query}': {e}")
+                continue
+
         from datetime import timezone
         aware_min = datetime.min.replace(tzinfo=timezone.utc)
         emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)

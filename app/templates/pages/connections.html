@@ -5,7 +5,9 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Page header -->
-    <div class="flex justify-between items-center fade-in page-header">
+    <div class="fade-in page-header">
+        <p class="section-label">Networking</p>
+        <div class="flex justify-between items-start">
         <div>
             <h1 class="reveal-text">Connections</h1>
             <p class="mt-1 text-sm reveal-text">Recruiters, hiring managers, and other contacts from your job search</p>
@@ -27,6 +29,7 @@
                     class="btn-primary">
                 + Add Connection
             </button>
+        </div>
         </div>
     </div>
 
@@ -375,6 +378,7 @@ async function scanContacts() {
             if (data.skipped_existing > 0) {
                 msg += ` (${data.skipped_existing} already existed)`;
             }
+            msg += ` — scanned ${data.total_emails_scanned} emails`;
             msgEl.textContent = msg;
             msgEl.className = 'rounded-lg p-3 flash-success';
             if (data.contacts_created > 0) {

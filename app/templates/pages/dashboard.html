@@ -1,67 +1,99 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Job Tracker{% endblock %}
+{% block title %}Dashboard — JobTracker{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <!-- Page header -->
-    <div class="page-header fade-in">
-        <h1 class="reveal-text">Dashboard</h1>
-        <p class="reveal-text">Overview of your job search progress</p>
-    </div>
+<div style="display:flex;flex-direction:column;gap:40px;">
 
-    <!-- Stats cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children"
-         hx-get="{{ url_for('views.stats_partial') }}"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-        <!-- Loading placeholder -->
-        {% for _ in range(4) %}
-        <div class="glass-card p-6">
-            <div class="h-4 skeleton w-1/2 mb-3"></div>
-            <div class="h-8 skeleton w-1/4"></div>
+    <!-- ── HERO HEADER ── -->
+    <div class="page-header fade-in" style="padding-top:20px;padding-bottom:20px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:20px;height:1px;background:var(--accent);opacity:0.6;"></span>
+            Live Dashboard
         </div>
-        {% endfor %}
+        <h1 class="reveal-text" style="margin-bottom:10px;">Your pipeline,<br><span style="background:linear-gradient(135deg,var(--accent) 0%,oklch(0.75 0.16 220) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">visualized.</span></h1>
+        <p class="reveal-text" style="color:var(--text-muted);font-size:15px;max-width:440px;line-height:1.65;">Track every application, interview, and offer. Your career momentum at a glance.</p>
     </div>
 
-    <!-- Stat breakdown (HTMX target) -->
+    <!-- ── STAT CARDS ── -->
+    <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:16px;height:1px;background:var(--text-muted);opacity:0.5;"></span>
+            Overview
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children"
+             hx-get="{{ url_for('views.stats_partial') }}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <!-- Loading skeletons -->
+            {% for _ in range(4) %}
+            <div class="stat-card" style="border-radius:20px!important;">
+                <div class="h-10 skeleton w-10 mb-5" style="border-radius:12px;"></div>
+                <div class="h-9 skeleton w-1/3 mb-2"></div>
+                <div class="h-3 skeleton w-1/2"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ── STAT BREAKDOWN (HTMX target) ── -->
     <div id="stat-breakdown" class="stagger-children"></div>
 
-    <!-- Status breakdown -->
-    <div class="glass-card fade-in">
-        <div class="px-6 py-4 border-b" style="border-color: var(--border-glass);">
-            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Application Status</h2>
+    <!-- ── PIPELINE + RECENT ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Status Breakdown -->
+        <div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <span style="display:inline-block;width:16px;height:1px;background:var(--text-muted);opacity:0.5;"></span>
+                Pipeline
+            </div>
+            <div class="glass-card fade-in" style="border-radius:24px!important;">
+                <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border-glass);">
+                    <h2 style="font-size:1rem!important;font-weight:700!important;letter-spacing:-0.02em!important;color:var(--text-primary)!important;">Status Breakdown</h2>
+                </div>
+                <div style="padding:16px 24px 20px;"
+                     hx-get="{{ url_for('views.status_breakdown_partial') }}"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div class="h-5 skeleton"></div>
+                        <div class="h-5 skeleton w-4/5"></div>
+                        <div class="h-5 skeleton w-3/5"></div>
+                        <div class="h-5 skeleton w-2/5"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="p-6"
-             hx-get="{{ url_for('views.status_breakdown_partial') }}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <div class="space-y-3">
-                <div class="h-6 skeleton w-full"></div>
-                <div class="h-6 skeleton w-4/5"></div>
-                <div class="h-6 skeleton w-3/5"></div>
+
+        <!-- Recent Applications -->
+        <div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <span style="display:inline-block;width:16px;height:1px;background:var(--text-muted);opacity:0.5;"></span>
+                Activity
+            </div>
+            <div class="glass-card fade-in" style="border-radius:24px!important;overflow:hidden;">
+                <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+                    <h2 style="font-size:1rem!important;font-weight:700!important;letter-spacing:-0.02em!important;color:var(--text-primary)!important;">Recent Applications</h2>
+                    <a href="{{ url_for('views.applications') }}"
+                       style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px;transition:gap 0.2s ease;"
+                       onmouseover="this.style.gap='8px'" onmouseout="this.style.gap='5px'">
+                        View all →
+                    </a>
+                </div>
+                <div hx-get="{{ url_for('views.recent_applications_partial') }}"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;">
+                        <div class="h-12 skeleton"></div>
+                        <div class="h-12 skeleton"></div>
+                        <div class="h-12 skeleton"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent applications -->
-    <div class="glass-card fade-in">
-        <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--border-glass);">
-            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">Recent Applications</h2>
-            <a href="{{ url_for('views.applications') }}" class="text-sm font-medium" style="color: var(--accent-hover);">
-                View all &rarr;
-            </a>
-        </div>
-        <div hx-get="{{ url_for('views.recent_applications_partial') }}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <div class="p-6 space-y-4">
-                <div class="h-12 skeleton"></div>
-                <div class="h-12 skeleton"></div>
-                <div class="h-12 skeleton"></div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
@@ -73,19 +105,18 @@
         var stat = card.getAttribute('data-stat');
 
         if (activeStatCard === stat) {
-            // Clicking same card — collapse
             event.preventDefault();
             closeStatBreakdown();
             return;
         }
 
-        // Remove active from all cards
         document.querySelectorAll('.stat-card').forEach(function(c) {
             c.classList.remove('stat-card-active');
+            gsap.to(c, { y: 0, duration: 0.2, ease: 'power2.out' });
         });
 
-        // Set new active
         card.classList.add('stat-card-active');
+        gsap.to(card, { y: -5, duration: 0.25, ease: 'power2.out' });
         activeStatCard = stat;
     }
 
@@ -94,8 +125,8 @@
         if (target) {
             gsap.to(target, {
                 opacity: 0,
-                y: -10,
-                duration: 0.3,
+                y: -12,
+                duration: 0.28,
                 ease: 'power2.in',
                 onComplete: function() {
                     target.innerHTML = '';
@@ -105,18 +136,18 @@
         }
         document.querySelectorAll('.stat-card').forEach(function(c) {
             c.classList.remove('stat-card-active');
+            gsap.to(c, { y: 0, duration: 0.2, ease: 'power2.out' });
         });
         activeStatCard = null;
     }
 
-    // Animate breakdown in after HTMX swap
     document.addEventListener('htmx:afterSwap', function(e) {
         if (e.detail.target && e.detail.target.id === 'stat-breakdown') {
             var content = e.detail.target.querySelector('#stat-breakdown-content');
             if (content) {
                 gsap.fromTo(content,
-                    { opacity: 0, y: 20 },
-                    { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+                    { opacity: 0, y: 24, scale: 0.97 },
+                    { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: 'power3.out' }
                 );
             }
         }

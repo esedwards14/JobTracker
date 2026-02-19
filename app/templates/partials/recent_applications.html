@@ -1,35 +1,30 @@
 {% if applications %}
-<div class="overflow-x-auto">
-    <table class="modern-table">
-        <thead>
-            <tr>
-                <th class="text-left">Company</th>
-                <th class="text-left">Position</th>
-                <th class="text-left">Status</th>
-                <th class="text-left">Date Applied</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in applications %}
-            <tr class="cursor-pointer" onclick="window.location='{{ url_for('views.application_detail', id=app.id) }}'">
-                <td class="whitespace-nowrap">
-                    <span class="font-medium" style="color: var(--text-primary);">{{ app.company_name }}</span>
-                </td>
-                <td class="whitespace-nowrap" style="color: var(--text-secondary);">{{ app.position }}</td>
-                <td class="whitespace-nowrap">
-                    <span class="status-pill status-{{ app.status }}">
-                        {{ app.status|replace('_', ' ')|title }}
-                    </span>
-                </td>
-                <td class="whitespace-nowrap" style="color: var(--text-muted);">{{ app.date_applied.strftime('%b %d, %Y') }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div style="padding: 8px 12px;">
+    {% for app in applications %}
+    <a href="{{ url_for('views.application_detail', id=app.id) }}"
+       style="display:flex;align-items:center;padding:12px;border-radius:12px;gap:14px;text-decoration:none;transition:all 0.18s ease;border:1px solid transparent;margin-bottom:4px;"
+       onmouseover="this.style.background='oklch(1 0 0 / 0.05)';this.style.borderColor='oklch(1 0 0 / 0.08)'"
+       onmouseout="this.style.background='transparent';this.style.borderColor='transparent'">
+        <div style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;border:1px solid oklch(1 0 0 / 0.10);
+            {% if app.status == 'applied' %}background:oklch(0.78 0.18 168 / 0.12);color:oklch(0.82 0.18 168);
+            {% elif app.status == 'interviewing' %}background:oklch(0.82 0.14 88 / 0.12);color:oklch(0.86 0.12 88);
+            {% elif app.status == 'offered' %}background:oklch(0.72 0.20 145 / 0.12);color:oklch(0.76 0.18 145);
+            {% elif app.status == 'rejected' %}background:oklch(0.62 0.22 25 / 0.12);color:oklch(0.70 0.18 25);
+            {% else %}background:oklch(1 0 0 / 0.06);color:var(--text-muted);{% endif %}">
+            {{ app.company_name[0]|upper }}
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:600;color:oklch(0.90 0.008 285);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ app.company_name }}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ app.position }}</div>
+        </div>
+        <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);flex-shrink:0;">{{ app.date_applied.strftime('%b %d') }}</div>
+        <span class="status-pill status-{{ app.status }}" style="flex-shrink:0;">{{ app.status|replace('_', ' ')|title }}</span>
+    </a>
+    {% endfor %}
 </div>
 {% else %}
 <div class="empty-state">
     <p>No applications yet.</p>
-    <a href="{{ url_for('views.new_application') }}" class="mt-2 inline-block" style="color: var(--accent-hover);">Add your first application</a>
+    <a href="{{ url_for('views.new_application') }}" style="color:var(--accent);display:inline-block;margin-top:8px;font-size:13px;font-weight:600;">Add your first application →</a>
 </div>
 {% endif %}

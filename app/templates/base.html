@@ -5,29 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Job Tracker{% endblock %}</title>
 
-    <!-- Inter font -->
+    <!-- Fonts: Plus Jakarta Sans + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script>
         window.tailwind = window.tailwind || {};
         tailwind.config = { darkMode: 'class' }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
 
-    <!-- GSAP + ScrollTrigger for scroll-driven animations -->
+    <!-- GSAP + ScrollTrigger -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-    <!-- Modern theme CSS -->
+    <!-- Liquid Glass Design System -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
 
-    <!-- HTMX loading indicator (minimal inline) -->
     <style>
         .htmx-request .htmx-indicator { display: inline-block; }
         .htmx-indicator { display: none; }
@@ -36,70 +39,106 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen dark flex flex-col">
-    <!-- Navigation -->
-    <nav class="glass-nav border-b">
-        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ url_for('views.dashboard') }}" class="flex items-center group">
-                        <div class="logo-mark h-10 w-10 flex items-center justify-center rounded-lg overflow-hidden">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                        <span class="ml-3 logo-text">Job Tracker</span>
-                    </a>
+
+    <!-- ORB BACKGROUND (depth layer) -->
+    <div class="parallax-bg" id="orb-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
+
+    <!-- FLOATING NAV -->
+    <nav class="glass-nav" id="navbar">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+
+            <!-- Logo -->
+            <a href="{{ url_for('views.dashboard') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+                <div class="logo-mark flex items-center justify-center">
+                    <svg style="width:14px;height:14px;color:oklch(0.07 0.012 285);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18A48.08 48.08 0 0112 21c-2.162 0-4.291-.143-6.378-.42-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
                 </div>
-                <div class="flex items-center">
-                    <a href="{{ url_for('views.dashboard') }}"
-                       class="nav-link {% if request.endpoint == 'views.dashboard' %}active{% endif %}">
-                        Dashboard
-                    </a>
-                    <a href="{{ url_for('views.applications') }}"
-                       class="nav-link {% if request.endpoint == 'views.applications' %}active{% endif %}">
-                        Applications
-                    </a>
-                    <a href="{{ url_for('views.connections') }}"
-                       class="nav-link {% if request.endpoint == 'views.connections' %}active{% endif %}">
-                        Connections
-                    </a>
-                    <a href="{{ url_for('views.email_settings') }}"
-                       class="nav-link {% if request.endpoint == 'views.email_settings' %}active{% endif %}">
-                        Email Import
-                    </a>
-                    <a href="{{ url_for('views.new_application') }}"
-                       class="btn-primary ml-6">
-                        + Add Application
-                    </a>
-                </div>
+                <span class="logo-text">JobTracker</span>
+            </a>
+
+            <!-- Nav links -->
+            <div style="display:flex;align-items:center;gap:2px;">
+                <a href="{{ url_for('views.dashboard') }}"
+                   class="nav-link {% if request.endpoint == 'views.dashboard' %}active{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{{ url_for('views.applications') }}"
+                   class="nav-link {% if request.endpoint in ['views.applications', 'views.application_detail', 'views.new_application', 'views.edit_application'] %}active{% endif %}">
+                    Applications
+                </a>
+                <a href="{{ url_for('views.connections') }}"
+                   class="nav-link {% if request.endpoint == 'views.connections' %}active{% endif %}">
+                    Connections
+                </a>
+                <a href="{{ url_for('views.email_settings') }}"
+                   class="nav-link {% if request.endpoint == 'views.email_settings' %}active{% endif %}">
+                    Email
+                </a>
+            </div>
+
+            <!-- Right actions -->
+            <div style="display:flex;align-items:center;gap:6px;">
+                <a href="{{ url_for('views.new_application') }}" class="btn-primary" style="padding:8px 16px;font-size:12px;">
+                    + Add Application
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8 flex-1 relative z-10 w-full">
+    <!-- MAIN CONTENT -->
+    <main class="max-w-6xl mx-auto px-6 sm:px-8 flex-1 relative z-10 w-full" style="padding-top: 100px; padding-bottom: 60px;">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div style="margin-bottom: 20px;">
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                    <div class="mb-3 {% if category == 'error' %}flash-error{% else %}flash-success{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="glass-footer mt-auto">
-        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-4">
-            <p class="text-center text-sm">Job Application Tracker</p>
+    <!-- FOOTER -->
+    <footer class="glass-footer relative z-10">
+        <div class="max-w-6xl mx-auto px-6 sm:px-8" style="padding-top:16px;padding-bottom:16px;">
+            <p class="text-center">Job Application Tracker</p>
         </div>
     </footer>
 
-    <!-- Animations JS -->
+    <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+
+    <script>
+        // Init Lucide icons
+        lucide.createIcons();
+
+        // Nav scroll glow
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 40) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        }, { passive: true });
+
+        // Orb parallax
+        window.addEventListener('scroll', () => {
+            const y = window.scrollY;
+            const orbs = document.querySelectorAll('.parallax-bg .orb');
+            if (orbs[0]) orbs[0].style.transform = `translate(${y*0.04}px,${y*0.07}px)`;
+            if (orbs[1]) orbs[1].style.transform = `translate(${-y*0.03}px,${y*0.05}px)`;
+            if (orbs[2]) orbs[2].style.transform = `translate(${y*0.02}px,${-y*0.05}px)`;
+            if (orbs[3]) orbs[3].style.transform = `translate(${-y*0.04}px,${y*0.03}px)`;
+        }, { passive: true });
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

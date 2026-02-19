@@ -174,7 +174,7 @@ def refresh_access_token(refresh_token):
     }
 
 
-def get_gmail_service(access_token, refresh_token):
+def get_gmail_service(access_token, refresh_token, token_expiry=None):
     """Get an authenticated Gmail API service."""
     client_config = get_client_config()
     web_config = client_config.get('web', client_config.get('installed', {}))
@@ -185,11 +185,12 @@ def get_gmail_service(access_token, refresh_token):
         token_uri='https://oauth2.googleapis.com/token',
         client_id=web_config['client_id'],
         client_secret=web_config['client_secret'],
-        scopes=SCOPES
+        scopes=SCOPES,
+        expiry=token_expiry  # Pass expiry so credentials.expired works correctly
     )
 
-    # Refresh if expired
-    if credentials.expired:
+    # Refresh if expired or no token
+    if not access_token or credentials.expired:
         credentials.refresh(Request())
 
     service = build('gmail', 'v1', credentials=credentials)
