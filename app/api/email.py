@@ -589,8 +589,21 @@ def scan_response_emails():
             settings.token_expiry
         )
         with connector:
-            # Fetch emails that might be responses (broader search)
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
+            # Fetch from both sources and merge — fetch_job_emails catches platform ATS,
+            # fetch_response_emails catches rejection/offer language from any sender.
+            job_emails = connector.fetch_job_emails(days_back=days_back, limit=75)
+            response_specific = connector.fetch_response_emails(days_back=days_back, limit=150)
+
+            # Deduplicate by message_id
+            seen_ids = set()
+            raw_emails = []
+            for em in job_emails + response_specific:
+                mid = em.get('message_id')
+                if mid and mid in seen_ids:
+                    continue
+                if mid:
+                    seen_ids.add(mid)
+                raw_emails.append(em)
 
             # Update tokens if refreshed
             updated_tokens = connector.get_updated_tokens()
@@ -785,6 +798,7 @@ def scan_response_emails():
 
         return jsonify({
             'message': f'Scan complete. Updated {len(updates)} applications. Saved {contacts_created} new contacts.',
+            'total_emails_fetched': len(raw_emails),
             'total_response_emails': len(response_emails),
             'updates': updates,
             'contacts_created': contacts_created
@@ -817,7 +831,19 @@ def preview_response_emails():
             settings.token_expiry
         )
         with connector:
-            raw_emails = connector.fetch_job_emails(days_back=days_back, limit=50)
+            job_emails = connector.fetch_job_emails(days_back=days_back, limit=75)
+            response_specific = connector.fetch_response_emails(days_back=days_back, limit=150)
+
+            # Deduplicate by message_id
+            seen_ids = set()
+            raw_emails = []
+            for em in job_emails + response_specific:
+                mid = em.get('message_id')
+                if mid and mid in seen_ids:
+                    continue
+                if mid:
+                    seen_ids.add(mid)
+                raw_emails.append(em)
 
             # Update tokens if refreshed
             updated_tokens = connector.get_updated_tokens()

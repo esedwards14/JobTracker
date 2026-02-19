@@ -224,6 +224,97 @@ class GmailOAuthConnector:
         emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)
         return emails[:limit]
 
+    def fetch_response_emails(self, days_back: int = 60, limit: int = 150) -> List[dict]:
+        """
+        Fetch emails that are likely responses to job applications
+        (rejections, interview requests, offers).
+
+        Uses body-content searches to catch responses regardless of platform
+        or From address — the narrow `fetch_job_emails` queries miss many
+        rejections because they only search subjects and known ATS domains.
+
+        Args:
+            days_back: How many days back to search
+            limit: Maximum number of emails to return
+
+        Returns:
+            List of email dictionaries
+        """
+        if not self.service:
+            raise ConnectionError("Not connected. Call connect() first.")
+
+        after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
+
+        search_queries = [
+            # Explicit rejection body language — most reliable signal
+            f'after:{after_date} "unfortunately"',
+            f'after:{after_date} "regret to inform"',
+            f'after:{after_date} "not moving forward"',
+            f'after:{after_date} "not selected"',
+            f'after:{after_date} "pursuing other candidates"',
+            f'after:{after_date} "decided to move forward with other"',
+            # "Thank you for applying / your interest" + typical rejection follow-up
+            f'after:{after_date} "thank you for applying"',
+            f'after:{after_date} "thank you for your application"',
+            f'after:{after_date} "thank you for your interest" subject:(application OR position OR role)',
+            # Application status update subjects (from any sender)
+            f'after:{after_date} subject:("application status" OR "application update" OR "application decision")',
+            # Offer language
+            f'after:{after_date} ("offer letter" OR "job offer" OR "extend an offer" OR "pleased to offer")',
+            # Interview requests from careers/recruiter addresses on company domains
+            f'after:{after_date} subject:interview from:careers@ OR from:recruiting@ OR from:hr@ OR from:talent@ OR from:hiring@',
+            # ATS platforms not already covered by fetch_job_emails
+            f'after:{after_date} from:icims.com OR from:taleo.net OR from:ashbyhq.com OR from:bamboohr.com OR from:smartrecruiters.com OR from:jobvite.com',
+        ]
+
+        emails = []
+        seen_ids = set()
+
+        for query in search_queries:
+            if len(emails) >= limit:
+                break
+
+            try:
+                results = self.service.users().messages().list(
+                    userId='me',
+                    q=query,
+                    maxResults=25
+                ).execute()
+
+                messages = results.get('messages', [])
+
+                for msg_info in messages:
+                    if msg_info['id'] in seen_ids:
+                        continue
+                    seen_ids.add(msg_info['id'])
+
+                    try:
+                        msg = self.service.users().messages().get(
+                            userId='me',
+                            id=msg_info['id'],
+                            format='full'
+                        ).execute()
+
+                        parsed = self._parse_message(msg)
+                        if parsed:
+                            emails.append(parsed)
+
+                        if len(emails) >= limit:
+                            break
+
+                    except Exception as e:
+                        print(f"Error fetching response message {msg_info['id']}: {e}")
+                        continue
+
+            except Exception as e:
+                print(f"Error with response query '{query}': {e}")
+                continue
+
+        from datetime import timezone
+        aware_min = datetime.min.replace(tzinfo=timezone.utc)
+        emails.sort(key=lambda x: x['date'] if x['date'] else aware_min, reverse=True)
+        return emails[:limit]
+
     def _parse_message(self, msg: dict) -> Optional[dict]:
         """Parse a Gmail API message into a dictionary."""
         try:

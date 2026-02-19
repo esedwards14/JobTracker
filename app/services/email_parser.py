@@ -1285,7 +1285,7 @@ class JobEmailParser:
         is_personal_domain = any(domain in from_lower for domain in personal_domains)
 
         if not is_personal_domain and not is_from_job_platform:
-            # Direct company email - check for strong interview scheduling signals
+            # Direct company email - accept if it has scheduling signals
             scheduling_signals = [
                 'calendly.com', 'goodtime.io', 'doodle.com',
                 'schedule an interview', 'schedule your interview',
@@ -1297,6 +1297,25 @@ class JobEmailParser:
             has_interview_keyword = any(kw in text for kw in interview_keywords)
 
             if has_scheduling and has_interview_keyword:
+                return True
+
+            # Also accept direct company emails with rejection signals + application reference.
+            # These are missed by the platform-domain check but are very common —
+            # e.g. rejections from no-reply@company.com or hr@company.com.
+            rejection_signals = [
+                'unfortunately', 'regret to inform', 'not moving forward',
+                'not selected', 'not been chosen', 'decided not to proceed',
+                'pursuing other candidates', 'position has been filled',
+                'not the right fit', 'unable to offer', 'not able to offer',
+            ]
+            has_rejection = any(signal in text for signal in rejection_signals)
+            if has_rejection and has_app_keyword:
+                return True
+
+            # Accept if there are strong offer signals
+            offer_signals = ['offer letter', 'job offer', 'pleased to offer', 'extend an offer']
+            has_offer = any(signal in text for signal in offer_signals)
+            if has_offer:
                 return True
 
         return False
