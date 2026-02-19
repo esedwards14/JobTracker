@@ -1,0 +1,98 @@
+:root {
+  /* Deep space dark background */
+  --background: oklch(0.07 0.012 285);
+  --foreground: oklch(0.93 0.008 285);
+
+  /* Glass card surfaces */
+  --card: oklch(0.13 0.015 285 / 0.55);
+  --card-foreground: oklch(0.93 0.008 285);
+
+  /* Popover/modal glass */
+  --popover: oklch(0.11 0.015 285 / 0.75);
+  --popover-foreground: oklch(0.93 0.008 285);
+
+  /* Primary accent — luminous mint/teal */
+  --primary: oklch(0.78 0.18 168);
+  --primary-foreground: oklch(0.07 0.012 285);
+
+  /* Secondary — muted glass surface */
+  --secondary: oklch(0.18 0.018 285 / 0.6);
+  --secondary-foreground: oklch(0.85 0.01 285);
+
+  /* Muted surfaces */
+  --muted: oklch(0.15 0.012 285 / 0.5);
+  --muted-foreground: oklch(0.58 0.02 285);
+
+  /* Accent — warm gold for highlights */
+  --accent: oklch(0.82 0.14 88);
+  --accent-foreground: oklch(0.07 0.012 285);
+
+  /* Destructive — glass red */
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.97 0 0);
+
+  /* Glass borders — light edge */
+  --border: oklch(0.95 0.01 285 / 0.12);
+  --input: oklch(0.95 0.01 285 / 0.08);
+  --ring: oklch(0.78 0.18 168 / 0.5);
+
+  /* Chart colors — status palette */
+  --chart-1: oklch(0.78 0.18 168);   /* mint — applied */
+  --chart-2: oklch(0.75 0.16 220);   /* sky — screening */
+  --chart-3: oklch(0.82 0.14 88);    /* gold — interview */
+  --chart-4: oklch(0.72 0.20 145);   /* green — offer */
+  --chart-5: oklch(0.58 0.18 25);    /* red — rejected */
+
+  /* Sidebar */
+  --sidebar: oklch(0.09 0.012 285 / 0.85);
+  --sidebar-foreground: oklch(0.93 0.008 285);
+  --sidebar-primary: oklch(0.78 0.18 168);
+  --sidebar-primary-foreground: oklch(0.07 0.012 285);
+  --sidebar-accent: oklch(0.82 0.14 88);
+  --sidebar-accent-foreground: oklch(0.07 0.012 285);
+  --sidebar-border: oklch(0.95 0.01 285 / 0.10);
+  --sidebar-ring: oklch(0.78 0.18 168 / 0.5);
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Geometry */
+  --radius: 1rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  /* Glass shadows — soft diffuse glow */
+  --shadow-2xs: 0 0 0 1px oklch(1 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.4);
+  --shadow-xs:  0 0 0 1px oklch(1 0 0 / 0.06), 0 2px 4px oklch(0 0 0 / 0.4);
+  --shadow-sm:  0 0 0 1px oklch(1 0 0 / 0.08), 0 4px 8px oklch(0 0 0 / 0.45);
+  --shadow:     0 0 0 1px oklch(1 0 0 / 0.08), 0 8px 16px oklch(0 0 0 / 0.5);
+  --shadow-md:  0 0 0 1px oklch(1 0 0 / 0.10), 0 12px 24px oklch(0 0 0 / 0.55), 0 0 40px oklch(0.78 0.18 168 / 0.04);
+  --shadow-lg:  0 0 0 1px oklch(1 0 0 / 0.10), 0 20px 40px oklch(0 0 0 / 0.6), 0 0 60px oklch(0.78 0.18 168 / 0.06);
+  --shadow-xl:  0 0 0 1px oklch(1 0 0 / 0.12), 0 32px 64px oklch(0 0 0 / 0.65), 0 0 80px oklch(0.78 0.18 168 / 0.08);
+  --shadow-2xl: 0 0 0 1px oklch(1 0 0 / 0.12), 0 48px 96px oklch(0 0 0 / 0.7),  0 0 120px oklch(0.78 0.18 168 / 0.10);
+
+  /* Spacing */
+  --tracking-normal: -0.01em;
+  --spacing: 0.25rem;
+
+  /* Glass specific */
+  --glass-blur: 24px;
+  --glass-blur-heavy: 40px;
+  --glass-bg: oklch(1 0 0 / 0.05);
+  --glass-bg-hover: oklch(1 0 0 / 0.08);
+  --glass-border: oklch(1 0 0 / 0.12);
+  --glass-border-bright: oklch(1 0 0 / 0.22);
+  --glass-glow-primary: oklch(0.78 0.18 168 / 0.15);
+  --glass-glow-accent: oklch(0.82 0.14 88 / 0.10);
+
+  /* Orb colors for background */
+  --orb-1: oklch(0.55 0.20 168 / 0.18);
+  --orb-2: oklch(0.50 0.18 280 / 0.14);
+  --orb-3: oklch(0.60 0.15 88 / 0.10);
+  --orb-4: oklch(0.45 0.22 25 / 0.08);
+}

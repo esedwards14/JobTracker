@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobTracker — Application Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root {
+    --primary: oklch(0.78 0.18 168);
+    --accent: oklch(0.82 0.14 88);
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --glass-blur: 24px;
+    --glass-bg: oklch(1 0 0 / 0.05);
+    --glass-bg-hover: oklch(1 0 0 / 0.08);
+    --glass-border: oklch(1 0 0 / 0.12);
+    --glass-border-bright: oklch(1 0 0 / 0.22);
+    --glass-glow-primary: oklch(0.78 0.18 168 / 0.15);
+    --orb-1: oklch(0.52 0.22 168 / 0.18);
+    --orb-2: oklch(0.48 0.20 280 / 0.14);
+    --orb-3: oklch(0.60 0.16 88 / 0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans) !important; background: oklch(0.07 0.012 285) !important; color: oklch(0.93 0.008 285) !important; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  .bg-canvas { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); }
+  .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--orb-1), transparent 70%); top: -100px; right: -50px; animation: d1 20s ease-in-out infinite; }
+  .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, var(--orb-2), transparent 70%); bottom: 0; left: -100px; animation: d2 18s ease-in-out infinite; }
+  .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, var(--orb-3), transparent 70%); top: 40%; right: 20%; animation: d3 16s ease-in-out infinite; }
+  @keyframes d1 { 0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,50px)} }
+  @keyframes d2 { 0%,100%{transform:translate(0,0)}50%{transform:translate(50px,-40px)} }
+  @keyframes d3 { 0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,30px)} }
+
+  .glass { background: var(--glass-bg) !important; backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; border: 1px solid var(--glass-border) !important; position: relative; }
+  .glass::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, oklch(1 0 0 / 0.06) 0%, transparent 50%, oklch(1 0 0 / 0.02) 100%); pointer-events: none; }
+
+  .nav-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; width: calc(100% - 48px); max-width: 900px; border-radius: 100px !important; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(40px) saturate(200%) !important; -webkit-backdrop-filter: blur(40px) saturate(200%) !important; }
+  .nav-logo { font-size: 15px; font-weight: 700; color: oklch(0.93 0.008 285) !important; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px var(--glass-glow-primary); animation: pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(0.85)} }
+  .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+  .nav-link { padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 500; color: oklch(0.70 0.01 285) !important; text-decoration: none; transition: all 0.2s ease; }
+  .nav-link:hover { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0 / 0.06); }
+  .nav-link.active { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0 / 0.10); }
+  .nav-icon-btn { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid transparent; background: none; color: oklch(0.65 0.01 285); transition: all 0.2s ease; }
+  .nav-icon-btn:hover { background: oklch(1 0 0 / 0.07); border-color: oklch(1 0 0 / 0.12); color: oklch(0.93 0.008 285); }
+
+  .main-content { position: relative; z-index: 1; padding-top: 100px; }
+  .page-wrapper { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* BACK LINK */
+  .back-link { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: oklch(0.55 0.01 285) !important; text-decoration: none; margin-bottom: 28px; transition: all 0.2s ease; }
+  .back-link:hover { color: var(--primary) !important; gap: 10px; }
+
+  /* MAIN CARD */
+  .detail-card { border-radius: 28px !important; padding: 0; overflow: hidden; box-shadow: 0 0 0 1px oklch(1 0 0/0.08), 0 24px 60px oklch(0 0 0/0.6), 0 0 80px var(--glass-glow-primary); }
+
+  /* CARD HEADER */
+  .card-header { padding: 32px 36px 28px; border-bottom: 1px solid oklch(1 0 0 / 0.07); display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+  .company-mark { display: flex; align-items: center; gap: 18px; }
+  .company-logo { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; flex-shrink: 0; border: 1px solid oklch(1 0 0/0.10); }
+  .company-name-big { font-size: 1.8rem !important; font-weight: 800 !important; letter-spacing: -0.03em !important; color: oklch(0.95 0.008 285) !important; line-height: 1.1; }
+  .company-role-big { font-size: 14px !important; color: oklch(0.58 0.01 285) !important; margin-top: 4px; font-weight: 400; }
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .btn-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid oklch(1 0 0/0.10) !important; background: oklch(1 0 0/0.04) !important; color: oklch(0.60 0.01 285); transition: all 0.2s ease; }
+  .btn-icon:hover { background: oklch(1 0 0/0.09) !important; color: oklch(0.90 0.008 285); border-color: oklch(1 0 0/0.18) !important; }
+  .btn-icon.danger:hover { background: oklch(0.60 0.22 25/0.12) !important; color: oklch(0.65 0.20 25); border-color: oklch(0.60 0.22 25/0.25) !important; }
+  .btn-sm { padding: 8px 16px; border-radius: 100px; font-size: 12px; font-weight: 700; font-family: var(--font-sans) !important; cursor: pointer; transition: all 0.2s ease; border: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-sm-primary { background: var(--primary) !important; color: oklch(0.07 0.012 285) !important; box-shadow: 0 0 16px var(--glass-glow-primary); }
+  .btn-sm-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--glass-glow-primary); }
+
+  /* STATUS TRACKER */
+  .status-tracker { padding: 24px 36px; border-bottom: 1px solid oklch(1 0 0/0.07); }
+  .tracker-label { font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: oklch(0.45 0.01 285) !important; margin-bottom: 14px; }
+  .status-steps { display: flex; align-items: center; gap: 0; }
+  .status-step { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; position: relative; cursor: pointer; }
+  .status-step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: calc(50% + 14px); right: calc(-50% + 14px); height: 1px; background: oklch(1 0 0/0.10); z-index: 0; }
+  .status-step.completed:not(:last-child)::after { background: oklch(0.78 0.18 168/0.4); }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid oklch(1 0 0/0.12); background: oklch(1 0 0/0.04); transition: all 0.3s ease; z-index: 1; position: relative; }
+  .step-dot.completed { background: oklch(0.78 0.18 168/0.20); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 12px var(--glass-glow-primary); }
+  .step-dot.current { background: var(--primary); border-color: var(--primary); color: oklch(0.07 0.012 285); box-shadow: 0 0 20px var(--glass-glow-primary), 0 0 40px oklch(0.78 0.18 168/0.20); }
+  .step-dot.future { color: oklch(0.40 0.01 285); }
+  .step-name { font-size: 10px !important; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
+  .step-name.completed { color: var(--primary) !important; }
+  .step-name.current { color: oklch(0.90 0.008 285) !important; }
+  .step-name.future { color: oklch(0.38 0.01 285) !important; }
+
+  /* CARD BODY */
+  .card-body { padding: 32px 36px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-field { }
+  .field-label { font-size: 11px !important; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(0.42 0.01 285) !important; margin-bottom: 6px; }
+  .field-value { font-size: 14px !important; font-weight: 500; color: oklch(0.82 0.008 285) !important; display: flex; align-items: center; gap: 6px; }
+  .field-value.mono { font-family: var(--font-mono) !important; font-size: 13px !important; }
+  .field-link { color: var(--primary) !important; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 500; transition: opacity 0.2s ease; }
+  .field-link:hover { opacity: 0.75; }
+
+  .section-divider { height: 1px; background: oklch(1 0 0/0.07); margin: 24px 0; }
+
+  /* INTERVIEW STAGES */
+  .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-heading-title { font-size: 13px !important; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: oklch(0.60 0.01 285) !important; }
+  .interview-list { display: flex; flex-direction: column; gap: 10px; }
+  .interview-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; border: 1px solid oklch(1 0 0/0.07); background: oklch(1 0 0/0.03); transition: all 0.2s ease; }
+  .interview-item:hover { background: oklch(1 0 0/0.06); border-color: oklch(1 0 0/0.12); }
+  .interview-num { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-family: var(--font-mono) !important; flex-shrink: 0; }
+  .interview-num.done { background: oklch(0.72 0.20 145/0.15); color: oklch(0.72 0.20 145); border: 1px solid oklch(0.72 0.20 145/0.25); }
+  .interview-num.upcoming { background: oklch(0.82 0.14 88/0.12); color: var(--accent); border: 1px solid oklch(0.82 0.14 88/0.22); }
+  .interview-info { flex: 1; min-width: 0; }
+  .interview-type { font-size: 13px !important; font-weight: 600; color: oklch(0.85 0.008 285) !important; }
+  .interview-meta { font-size: 12px !important; color: oklch(0.50 0.01 285) !important; margin-top: 2px; font-family: var(--font-mono) !important; }
+  .interview-outcome { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; }
+  .outcome-pass { background: oklch(0.72 0.20 145/0.12); color: oklch(0.72 0.20 145); border: 1px solid oklch(0.72 0.20 145/0.22); }
+  .outcome-pending { background: oklch(0.82 0.14 88/0.12); color: var(--accent); border: 1px solid oklch(0.82 0.14 88/0.22); }
+
+  /* NOTES */
+  .notes-area { width: 100%; padding: 14px 16px; background: oklch(1 0 0/0.04) !important; border: 1px solid oklch(1 0 0/0.09) !important; border-radius: 14px !important; color: oklch(0.80 0.008 285) !important; font-size: 14px; font-family: var(--font-sans) !important; resize: vertical; min-height: 100px; outline: none; transition: all 0.2s ease; line-height: 1.6; }
+  .notes-area:focus { border-color: oklch(0.78 0.18 168/0.35) !important; background: oklch(1 0 0/0.06) !important; box-shadow: 0 0 0 3px oklch(0.78 0.18 168/0.07); }
+  .notes-area::placeholder { color: oklch(0.40 0.01 285) !important; }
+
+  .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .pill-interview { background: oklch(0.82 0.14 88/0.14); color: var(--accent) !important; border: 1px solid oklch(0.82 0.14 88/0.24); }
+  .pill-interview::before { background: var(--accent); box-shadow: 0 0 6px oklch(0.82 0.14 88/0.6); }
+
+  .reveal { opacity: 0; }
+</style>
+</head>
+<body>
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<nav class="nav-bar glass" style="box-shadow:0 0 0 1px oklch(1 0 0/0.08),0 16px 48px oklch(0 0 0/0.6);">
+  <a href="#" class="nav-logo"><div class="nav-logo-dot"></div>JobTracker</a>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link">Dashboard</a></li>
+    <li><a href="#" class="nav-link active">Applications</a></li>
+    <li><a href="#" class="nav-link">Connections</a></li>
+  </ul>
+  <div style="display:flex;gap:4px;">
+    <button class="nav-icon-btn"><i data-lucide="mail" style="width:16px;height:16px;"></i></button>
+    <button class="nav-icon-btn"><i data-lucide="settings" style="width:16px;height:16px;"></i></button>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-wrapper">
+
+    <a href="#" class="back-link reveal">
+      <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
+      All Applications
+    </a>
+
+    <div class="detail-card glass reveal" style="transition-delay:0.05s;">
+
+      <!-- HEADER -->
+      <div class="card-header">
+        <div class="company-mark">
+          <div class="company-logo" style="background:oklch(0.78 0.18 168/0.12);color:var(--primary);">G</div>
+          <div>
+            <div class="company-name-big">Google</div>
+            <div class="company-role-big">Software Engineer, L5 · Mountain View, CA</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="status-pill pill-interview">Interviewing</div>
+          <button class="btn-icon" title="Edit">
+            <i data-lucide="pencil" style="width:15px;height:15px;"></i>
+          </button>
+          <button class="btn-icon danger" title="Delete">
+            <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STATUS TRACKER -->
+      <div class="status-tracker">
+        <div class="tracker-label">Application Journey</div>
+        <div class="status-steps">
+
+          <div class="status-step completed">
+            <div class="step-dot completed">
+              <i data-lucide="check" style="width:13px;height:13px;"></i>
+            </div>
+            <span class="step-name completed">Applied</span>
+          </div>
+
+          <div class="status-step completed">
+            <div class="step-dot completed">
+              <i data-lucide="check" style="width:13px;height:13px;"></i>
+            </div>
+            <span class="step-name completed">Screening</span>
+          </div>
+
+          <div class="status-step">
+            <div class="step-dot current">
+              <i data-lucide="zap" style="width:13px;height:13px;"></i>
+            </div>
+            <span class="step-name current">Interview</span>
+          </div>
+
+          <div class="status-step">
+            <div class="step-dot future">
+              <i data-lucide="gift" style="width:13px;height:13px;"></i>
+            </div>
+            <span class="step-name future">Offered</span>
+          </div>
+
+          <div class="status-step">
+            <div class="step-dot future">
+              <i data-lucide="check-circle" style="width:13px;height:13px;"></i>
+            </div>
+            <span class="step-name future">Hired</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="card-body">
+
+        <!-- Details Grid -->
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="field-label">Date Applied</div>
+            <div class="field-value mono">Jan 18, 2026</div>
+          </div>
+          <div class="detail-field">
+            <div class="field-label">Response Received</div>
+            <div class="field-value mono" style="color:var(--primary)!important;">Jan 20, 2026</div>
+          </div>
+          <div class="detail-field">
+            <div class="field-label">Salary Range</div>
+            <div class="field-value mono">$160,000 – $200,000 USD</div>
+          </div>
+          <div class="detail-field">
+            <div class="field-label">Application URL</div>
+            <a href="#" class="field-value field-link">
+              careers.google.com
+              <i data-lucide="external-link" style="width:12px;height:12px;"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Interview Stages -->
+        <div class="section-heading">
+          <div class="section-heading-title">Interview Stages</div>
+          <button class="btn-sm btn-sm-primary">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i>
+            Add Stage
+          </button>
+        </div>
+        <div class="interview-list">
+          <div class="interview-item">
+            <div class="interview-num done">01</div>
+            <div class="interview-info">
+              <div class="interview-type">Phone Screen</div>
+              <div class="interview-meta">Jan 22 · with Sarah Chen, Recruiter</div>
+            </div>
+            <span class="interview-outcome outcome-pass">Passed</span>
+          </div>
+          <div class="interview-item">
+            <div class="interview-num done">02</div>
+            <div class="interview-info">
+              <div class="interview-type">Technical Interview</div>
+              <div class="interview-meta">Jan 28 · with Alex Kim, L6 Engineer</div>
+            </div>
+            <span class="interview-outcome outcome-pass">Passed</span>
+          </div>
+          <div class="interview-item">
+            <div class="interview-num upcoming">03</div>
+            <div class="interview-info">
+              <div class="interview-type">System Design</div>
+              <div class="interview-meta">Feb 4 · Panel · 3 interviewers</div>
+            </div>
+            <span class="interview-outcome outcome-pending">Upcoming</span>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Notes -->
+        <div class="section-heading" style="margin-bottom:12px;">
+          <div class="section-heading-title">Notes</div>
+        </div>
+        <textarea class="notes-area" placeholder="Add notes about this application…">Recruiter reached out via LinkedIn. Role focuses on distributed systems. Strong culture fit based on initial call. Need to review system design patterns before Feb 4 interview.</textarea>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  lucide.createIcons();
+  gsap.utils.toArray('.reveal').forEach((el, i) => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 24, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'power3.out', delay: 0.1 + i * 0.1 }
+    );
+  });
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    document.querySelector('.orb-1').style.transform = `translate(${-y*0.04}px,${y*0.05}px)`;
+    document.querySelector('.orb-2').style.transform = `translate(${y*0.03}px,${-y*0.04}px)`;
+  }, { passive: true });
+</script>
+</body>
+</html>

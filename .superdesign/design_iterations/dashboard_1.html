@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobTracker — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  /* ============================================================
+     LIQUID GLASS DESIGN SYSTEM
+  ============================================================ */
+  :root {
+    --background: oklch(0.07 0.012 285);
+    --foreground: oklch(0.93 0.008 285);
+    --card: oklch(0.13 0.015 285 / 0.55);
+    --card-foreground: oklch(0.93 0.008 285);
+    --popover: oklch(0.11 0.015 285 / 0.75);
+    --primary: oklch(0.78 0.18 168);
+    --primary-foreground: oklch(0.07 0.012 285);
+    --secondary: oklch(0.18 0.018 285 / 0.6);
+    --muted: oklch(0.15 0.012 285 / 0.5);
+    --muted-foreground: oklch(0.58 0.02 285);
+    --accent: oklch(0.82 0.14 88);
+    --destructive: oklch(0.60 0.22 25);
+    --border: oklch(0.95 0.01 285 / 0.12);
+    --ring: oklch(0.78 0.18 168 / 0.5);
+
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 1rem;
+
+    --glass-blur: 24px;
+    --glass-blur-heavy: 40px;
+    --glass-bg: oklch(1 0 0 / 0.05);
+    --glass-bg-hover: oklch(1 0 0 / 0.09);
+    --glass-border: oklch(1 0 0 / 0.12);
+    --glass-border-bright: oklch(1 0 0 / 0.24);
+    --glass-glow-primary: oklch(0.78 0.18 168 / 0.18);
+    --glass-glow-accent: oklch(0.82 0.14 88 / 0.12);
+
+    --orb-1: oklch(0.52 0.22 168 / 0.22);
+    --orb-2: oklch(0.48 0.20 280 / 0.16);
+    --orb-3: oklch(0.60 0.16 88 / 0.12);
+    --orb-4: oklch(0.42 0.24 25 / 0.10);
+
+    --status-applied: oklch(0.78 0.18 168);
+    --status-interviewing: oklch(0.82 0.14 88);
+    --status-offered: oklch(0.72 0.20 145);
+    --status-rejected: oklch(0.58 0.18 25);
+    --status-withdrawn: oklch(0.55 0.02 285);
+    --status-follow: oklch(0.75 0.16 310);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-sans) !important;
+    background: oklch(0.07 0.012 285) !important;
+    color: oklch(0.93 0.008 285) !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── BACKGROUND CANVAS ── */
+  .bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    will-change: transform;
+  }
+  .orb-1 {
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, var(--orb-1), transparent 70%);
+    top: -200px; left: -150px;
+    animation: drift1 18s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--orb-2), transparent 70%);
+    top: 30%; right: -200px;
+    animation: drift2 22s ease-in-out infinite;
+  }
+  .orb-3 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--orb-3), transparent 70%);
+    bottom: 10%; left: 20%;
+    animation: drift3 16s ease-in-out infinite;
+  }
+  .orb-4 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--orb-4), transparent 70%);
+    bottom: -100px; right: 15%;
+    animation: drift4 20s ease-in-out infinite;
+  }
+
+  @keyframes drift1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33%      { transform: translate(60px, 80px) scale(1.05); }
+    66%      { transform: translate(-40px, 40px) scale(0.95); }
+  }
+  @keyframes drift2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    40%      { transform: translate(-80px, -60px) scale(1.08); }
+    70%      { transform: translate(50px, 30px) scale(0.96); }
+  }
+  @keyframes drift3 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    30%      { transform: translate(40px, -50px) scale(1.04); }
+    60%      { transform: translate(-60px, 20px) scale(0.97); }
+  }
+  @keyframes drift4 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50%      { transform: translate(-30px, -40px) scale(1.06); }
+  }
+
+  /* Noise grain texture overlay */
+  .bg-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* ── GLASS UTILITY ── */
+  .glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    position: relative;
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, oklch(1 0 0 / 0.06) 0%, transparent 50%, oklch(1 0 0 / 0.02) 100%);
+    pointer-events: none;
+  }
+  .glass-heavy {
+    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%) !important;
+  }
+  .glass:hover {
+    border-color: var(--glass-border-bright) !important;
+    background: var(--glass-bg-hover) !important;
+  }
+  .glass-glow-primary {
+    box-shadow: 0 0 0 1px oklch(1 0 0 / 0.10),
+                0 8px 32px oklch(0 0 0 / 0.5),
+                0 0 60px var(--glass-glow-primary) !important;
+  }
+  .glass-glow-accent {
+    box-shadow: 0 0 0 1px oklch(1 0 0 / 0.10),
+                0 8px 32px oklch(0 0 0 / 0.5),
+                0 0 60px var(--glass-glow-accent) !important;
+  }
+  .glass-shadow {
+    box-shadow: 0 0 0 1px oklch(1 0 0 / 0.08),
+                0 16px 40px oklch(0 0 0 / 0.55) !important;
+  }
+
+  /* ── NAVIGATION ── */
+  .nav-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: calc(100% - 48px);
+    max-width: 900px;
+    border-radius: 100px !important;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+  }
+  .nav-bar.scrolled {
+    box-shadow: 0 0 0 1px oklch(1 0 0 / 0.10),
+                0 16px 48px oklch(0 0 0 / 0.6),
+                0 0 80px var(--glass-glow-primary) !important;
+  }
+  .nav-logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: oklch(0.93 0.008 285) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .nav-logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 12px var(--glass-glow-primary);
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--glass-glow-primary); }
+    50%      { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 6px var(--glass-glow-primary); }
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+  }
+  .nav-link {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: oklch(0.70 0.01 285) !important;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .nav-link:hover {
+    color: oklch(0.93 0.008 285) !important;
+    background: oklch(1 0 0 / 0.06);
+  }
+  .nav-link.active {
+    color: oklch(0.93 0.008 285) !important;
+    background: oklch(1 0 0 / 0.10);
+  }
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px; height: 2px;
+    border-radius: 1px;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--glass-glow-primary);
+  }
+  .nav-icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    background: none;
+    color: oklch(0.65 0.01 285);
+  }
+  .nav-icon-btn:hover {
+    background: oklch(1 0 0 / 0.07);
+    border-color: oklch(1 0 0 / 0.12);
+    color: oklch(0.93 0.008 285);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main-content {
+    position: relative;
+    z-index: 1;
+    padding-top: 100px;
+  }
+
+  section {
+    padding: 80px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── HERO SECTION ── */
+  .hero-section {
+    min-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 40px;
+    padding-bottom: 80px;
+  }
+  .hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary) !important;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+  .hero-label-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--glass-glow-primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-label-dot::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  .hero-title {
+    font-size: clamp(2.8rem, 6vw, 5rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1.05 !important;
+    color: oklch(0.95 0.008 285) !important;
+    margin-bottom: 20px;
+  }
+  .hero-title span {
+    background: linear-gradient(135deg, var(--primary) 0%, oklch(0.75 0.16 220) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 17px !important;
+    color: oklch(0.60 0.015 285) !important;
+    font-weight: 400;
+    max-width: 480px;
+    line-height: 1.65;
+    margin-bottom: 40px;
+  }
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .btn-primary {
+    padding: 12px 24px;
+    border-radius: 100px;
+    background: var(--primary) !important;
+    color: oklch(0.07 0.012 285) !important;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: var(--font-sans) !important;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 24px var(--glass-glow-primary);
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--glass-glow-primary);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-glass {
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: var(--font-sans) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    color: oklch(0.80 0.01 285) !important;
+    text-decoration: none;
+    border: 1px solid var(--glass-border) !important;
+  }
+  .btn-glass:hover {
+    background: oklch(1 0 0 / 0.07);
+    border-color: var(--glass-border-bright) !important;
+    color: oklch(0.93 0.008 285) !important;
+  }
+
+  /* ── SCROLL ADVANCE INDICATOR ── */
+  .scroll-advance {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 60px;
+    opacity: 0.4;
+    animation: breathe 2s ease-in-out infinite;
+  }
+  .scroll-advance span {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: oklch(0.55 0.01 285) !important;
+    font-weight: 500;
+  }
+  .scroll-arrow {
+    width: 24px; height: 24px;
+    border-right: 1.5px solid oklch(0.55 0.01 285);
+    border-bottom: 1.5px solid oklch(0.55 0.01 285);
+    transform: rotate(45deg);
+    animation: arrow-fall 1.5s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { opacity: 0.4; }
+    50%      { opacity: 0.7; }
+  }
+  @keyframes arrow-fall {
+    0%   { transform: rotate(45deg) translateY(-4px); opacity: 0; }
+    50%  { opacity: 1; }
+    100% { transform: rotate(45deg) translateY(4px); opacity: 0; }
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary) !important;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--primary);
+    opacity: 0.6;
+  }
+  .section-title {
+    font-size: clamp(1.6rem, 3vw, 2.2rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.03em !important;
+    color: oklch(0.93 0.008 285) !important;
+    margin-bottom: 40px;
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 0;
+  }
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-card {
+    border-radius: 20px !important;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+    display: block;
+    will-change: transform;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 0 1px var(--glass-border-bright),
+                0 20px 48px oklch(0 0 0 / 0.55),
+                0 0 60px var(--glass-glow-primary) !important;
+  }
+  .stat-card:active { transform: scale(0.98); }
+  .stat-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+  }
+  .stat-card-icon.mint { color: var(--primary); background: oklch(0.78 0.18 168 / 0.12); border-color: oklch(0.78 0.18 168 / 0.2); }
+  .stat-card-icon.gold { color: var(--accent); background: oklch(0.82 0.14 88 / 0.12); border-color: oklch(0.82 0.14 88 / 0.2); }
+  .stat-card-icon.green { color: oklch(0.72 0.20 145); background: oklch(0.72 0.20 145 / 0.12); border-color: oklch(0.72 0.20 145 / 0.2); }
+  .stat-card-icon.violet { color: oklch(0.75 0.16 310); background: oklch(0.75 0.16 310 / 0.12); border-color: oklch(0.75 0.16 310 / 0.2); }
+  .stat-value {
+    font-size: 2.4rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    color: oklch(0.95 0.008 285) !important;
+    line-height: 1;
+    font-family: var(--font-sans) !important;
+    margin-bottom: 6px;
+  }
+  .stat-label {
+    font-size: 12px !important;
+    color: oklch(0.55 0.015 285) !important;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .stat-delta {
+    margin-top: 12px;
+    font-size: 11px;
+    font-family: var(--font-mono) !important;
+    color: var(--primary) !important;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ── STATUS BREAKDOWN ── */
+  .breakdown-card {
+    border-radius: 24px !important;
+    padding: 32px;
+  }
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid oklch(1 0 0 / 0.05);
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-label {
+    font-size: 13px !important;
+    font-weight: 500;
+    color: oklch(0.75 0.01 285) !important;
+    width: 100px;
+    flex-shrink: 0;
+  }
+  .breakdown-bar-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 100px;
+    background: oklch(1 0 0 / 0.06);
+    overflow: hidden;
+  }
+  .breakdown-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .breakdown-bar-fill.animate { transform: scaleX(1); }
+  .breakdown-count {
+    font-size: 13px !important;
+    font-weight: 600;
+    font-family: var(--font-mono) !important;
+    color: oklch(0.85 0.008 285) !important;
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── RECENT APPLICATIONS ── */
+  .app-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-radius: 14px;
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .app-row:hover {
+    background: oklch(1 0 0 / 0.05);
+    border-color: oklch(1 0 0 / 0.08);
+  }
+  .app-avatar {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 16px;
+    flex-shrink: 0;
+    border: 1px solid oklch(1 0 0 / 0.10);
+  }
+  .app-info { flex: 1; min-width: 0; }
+  .app-company {
+    font-size: 14px !important;
+    font-weight: 600;
+    color: oklch(0.90 0.008 285) !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .app-role {
+    font-size: 12px !important;
+    color: oklch(0.55 0.01 285) !important;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .app-date {
+    font-size: 11px !important;
+    font-family: var(--font-mono) !important;
+    color: oklch(0.45 0.01 285) !important;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── STATUS PILLS ── */
+  .status-pill {
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .pill-applied    { background: oklch(0.78 0.18 168 / 0.15); color: var(--primary) !important; border: 1px solid oklch(0.78 0.18 168 / 0.25); }
+  .pill-screening  { background: oklch(0.75 0.16 220 / 0.15); color: oklch(0.75 0.16 220) !important; border: 1px solid oklch(0.75 0.16 220 / 0.25); }
+  .pill-interview  { background: oklch(0.82 0.14 88 / 0.15);  color: var(--accent) !important; border: 1px solid oklch(0.82 0.14 88 / 0.25); }
+  .pill-offered    { background: oklch(0.72 0.20 145 / 0.15); color: oklch(0.72 0.20 145) !important; border: 1px solid oklch(0.72 0.20 145 / 0.25); }
+  .pill-rejected   { background: oklch(0.58 0.18 25 / 0.15);  color: oklch(0.65 0.18 25) !important; border: 1px solid oklch(0.58 0.18 25 / 0.25); }
+  .pill-withdrawn  { background: oklch(0.55 0.02 285 / 0.15); color: oklch(0.60 0.02 285) !important; border: 1px solid oklch(0.55 0.02 285 / 0.25); }
+
+  /* ── TWO-COLUMN LAYOUT ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  /* ── REVEAL ANIMATIONS (initial state) ── */
+  .reveal { opacity: 0; will-change: transform, opacity; }
+  .reveal-up   { transform: translateY(40px) scale(0.97); }
+  .reveal-left { transform: translateX(-30px); }
+
+  /* ── SHIMMER EFFECT ── */
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .glass-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(105deg,
+      transparent 40%,
+      oklch(1 0 0 / 0.04) 50%,
+      transparent 60%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* ── ADD BUTTON ── */
+  .fab {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 50;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--primary) !important;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: oklch(0.07 0.012 285) !important;
+    box-shadow: 0 0 0 1px oklch(0.78 0.18 168 / 0.3),
+                0 8px 24px oklch(0 0 0 / 0.4),
+                0 0 40px var(--glass-glow-primary);
+    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 1px oklch(0.78 0.18 168 / 0.4),
+                0 12px 32px oklch(0 0 0 / 0.5),
+                0 0 60px var(--glass-glow-primary);
+  }
+  .fab:active { transform: scale(0.95); }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.08), transparent);
+    margin: 0 24px;
+  }
+
+  /* ── MONO DATA ── */
+  .mono { font-family: var(--font-mono) !important; }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND DEPTH LAYER -->
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+</div>
+
+<!-- FLOATING NAV -->
+<nav class="nav-bar glass glass-heavy glass-shadow" id="navbar">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    JobTracker
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link active">Dashboard</a></li>
+    <li><a href="#" class="nav-link">Applications</a></li>
+    <li><a href="#" class="nav-link">Connections</a></li>
+  </ul>
+  <div style="display:flex;gap:4px;align-items:center;">
+    <button class="nav-icon-btn" title="Email Settings">
+      <i data-lucide="mail" style="width:16px;height:16px;"></i>
+    </button>
+    <button class="nav-icon-btn" title="Settings">
+      <i data-lucide="settings" style="width:16px;height:16px;"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- ── HERO SECTION ── -->
+  <section class="hero-section">
+    <div class="hero-label glass" style="border-radius:100px!important;">
+      <div class="hero-label-dot"></div>
+      Live Dashboard
+    </div>
+    <h1 class="hero-title reveal reveal-up">
+      Your pipeline,<br><span>visualized.</span>
+    </h1>
+    <p class="hero-sub reveal reveal-up">
+      Track every application, interview, and offer. Your career momentum at a glance.
+    </p>
+    <div class="hero-cta reveal reveal-up">
+      <a href="#" class="btn-primary">
+        <i data-lucide="plus" style="width:15px;height:15px;"></i>
+        Add Application
+      </a>
+      <a href="#" class="btn-glass glass">
+        View All
+        <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+      </a>
+    </div>
+    <div class="scroll-advance">
+      <span>Advance</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ── STATS SECTION ── -->
+  <section style="padding-top: 80px; padding-bottom: 80px;">
+    <div class="section-label">Overview</div>
+    <h2 class="section-title reveal reveal-up">At a glance</h2>
+    <div class="stats-grid">
+      <!-- Total -->
+      <div class="stat-card glass glass-shimmer glass-glow-primary reveal reveal-up">
+        <div class="stat-card-icon mint">
+          <i data-lucide="briefcase" style="width:18px;height:18px;"></i>
+        </div>
+        <div class="stat-value">24</div>
+        <div class="stat-label">Total Applications</div>
+        <div class="stat-delta">
+          <i data-lucide="trending-up" style="width:12px;height:12px;"></i>
+          +3 this week
+        </div>
+      </div>
+      <!-- Response Rate -->
+      <div class="stat-card glass glass-shimmer reveal reveal-up" style="transition-delay: 80ms;">
+        <div class="stat-card-icon gold">
+          <i data-lucide="zap" style="width:18px;height:18px;"></i>
+        </div>
+        <div class="stat-value" style="background: linear-gradient(135deg, oklch(0.82 0.14 88), oklch(0.78 0.18 168)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">67%</div>
+        <div class="stat-label">Response Rate</div>
+        <div class="stat-delta" style="color: var(--accent) !important;">
+          <i data-lucide="trending-up" style="width:12px;height:12px;"></i>
+          +5% vs avg
+        </div>
+      </div>
+      <!-- Interview Rate -->
+      <div class="stat-card glass glass-shimmer reveal reveal-up" style="transition-delay: 160ms;">
+        <div class="stat-card-icon green">
+          <i data-lucide="users" style="width:18px;height:18px;"></i>
+        </div>
+        <div class="stat-value" style="color: oklch(0.72 0.20 145) !important;">33%</div>
+        <div class="stat-label">Interview Rate</div>
+        <div class="stat-delta" style="color: oklch(0.72 0.20 145) !important;">
+          <i data-lucide="trending-up" style="width:12px;height:12px;"></i>
+          8 total
+        </div>
+      </div>
+      <!-- This Week -->
+      <div class="stat-card glass glass-shimmer reveal reveal-up" style="transition-delay: 240ms;">
+        <div class="stat-card-icon violet">
+          <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+        </div>
+        <div class="stat-value" style="color: oklch(0.75 0.16 310) !important;">5</div>
+        <div class="stat-label">Applied This Week</div>
+        <div class="stat-delta" style="color: oklch(0.75 0.16 310) !important;">
+          <i data-lucide="clock" style="width:12px;height:12px;"></i>
+          Last 7 days
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ── STATUS + RECENT SECTION ── -->
+  <section style="padding-top: 80px; padding-bottom: 80px;">
+    <div class="two-col">
+
+      <!-- Status Breakdown -->
+      <div>
+        <div class="section-label">Pipeline</div>
+        <h2 class="section-title reveal reveal-up" style="font-size: 1.5rem !important; margin-bottom: 20px;">Status breakdown</h2>
+        <div class="breakdown-card glass glass-shadow reveal reveal-up">
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Applied</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 50%; background: linear-gradient(90deg, var(--primary), oklch(0.78 0.18 168 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">12</div>
+          </div>
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Screening</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 21%; background: linear-gradient(90deg, oklch(0.75 0.16 220), oklch(0.75 0.16 220 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">5</div>
+          </div>
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Interview</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 17%; background: linear-gradient(90deg, var(--accent), oklch(0.82 0.14 88 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">4</div>
+          </div>
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Offered</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 12%; background: linear-gradient(90deg, oklch(0.72 0.20 145), oklch(0.72 0.20 145 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">3</div>
+          </div>
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Rejected</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 8%; background: linear-gradient(90deg, oklch(0.58 0.18 25), oklch(0.58 0.18 25 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">2</div>
+          </div>
+
+          <div class="breakdown-row">
+            <div class="breakdown-label">Withdrawn</div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill" style="width: 4%; background: linear-gradient(90deg, oklch(0.55 0.02 285), oklch(0.55 0.02 285 / 0.6));"></div>
+            </div>
+            <div class="breakdown-count mono">1</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Recent Applications -->
+      <div>
+        <div class="section-label">Activity</div>
+        <h2 class="section-title reveal reveal-up" style="font-size: 1.5rem !important; margin-bottom: 20px;">Recent applications</h2>
+        <div class="glass glass-shadow" style="border-radius: 24px !important; padding: 12px; overflow: hidden;">
+
+          <a href="#" class="app-row reveal reveal-left" style="transition-delay: 0ms;">
+            <div class="app-avatar" style="background: oklch(0.78 0.18 168 / 0.15); color: var(--primary) !important;">G</div>
+            <div class="app-info">
+              <div class="app-company">Google</div>
+              <div class="app-role">Software Engineer, L5</div>
+            </div>
+            <div class="app-date">Jan 18</div>
+            <div class="status-pill pill-interview">Interview</div>
+          </a>
+
+          <a href="#" class="app-row reveal reveal-left" style="transition-delay: 60ms;">
+            <div class="app-avatar" style="background: oklch(0.82 0.14 88 / 0.12); color: var(--accent) !important;">S</div>
+            <div class="app-info">
+              <div class="app-company">Stripe</div>
+              <div class="app-role">Backend Engineer</div>
+            </div>
+            <div class="app-date">Jan 15</div>
+            <div class="status-pill pill-screening">Screening</div>
+          </a>
+
+          <a href="#" class="app-row reveal reveal-left" style="transition-delay: 120ms;">
+            <div class="app-avatar" style="background: oklch(0.72 0.20 145 / 0.12); color: oklch(0.72 0.20 145) !important;">V</div>
+            <div class="app-info">
+              <div class="app-company">Vercel</div>
+              <div class="app-role">Full Stack Engineer</div>
+            </div>
+            <div class="app-date">Jan 12</div>
+            <div class="status-pill pill-offered">Offered</div>
+          </a>
+
+          <a href="#" class="app-row reveal reveal-left" style="transition-delay: 180ms;">
+            <div class="app-avatar" style="background: oklch(0.75 0.16 310 / 0.12); color: oklch(0.75 0.16 310) !important;">L</div>
+            <div class="app-info">
+              <div class="app-company">Linear</div>
+              <div class="app-role">Product Engineer</div>
+            </div>
+            <div class="app-date">Jan 10</div>
+            <div class="status-pill pill-applied">Applied</div>
+          </a>
+
+          <a href="#" class="app-row reveal reveal-left" style="transition-delay: 240ms;">
+            <div class="app-avatar" style="background: oklch(0.58 0.18 25 / 0.12); color: oklch(0.65 0.18 25) !important;">N</div>
+            <div class="app-info">
+              <div class="app-company">Notion</div>
+              <div class="app-role">Frontend Engineer</div>
+            </div>
+            <div class="app-date">Jan 8</div>
+            <div class="status-pill pill-rejected">Rejected</div>
+          </a>
+
+          <div style="padding: 12px 20px 4px; border-top: 1px solid oklch(1 0 0 / 0.06); margin-top: 4px;">
+            <a href="#" style="font-size: 13px; color: var(--primary) !important; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: gap 0.2s ease;" onmouseover="this.style.gap='10px'" onmouseout="this.style.gap='6px'">
+              View all applications
+              <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- FAB: Add Application -->
+<button class="fab" title="New Application">
+  <i data-lucide="plus" style="width:22px;height:22px;"></i>
+</button>
+
+<script>
+  // Init Lucide icons
+  lucide.createIcons();
+
+  // Register ScrollTrigger
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ── NAV scroll effect ──
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 40) navbar.classList.add('scrolled');
+    else navbar.classList.remove('scrolled');
+  });
+
+  // ── ADVANCE ANIMATIONS ──
+  // Hero elements stagger
+  gsap.utils.toArray('.hero-section .reveal').forEach((el, i) => {
+    gsap.to(el, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.9,
+      ease: 'power3.out',
+      delay: 0.2 + i * 0.12
+    });
+  });
+
+  // Stat cards — scale up from depth
+  gsap.utils.toArray('.stat-card.reveal').forEach((el, i) => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 50, scale: 0.88, filter: 'blur(6px)' },
+      {
+        opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
+        duration: 0.8,
+        ease: 'back.out(1.4)',
+        delay: parseFloat(el.style.transitionDelay || '0') / 1000,
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 85%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  });
+
+  // Section titles
+  gsap.utils.toArray('section .section-title.reveal, section h2.reveal').forEach(el => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 88%' }
+      }
+    );
+  });
+
+  // Breakdown card
+  gsap.utils.toArray('.breakdown-card.reveal').forEach(el => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 40, scale: 0.96 },
+      {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 82%',
+          onEnter: () => {
+            // Animate bars
+            document.querySelectorAll('.breakdown-bar-fill').forEach((bar, i) => {
+              setTimeout(() => bar.classList.add('animate'), 200 + i * 120);
+            });
+          }
+        }
+      }
+    );
+  });
+
+  // App rows — slide from left
+  gsap.utils.toArray('.app-row.reveal').forEach((el, i) => {
+    const delay = parseFloat(el.style.transitionDelay || '0') / 1000;
+    gsap.fromTo(el,
+      { opacity: 0, x: -24 },
+      {
+        opacity: 1, x: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        delay,
+        scrollTrigger: { trigger: el.closest('.glass'), start: 'top 82%' }
+      }
+    );
+  });
+
+  // Recent glass container
+  gsap.utils.toArray('.glass.glass-shadow').forEach(el => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 40, scale: 0.96 },
+      {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 82%' }
+      }
+    );
+  });
+
+  // ── PARALLAX DEPTH on orbs ──
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    document.querySelector('.orb-1').style.transform = `translate(${y * 0.04}px, ${y * 0.08}px) scale(1)`;
+    document.querySelector('.orb-2').style.transform = `translate(${-y * 0.03}px, ${y * 0.05}px) scale(1)`;
+    document.querySelector('.orb-3').style.transform = `translate(${y * 0.02}px, ${-y * 0.06}px) scale(1)`;
+    document.querySelector('.orb-4').style.transform = `translate(${-y * 0.05}px, ${y * 0.03}px) scale(1)`;
+  }, { passive: true });
+
+  // ── HERO section parallax ──
+  ScrollTrigger.create({
+    trigger: '.hero-section',
+    start: 'top top',
+    end: 'bottom top',
+    onUpdate: (self) => {
+      gsap.set('.hero-section', {
+        y: self.progress * 80,
+        opacity: 1 - self.progress * 0.5
+      });
+    }
+  });
+</script>
+</body>
+</html>

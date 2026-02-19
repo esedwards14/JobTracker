@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobTracker — Add Application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root {
+    --primary: oklch(0.78 0.18 168);
+    --accent: oklch(0.82 0.14 88);
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --glass-blur: 24px;
+    --glass-bg: oklch(1 0 0 / 0.05);
+    --glass-border: oklch(1 0 0 / 0.12);
+    --glass-border-bright: oklch(1 0 0 / 0.22);
+    --glass-glow-primary: oklch(0.78 0.18 168 / 0.15);
+    --orb-1: oklch(0.52 0.22 168 / 0.18);
+    --orb-2: oklch(0.48 0.20 280 / 0.14);
+    --orb-3: oklch(0.60 0.16 88 / 0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans) !important; background: oklch(0.07 0.012 285) !important; color: oklch(0.93 0.008 285) !important; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  .bg-canvas { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); }
+  .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--orb-1), transparent 70%); top: -150px; left: -100px; animation: d1 20s ease-in-out infinite; }
+  .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, var(--orb-2), transparent 70%); bottom: -50px; right: -100px; animation: d2 18s ease-in-out infinite; }
+  .orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, var(--orb-3), transparent 70%); top: 50%; right: 10%; animation: d3 16s ease-in-out infinite; }
+  @keyframes d1 { 0%,100%{transform:translate(0,0)}50%{transform:translate(60px,50px)} }
+  @keyframes d2 { 0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-40px)} }
+  @keyframes d3 { 0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)} }
+
+  .glass { background: var(--glass-bg) !important; backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; border: 1px solid var(--glass-border) !important; position: relative; }
+  .glass::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, oklch(1 0 0 / 0.06) 0%, transparent 50%, oklch(1 0 0 / 0.02) 100%); pointer-events: none; }
+
+  .nav-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; width: calc(100% - 48px); max-width: 900px; border-radius: 100px !important; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(40px) saturate(200%) !important; box-shadow: 0 0 0 1px oklch(1 0 0/0.08),0 16px 48px oklch(0 0 0/0.6); }
+  .nav-logo { font-size: 15px; font-weight: 700; color: oklch(0.93 0.008 285) !important; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px var(--glass-glow-primary); animation: pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+  .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+  .nav-link { padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 500; color: oklch(0.70 0.01 285) !important; text-decoration: none; transition: all 0.2s ease; }
+  .nav-link:hover { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0/0.06); }
+  .nav-link.active { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0/0.10); }
+  .nav-icon-btn { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid transparent; background: none; color: oklch(0.65 0.01 285); transition: all 0.2s ease; }
+  .nav-icon-btn:hover { background: oklch(1 0 0/0.07); border-color: oklch(1 0 0/0.12); color: oklch(0.93 0.008 285); }
+
+  .main-content { position: relative; z-index: 1; padding-top: 100px; }
+  .page-wrapper { max-width: 680px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .back-link { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: oklch(0.55 0.01 285) !important; text-decoration: none; margin-bottom: 28px; transition: all 0.2s ease; }
+  .back-link:hover { color: var(--primary) !important; }
+
+  .page-title { font-size: clamp(1.8rem, 4vw, 2.5rem) !important; font-weight: 800 !important; letter-spacing: -0.04em !important; color: oklch(0.95 0.008 285) !important; margin-bottom: 4px; }
+  .page-sub { font-size: 14px !important; color: oklch(0.50 0.01 285) !important; margin-bottom: 32px; }
+
+  /* FORM CARD */
+  .form-card { border-radius: 28px !important; overflow: hidden; box-shadow: 0 0 0 1px oklch(1 0 0/0.08), 0 24px 60px oklch(0 0 0/0.6); }
+
+  /* FORM SECTIONS */
+  .form-section { padding: 28px 32px; border-bottom: 1px solid oklch(1 0 0/0.07); }
+  .form-section:last-child { border-bottom: none; }
+  .form-section-label { font-size: 11px !important; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: oklch(0.42 0.01 285) !important; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .form-section-label::before { content: ''; display: inline-block; width: 16px; height: 1px; background: oklch(0.42 0.01 285); }
+
+  /* FORM FIELDS */
+  .form-row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 560px) { .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; } }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px !important; font-weight: 600; color: oklch(0.60 0.01 285) !important; letter-spacing: 0.02em; }
+  .form-label .required { color: var(--primary); margin-left: 2px; }
+  .form-input { width: 100%; padding: 10px 14px; background: oklch(1 0 0 / 0.04) !important; border: 1px solid oklch(1 0 0 / 0.10) !important; border-radius: 12px !important; color: oklch(0.88 0.008 285) !important; font-size: 14px; font-family: var(--font-sans) !important; outline: none; transition: all 0.2s ease; }
+  .form-input::placeholder { color: oklch(0.40 0.01 285) !important; }
+  .form-input:focus { border-color: oklch(0.78 0.18 168 / 0.45) !important; background: oklch(1 0 0 / 0.07) !important; box-shadow: 0 0 0 3px oklch(0.78 0.18 168 / 0.08); }
+  .form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: right 12px center !important; padding-right: 36px; }
+  .form-select option { background: oklch(0.12 0.015 285) !important; color: oklch(0.90 0.008 285) !important; }
+
+  /* STATUS SELECTOR */
+  .status-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+  .status-opt { padding: 7px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; border: 1px solid oklch(1 0 0/0.10); background: oklch(1 0 0/0.04); color: oklch(0.55 0.01 285) !important; user-select: none; }
+  .status-opt:hover { background: oklch(1 0 0/0.08); color: oklch(0.80 0.01 285) !important; }
+  .status-opt.selected-applied    { background: oklch(0.78 0.18 168/0.15); color: var(--primary) !important; border-color: oklch(0.78 0.18 168/0.30); box-shadow: 0 0 12px oklch(0.78 0.18 168/0.12); }
+  .status-opt.selected-screening  { background: oklch(0.75 0.16 220/0.15); color: oklch(0.75 0.16 220) !important; border-color: oklch(0.75 0.16 220/0.30); }
+  .status-opt.selected-interview  { background: oklch(0.82 0.14 88/0.15);  color: var(--accent) !important; border-color: oklch(0.82 0.14 88/0.30); }
+  .status-opt.selected-offered    { background: oklch(0.72 0.20 145/0.15); color: oklch(0.72 0.20 145) !important; border-color: oklch(0.72 0.20 145/0.30); }
+  .status-opt.selected-rejected   { background: oklch(0.58 0.18 25/0.15);  color: oklch(0.65 0.18 25) !important; border-color: oklch(0.58 0.18 25/0.30); }
+  .status-opt.selected-withdrawn  { background: oklch(0.55 0.02 285/0.15); color: oklch(0.65 0.02 285) !important; border-color: oklch(0.55 0.02 285/0.30); }
+
+  /* FORM FOOTER */
+  .form-footer { padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: oklch(1 0 0/0.02); }
+  .btn-primary { padding: 12px 26px; border-radius: 100px; background: var(--primary) !important; color: oklch(0.07 0.012 285) !important; font-weight: 700; font-size: 14px; font-family: var(--font-sans) !important; border: none; cursor: pointer; transition: all 0.2s cubic-bezier(0.16,1,0.3,1); display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 24px var(--glass-glow-primary); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--glass-glow-primary); }
+  .btn-ghost { padding: 12px 20px; border-radius: 100px; font-weight: 600; font-size: 14px; font-family: var(--font-sans) !important; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; color: oklch(0.55 0.01 285) !important; background: none; border: 1px solid oklch(1 0 0/0.10) !important; }
+  .btn-ghost:hover { background: oklch(1 0 0/0.06) !important; color: oklch(0.80 0.01 285) !important; }
+
+  .hint { font-size: 11px !important; color: oklch(0.40 0.01 285) !important; margin-top: 4px; }
+
+  .reveal { opacity: 0; }
+</style>
+</head>
+<body>
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<nav class="nav-bar glass">
+  <a href="#" class="nav-logo"><div class="nav-logo-dot"></div>JobTracker</a>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link">Dashboard</a></li>
+    <li><a href="#" class="nav-link active">Applications</a></li>
+    <li><a href="#" class="nav-link">Connections</a></li>
+  </ul>
+  <div style="display:flex;gap:4px;">
+    <button class="nav-icon-btn"><i data-lucide="mail" style="width:16px;height:16px;"></i></button>
+    <button class="nav-icon-btn"><i data-lucide="settings" style="width:16px;height:16px;"></i></button>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-wrapper">
+
+    <a href="#" class="back-link reveal">
+      <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
+      Applications
+    </a>
+
+    <h1 class="page-title reveal" style="transition-delay:0.05s;">New Application</h1>
+    <p class="page-sub reveal" style="transition-delay:0.09s;">Track a new job application in your pipeline</p>
+
+    <form class="form-card glass reveal" style="transition-delay:0.13s;">
+
+      <!-- COMPANY SECTION -->
+      <div class="form-section">
+        <div class="form-section-label">Company Info</div>
+        <div class="form-row cols-2">
+          <div class="form-field">
+            <label class="form-label">Company <span class="required">*</span></label>
+            <input class="form-input" type="text" placeholder="e.g. Google">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Position <span class="required">*</span></label>
+            <input class="form-input" type="text" placeholder="e.g. Software Engineer">
+          </div>
+        </div>
+        <div class="form-row cols-3">
+          <div class="form-field">
+            <label class="form-label">Min Salary</label>
+            <input class="form-input" type="number" placeholder="120000">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Max Salary</label>
+            <input class="form-input" type="number" placeholder="160000">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Currency</label>
+            <select class="form-input form-select">
+              <option>USD</option>
+              <option>GBP</option>
+              <option>EUR</option>
+              <option>CAD</option>
+              <option>AUD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Application URL</label>
+            <input class="form-input" type="url" placeholder="https://careers.google.com/jobs/...">
+            <div class="hint">Link to the original job posting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATES SECTION -->
+      <div class="form-section">
+        <div class="form-section-label">Timeline</div>
+        <div class="form-row cols-2">
+          <div class="form-field">
+            <label class="form-label">Date Applied <span class="required">*</span></label>
+            <input class="form-input" type="date" value="2026-02-18">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Response Date</label>
+            <input class="form-input" type="date" placeholder="When did they respond?">
+            <div class="hint">Leave blank if no response yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS SECTION -->
+      <div class="form-section">
+        <div class="form-section-label">Status</div>
+        <div class="status-selector">
+          <div class="status-opt selected-applied" onclick="selectStatus(this, 'applied')">Applied</div>
+          <div class="status-opt" onclick="selectStatus(this, 'screening')">Screening</div>
+          <div class="status-opt" onclick="selectStatus(this, 'interview')">Interviewing</div>
+          <div class="status-opt" onclick="selectStatus(this, 'offered')">Offered</div>
+          <div class="status-opt" onclick="selectStatus(this, 'rejected')">Rejected</div>
+          <div class="status-opt" onclick="selectStatus(this, 'withdrawn')">Withdrawn</div>
+        </div>
+      </div>
+
+      <!-- NOTES SECTION -->
+      <div class="form-section">
+        <div class="form-section-label">Details</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Job Description</label>
+            <textarea class="form-input form-textarea" placeholder="Paste the job description here…" style="min-height:120px;"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input form-textarea" placeholder="Your notes about this application…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="form-footer">
+        <a href="#" class="btn-ghost">
+          <i data-lucide="x" style="width:14px;height:14px;"></i>
+          Cancel
+        </a>
+        <button type="submit" class="btn-primary">
+          <i data-lucide="plus" style="width:15px;height:15px;"></i>
+          Save Application
+        </button>
+      </div>
+
+    </form>
+  </div>
+</main>
+
+<script>
+  lucide.createIcons();
+
+  gsap.utils.toArray('.reveal').forEach((el, i) => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 24, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'power3.out',
+        delay: 0.1 + i * 0.09 }
+    );
+  });
+
+  function selectStatus(el, status) {
+    document.querySelectorAll('.status-opt').forEach(opt => {
+      opt.className = 'status-opt';
+    });
+    el.classList.add(`selected-${status}`);
+  }
+
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    document.querySelector('.orb-1').style.transform = `translate(${y*0.04}px,${y*0.05}px)`;
+    document.querySelector('.orb-2').style.transform = `translate(${-y*0.03}px,${-y*0.04}px)`;
+  }, { passive: true });
+</script>
+</body>
+</html>

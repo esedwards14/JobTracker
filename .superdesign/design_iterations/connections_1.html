@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connections — JobTracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: oklch(0.07 0.012 285);
+      --mint: oklch(0.78 0.18 168);
+      --mint-dim: oklch(0.78 0.18 168 / 0.15);
+      --mint-border: oklch(0.78 0.18 168 / 0.35);
+      --gold: oklch(0.82 0.14 88);
+      --gold-dim: oklch(0.82 0.14 88 / 0.15);
+      --glass-bg: oklch(1 0 0 / 0.05);
+      --glass-border: oklch(1 0 0 / 0.12);
+      --glass-hover: oklch(1 0 0 / 0.08);
+      --text-primary: oklch(0.95 0.005 285);
+      --text-secondary: oklch(0.65 0.01 285);
+      --text-muted: oklch(0.45 0.008 285);
+      --danger: oklch(0.65 0.22 25);
+      --danger-dim: oklch(0.65 0.22 25 / 0.15);
+    }
+
+    html, body {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      background: var(--bg) !important;
+      color: var(--text-primary) !important;
+      min-height: 100vh !important;
+      overflow-x: hidden !important;
+    }
+
+    /* ── Orb Background ── */
+    .orb-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      animation: drift linear infinite;
+    }
+    .orb-1 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, oklch(0.78 0.18 168 / 0.6) 0%, transparent 70%);
+      top: -180px; left: -120px;
+      animation-duration: 28s;
+      animation-name: drift1;
+    }
+    .orb-2 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, oklch(0.82 0.14 88 / 0.45) 0%, transparent 70%);
+      bottom: -160px; right: -100px;
+      animation-duration: 34s;
+      animation-name: drift2;
+    }
+    .orb-3 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, oklch(0.6 0.18 300 / 0.35) 0%, transparent 70%);
+      top: 50%; left: 55%;
+      animation-duration: 22s;
+      animation-name: drift3;
+    }
+
+    @keyframes drift1 {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(60px, 40px) scale(1.08); }
+      66%  { transform: translate(-30px, 80px) scale(0.95); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes drift2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(-50px, -30px) scale(1.06); }
+      66%  { transform: translate(40px, -60px) scale(0.97); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes drift3 {
+      0%   { transform: translate(-50%, -50%) scale(1); }
+      50%  { transform: translate(-50%, -50%) translate(40px, -40px) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* ── Floating Nav ── */
+    .nav-pill {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      width: min(900px, calc(100vw - 32px));
+      background: oklch(1 0 0 / 0.06);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid oklch(1 0 0 / 0.13);
+      border-radius: 18px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .nav-logo {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+      letter-spacing: -0.3px;
+      color: var(--text-primary) !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 10px var(--mint);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+    .nav-links a {
+      display: block;
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      color: var(--text-secondary) !important;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--text-primary) !important;
+      background: oklch(1 0 0 / 0.08);
+    }
+    .nav-links a.active {
+      color: var(--mint) !important;
+      background: var(--mint-dim);
+    }
+    .nav-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mint), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px !important; font-weight: 700 !important;
+      color: oklch(0.1 0 0) !important;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Page Layout ── */
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-top: 100px;
+      padding-bottom: 80px;
+      padding-left: 20px;
+      padding-right: 20px;
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* ── Glass Card ── */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, oklch(1 0 0 / 0.07) 0%, transparent 55%, transparent 100%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .page-title {
+      font-size: 32px !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.8px;
+      color: var(--text-primary) !important;
+      line-height: 1.1;
+    }
+    .page-subtitle {
+      font-size: 13px !important;
+      color: var(--text-muted) !important;
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--mint);
+      color: oklch(0.08 0.01 285) !important;
+      box-shadow: 0 0 20px oklch(0.78 0.18 168 / 0.35);
+    }
+    .btn-primary:hover {
+      background: oklch(0.82 0.18 168);
+      box-shadow: 0 0 28px oklch(0.78 0.18 168 / 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary) !important;
+      backdrop-filter: blur(12px);
+    }
+    .btn-ghost:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary) !important;
+      border-color: oklch(1 0 0 / 0.2);
+    }
+    .btn-danger-ghost {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger) !important;
+    }
+    .btn-danger-ghost:hover {
+      background: var(--danger-dim);
+    }
+    .icon-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .icon-btn:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+    }
+    .icon-btn.danger:hover {
+      background: var(--danger-dim);
+      color: var(--danger);
+    }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      background: oklch(1 0 0 / 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 9px 12px 9px 38px;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important;
+      color: var(--text-primary) !important;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input::placeholder { color: var(--text-muted) !important; }
+    .search-input:focus {
+      border-color: var(--mint-border);
+      background: oklch(1 0 0 / 0.07);
+      box-shadow: 0 0 0 3px var(--mint-dim);
+    }
+    .filter-select {
+      background: oklch(1 0 0 / 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 9px 32px 9px 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important;
+      color: var(--text-primary) !important;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .filter-select option {
+      background: oklch(0.12 0.012 285);
+      color: var(--text-primary);
+    }
+    .filter-select:focus {
+      border-color: var(--mint-border);
+      box-shadow: 0 0 0 3px var(--mint-dim);
+    }
+    .filter-count {
+      font-size: 12px !important;
+      color: var(--text-muted) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    /* ── Contact Grid ── */
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .contacts-grid { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; }
+      .header-actions { width: 100%; }
+    }
+
+    /* ── Contact Card ── */
+    .contact-card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.25s;
+    }
+    .contact-card:hover {
+      background: var(--glass-hover) !important;
+      border-color: oklch(1 0 0 / 0.18) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px oklch(0 0 0 / 0.25);
+    }
+    .contact-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .contact-avatar {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px !important; font-weight: 700 !important;
+      flex-shrink: 0;
+      color: oklch(0.1 0 0) !important;
+      position: relative;
+    }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name {
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: var(--text-primary) !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .contact-title {
+      font-size: 12px !important;
+      color: var(--text-secondary) !important;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .contact-company {
+      font-size: 12px !important;
+      color: var(--mint) !important;
+      font-weight: 500 !important;
+    }
+    .contact-actions {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .contact-divider {
+      height: 1px;
+      background: var(--glass-border);
+    }
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .contact-detail-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px !important;
+      color: var(--text-secondary) !important;
+    }
+    .contact-detail-row .detail-icon {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .contact-detail-row a {
+      color: var(--mint) !important;
+      text-decoration: none;
+    }
+    .contact-detail-row a:hover { text-decoration: underline; }
+    .contact-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── Source Badge ── */
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.3px;
+      font-family: 'JetBrains Mono', monospace !important;
+      text-transform: uppercase;
+    }
+    .source-email {
+      background: var(--mint-dim);
+      border: 1px solid var(--mint-border);
+      color: var(--mint) !important;
+    }
+    .source-manual {
+      background: oklch(1 0 0 / 0.06);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted) !important;
+    }
+    .source-badge .badge-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+    .source-email .badge-dot { background: var(--mint); }
+    .source-manual .badge-dot { background: var(--text-muted); }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 32px;
+    }
+    .page-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-secondary);
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      transition: all 0.2s;
+    }
+    .page-btn:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+    }
+    .page-btn.active {
+      background: var(--mint-dim);
+      border-color: var(--mint-border);
+      color: var(--mint) !important;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: oklch(0 0 0 / 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      width: min(480px, 100%);
+      background: oklch(0.1 0.012 285);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0) scale(1);
+    }
+    .modal::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, oklch(1 0 0 / 0.07) 0%, transparent 55%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-title {
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      color: var(--text-primary) !important;
+    }
+    .modal-close {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--glass-hover); color: var(--text-primary); }
+    .modal-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      color: var(--text-muted) !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      background: oklch(1 0 0 / 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important;
+      color: var(--text-primary) !important;
+      outline: none;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .form-input::placeholder { color: var(--text-muted) !important; }
+    .form-input:focus {
+      border-color: var(--mint-border);
+      background: oklch(1 0 0 / 0.07);
+      box-shadow: 0 0 0 3px var(--mint-dim);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    /* ── Section Heading ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .section-label {
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    /* ── Tooltip ── */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: oklch(0.15 0.015 285);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    [data-tooltip]:hover::after { opacity: 1; }
+
+    /* Reveal animation initial state */
+    .reveal { opacity: 0; transform: translateY(24px); }
+  </style>
+</head>
+<body>
+
+<!-- ── Orbs ── -->
+<div class="orb-container">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- ── Floating Nav ── -->
+<nav class="nav-pill">
+  <div class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    JobTracker
+  </div>
+  <ul class="nav-links">
+    <li><a href="#">Dashboard</a></li>
+    <li><a href="#">Applications</a></li>
+    <li><a href="#" class="active">Connections</a></li>
+    <li><a href="#">Analytics</a></li>
+    <li><a href="#">Settings</a></li>
+  </ul>
+  <div class="nav-avatar">EK</div>
+</nav>
+
+<!-- ── Page ── -->
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div class="page-header reveal">
+    <div>
+      <h1 class="page-title">Connections</h1>
+      <p class="page-subtitle">24 contacts · 18 from email scan</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openModal()">
+        <i data-lucide="scan-line" style="width:14px;height:14px;"></i>
+        Scan Contacts
+      </button>
+      <button class="btn btn-primary" onclick="openModal()">
+        <i data-lucide="user-plus" style="width:14px;height:14px;"></i>
+        Add Contact
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="glass-card filter-bar reveal" style="animation-delay:0.05s">
+    <div class="search-wrap">
+      <span class="search-icon"><i data-lucide="search" style="width:14px;height:14px;"></i></span>
+      <input class="search-input" type="text" placeholder="Search by name, company, title…" />
+    </div>
+    <select class="filter-select">
+      <option>All Sources</option>
+      <option>Email Scan</option>
+      <option>Manual</option>
+    </select>
+    <button class="btn btn-ghost" style="padding: 9px 14px; gap:6px;">
+      <i data-lucide="check-square" style="width:14px;height:14px;"></i>
+      Select
+    </button>
+    <span class="filter-count">Showing 6 of 24</span>
+  </div>
+
+  <!-- Contact Grid -->
+  <div class="section-header reveal" style="animation-delay:0.08s">
+    <span class="section-label">All Contacts</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="contacts-grid">
+
+    <!-- Contact 1 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.10s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.78 0.18 168), oklch(0.6 0.18 168));">
+          SL
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">Sarah Lin</div>
+          <div class="contact-title">Senior Engineering Recruiter</div>
+          <div class="contact-company">Vercel</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          sarah.lin@vercel.com
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          +1 (415) 555-0192
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/sarahlin</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-email">
+          <span class="badge-dot"></span>
+          Email Scan
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Jan 14</span>
+      </div>
+    </div>
+
+    <!-- Contact 2 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.13s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.82 0.14 88), oklch(0.72 0.16 55));">
+          MR
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">Marcus Reid</div>
+          <div class="contact-title">Talent Acquisition Lead</div>
+          <div class="contact-company">Linear</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          m.reid@linear.app
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          +1 (628) 555-0044
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/marcusreid</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-email">
+          <span class="badge-dot"></span>
+          Email Scan
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Jan 16</span>
+      </div>
+    </div>
+
+    <!-- Contact 3 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.16s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.7 0.18 300), oklch(0.6 0.2 270));">
+          AK
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">Aiko Kurosawa</div>
+          <div class="contact-title">Head of Engineering Recruiting</div>
+          <div class="contact-company">Figma</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          aiko@figma.com
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          +1 (415) 555-0267
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/aikokurosawa</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-manual">
+          <span class="badge-dot"></span>
+          Manual
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Jan 19</span>
+      </div>
+    </div>
+
+    <!-- Contact 4 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.19s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.65 0.22 25), oklch(0.72 0.18 45));">
+          JT
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">Jordan Torres</div>
+          <div class="contact-title">Technical Recruiter</div>
+          <div class="contact-company">Stripe</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          j.torres@stripe.com
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          +1 (650) 555-0088
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/jordantorres</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-email">
+          <span class="badge-dot"></span>
+          Email Scan
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Jan 22</span>
+      </div>
+    </div>
+
+    <!-- Contact 5 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.22s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.72 0.15 200), oklch(0.6 0.18 220));">
+          NP
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">Nina Patel</div>
+          <div class="contact-title">Director of People</div>
+          <div class="contact-company">Notion</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          nina@makenotion.com
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          —
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/ninapatel</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-manual">
+          <span class="badge-dot"></span>
+          Manual
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Feb 1</span>
+      </div>
+    </div>
+
+    <!-- Contact 6 -->
+    <div class="glass-card contact-card reveal" style="animation-delay:0.25s">
+      <div class="contact-card-top">
+        <div class="contact-avatar" style="background: linear-gradient(135deg, oklch(0.75 0.13 120), oklch(0.65 0.15 140));">
+          DW
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">David Wu</div>
+          <div class="contact-title">Engineering Manager</div>
+          <div class="contact-company">PlanetScale</div>
+        </div>
+        <div class="contact-actions">
+          <button class="icon-btn" data-tooltip="Edit" onclick="openModal()">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="icon-btn danger" data-tooltip="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="contact-divider"></div>
+      <div class="contact-details">
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="mail" style="width:12px;height:12px;"></i></span>
+          dwu@planetscale.com
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="phone" style="width:12px;height:12px;"></i></span>
+          +1 (408) 555-0133
+        </div>
+        <div class="contact-detail-row">
+          <span class="detail-icon"><i data-lucide="link" style="width:12px;height:12px;"></i></span>
+          <a href="#">linkedin.com/in/davidwu-ps</a>
+        </div>
+      </div>
+      <div class="contact-card-footer">
+        <span class="source-badge source-email">
+          <span class="badge-dot"></span>
+          Email Scan
+        </span>
+        <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Feb 5</span>
+      </div>
+    </div>
+
+  </div><!-- /contacts-grid -->
+
+  <!-- Pagination -->
+  <div class="pagination reveal" style="animation-delay:0.3s">
+    <button class="page-btn">
+      <i data-lucide="chevron-left" style="width:14px;height:14px;"></i>
+    </button>
+    <button class="page-btn active">1</button>
+    <button class="page-btn">2</button>
+    <button class="page-btn">3</button>
+    <button class="page-btn">4</button>
+    <button class="page-btn">
+      <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
+    </button>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- ── Add/Edit Modal ── -->
+<div class="modal-overlay" id="contactModal" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Contact</span>
+      <button class="modal-close" onclick="closeModal()">
+        <i data-lucide="x" style="width:14px;height:14px;"></i>
+      </button>
+    </div>
+    <div class="modal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" type="text" placeholder="Jane" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" type="text" placeholder="Smith" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company</label>
+        <input class="form-input" type="text" placeholder="Acme Corp" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title / Role</label>
+        <input class="form-input" type="text" placeholder="Senior Recruiter" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="jane@company.com" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" placeholder="+1 (555) 000-0000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">LinkedIn URL</label>
+          <input class="form-input" type="url" placeholder="linkedin.com/in/…" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary">Save Contact</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Lucide icons
+  lucide.createIcons();
+
+  // Modal
+  function openModal() {
+    document.getElementById('contactModal').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('contactModal').classList.remove('open');
+  }
+  function closeModalOnBg(e) {
+    if (e.target === document.getElementById('contactModal')) closeModal();
+  }
+
+  // GSAP reveal animations
+  window.addEventListener('DOMContentLoaded', () => {
+    const reveals = document.querySelectorAll('.reveal');
+    gsap.to(reveals, {
+      opacity: 1,
+      y: 0,
+      duration: 0.65,
+      ease: 'power3.out',
+      stagger: 0.07,
+      delay: 0.1,
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Settings — JobTracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: oklch(0.07 0.012 285);
+      --mint: oklch(0.78 0.18 168);
+      --mint-dim: oklch(0.78 0.18 168 / 0.15);
+      --mint-border: oklch(0.78 0.18 168 / 0.35);
+      --mint-glow: oklch(0.78 0.18 168 / 0.4);
+      --gold: oklch(0.82 0.14 88);
+      --gold-dim: oklch(0.82 0.14 88 / 0.15);
+      --glass-bg: oklch(1 0 0 / 0.05);
+      --glass-border: oklch(1 0 0 / 0.12);
+      --glass-hover: oklch(1 0 0 / 0.08);
+      --text-primary: oklch(0.95 0.005 285);
+      --text-secondary: oklch(0.65 0.01 285);
+      --text-muted: oklch(0.45 0.008 285);
+      --danger: oklch(0.65 0.22 25);
+      --danger-dim: oklch(0.65 0.22 25 / 0.15);
+      --success: oklch(0.72 0.18 142);
+      --success-dim: oklch(0.72 0.18 142 / 0.15);
+      --success-border: oklch(0.72 0.18 142 / 0.3);
+    }
+
+    html, body {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      background: var(--bg) !important;
+      color: var(--text-primary) !important;
+      min-height: 100vh !important;
+      overflow-x: hidden !important;
+    }
+
+    /* ── Orb Background ── */
+    .orb-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+    }
+    .orb-1 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, oklch(0.78 0.18 168 / 0.6) 0%, transparent 70%);
+      top: -180px; left: -120px;
+      animation: drift1 28s linear infinite;
+    }
+    .orb-2 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, oklch(0.82 0.14 88 / 0.45) 0%, transparent 70%);
+      bottom: -160px; right: -100px;
+      animation: drift2 34s linear infinite;
+    }
+    .orb-3 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, oklch(0.6 0.18 300 / 0.35) 0%, transparent 70%);
+      top: 50%; left: 55%;
+      animation: drift3 22s linear infinite;
+    }
+
+    @keyframes drift1 {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(60px, 40px) scale(1.08); }
+      66%  { transform: translate(-30px, 80px) scale(0.95); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes drift2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(-50px, -30px) scale(1.06); }
+      66%  { transform: translate(40px, -60px) scale(0.97); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes drift3 {
+      0%   { transform: translate(-50%, -50%) scale(1); }
+      50%  { transform: translate(-50%, -50%) translate(40px, -40px) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* ── Floating Nav ── */
+    .nav-pill {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      width: min(900px, calc(100vw - 32px));
+      background: oklch(1 0 0 / 0.06);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid oklch(1 0 0 / 0.13);
+      border-radius: 18px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .nav-logo {
+      font-weight: 800 !important;
+      font-size: 15px !important;
+      letter-spacing: -0.3px;
+      color: var(--text-primary) !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 10px var(--mint);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+    .nav-links a {
+      display: block;
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      color: var(--text-secondary) !important;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--text-primary) !important;
+      background: oklch(1 0 0 / 0.08);
+    }
+    .nav-links a.active {
+      color: var(--mint) !important;
+      background: var(--mint-dim);
+    }
+    .nav-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mint), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px !important; font-weight: 700 !important;
+      color: oklch(0.1 0 0) !important;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Page Layout ── */
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-top: 100px;
+      padding-bottom: 80px;
+      padding-left: 20px;
+      padding-right: 20px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* ── Glass Card ── */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, oklch(1 0 0 / 0.07) 0%, transparent 55%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* ── Page Header ── */
+    .page-title {
+      font-size: 32px !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.8px;
+      color: var(--text-primary) !important;
+      line-height: 1.1;
+    }
+    .page-subtitle {
+      font-size: 13px !important;
+      color: var(--text-muted) !important;
+      margin-top: 5px;
+    }
+
+    /* ── Callout ── */
+    .callout-mint {
+      background: oklch(0.78 0.18 168 / 0.08);
+      border: 1px solid oklch(0.78 0.18 168 / 0.28);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .callout-mint::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, oklch(0.78 0.18 168 / 0.06) 0%, transparent 60%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    .callout-icon {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      background: var(--mint-dim);
+      border: 1px solid var(--mint-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--mint);
+      flex-shrink: 0;
+    }
+    .callout-text {
+      font-size: 13px !important;
+      color: var(--text-secondary) !important;
+      line-height: 1.55;
+    }
+    .callout-text strong {
+      color: var(--mint) !important;
+      font-weight: 600 !important;
+    }
+
+    /* ── Section Spacing ── */
+    .section { margin-bottom: 20px; }
+
+    /* ── Section Title ── */
+    .card-header {
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .card-title {
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: var(--text-primary) !important;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Gmail Connection Card ── */
+    .gmail-status-block {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .gmail-icon-circle {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: oklch(0.65 0.22 25 / 0.12);
+      border: 1px solid oklch(0.65 0.22 25 / 0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: oklch(0.7 0.22 25);
+    }
+    .gmail-info { flex: 1; }
+    .gmail-service-name {
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      color: var(--text-primary) !important;
+      margin-bottom: 4px;
+    }
+    .gmail-status-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 2px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot-green {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse-green 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--success); }
+      50% { opacity: 0.6; box-shadow: 0 0 4px var(--success); }
+    }
+    .status-dot-gray { background: var(--text-muted); }
+    .status-label-connected {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--success) !important;
+    }
+    .gmail-email {
+      font-size: 12px !important;
+      color: var(--text-muted) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .gmail-sync-info {
+      font-size: 11px !important;
+      color: var(--text-muted) !important;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gmail-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--mint);
+      color: oklch(0.08 0.01 285) !important;
+      box-shadow: 0 0 18px oklch(0.78 0.18 168 / 0.35);
+    }
+    .btn-primary:hover {
+      background: oklch(0.82 0.18 168);
+      box-shadow: 0 0 26px oklch(0.78 0.18 168 / 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary-sm {
+      padding: 6px 13px;
+      font-size: 12px !important;
+    }
+    .btn-ghost {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary) !important;
+      backdrop-filter: blur(12px);
+    }
+    .btn-ghost:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary) !important;
+      border-color: oklch(1 0 0 / 0.2);
+    }
+    .btn-ghost-sm {
+      padding: 6px 13px;
+      font-size: 12px !important;
+    }
+    .btn-danger-link {
+      background: transparent;
+      border: none;
+      color: var(--danger) !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .btn-danger-link:hover { opacity: 1; }
+
+    /* ── Email List ── */
+    .email-list { padding: 8px 16px 16px; }
+    .email-list-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 10px;
+      border-radius: 12px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .email-list-item:not(:last-child) {
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .email-list-item:hover {
+      background: var(--glass-hover);
+    }
+    .email-co-logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      flex-shrink: 0;
+      color: oklch(0.1 0 0) !important;
+    }
+    .email-content { flex: 1; min-width: 0; }
+    .email-company {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--text-primary) !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .email-subject {
+      font-size: 11px !important;
+      color: var(--text-muted) !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .email-date {
+      font-size: 11px !important;
+      color: var(--text-muted) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      flex-shrink: 0;
+    }
+    .email-item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Import History ── */
+    .history-list { padding: 8px 16px 16px; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 10px;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+    .history-item:not(:last-child) {
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .history-item:hover { background: var(--glass-hover); }
+    .history-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--mint);
+      flex-shrink: 0;
+      box-shadow: 0 0 6px var(--mint-glow);
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-company {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--text-primary) !important;
+    }
+    .history-role {
+      font-size: 11px !important;
+      color: var(--text-muted) !important;
+      margin-top: 2px;
+    }
+    .history-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .history-date {
+      font-size: 11px !important;
+      color: var(--text-muted) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .history-view-link {
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      color: var(--mint) !important;
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--mint-dim);
+      border: 1px solid var(--mint-border);
+      transition: all 0.2s;
+    }
+    .history-view-link:hover {
+      background: oklch(0.78 0.18 168 / 0.25);
+    }
+
+    /* ── Status Chip in Card Title ── */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .status-chip-connected {
+      background: var(--success-dim);
+      border: 1px solid var(--success-border);
+      color: var(--success) !important;
+    }
+    .status-chip-count {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted) !important;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    /* Reveal animation initial state */
+    .reveal { opacity: 0; transform: translateY(24px); }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .gmail-status-block { flex-direction: column; align-items: flex-start; }
+      .gmail-actions { flex-direction: row; align-items: center; width: 100%; }
+      .email-item-actions { gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Orbs ── -->
+<div class="orb-container">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- ── Floating Nav ── -->
+<nav class="nav-pill">
+  <div class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    JobTracker
+  </div>
+  <ul class="nav-links">
+    <li><a href="#">Dashboard</a></li>
+    <li><a href="#">Applications</a></li>
+    <li><a href="#">Connections</a></li>
+    <li><a href="#">Analytics</a></li>
+    <li><a href="#" class="active">Settings</a></li>
+  </ul>
+  <div class="nav-avatar">EK</div>
+</nav>
+
+<!-- ── Page ── -->
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div style="margin-bottom: 24px;" class="reveal">
+    <h1 class="page-title">Email Settings</h1>
+    <p class="page-subtitle">Connect your Gmail to auto-import job applications</p>
+  </div>
+
+  <!-- Tip Callout -->
+  <div class="callout-mint section reveal" style="animation-delay:0.05s">
+    <div class="callout-icon">
+      <i data-lucide="lightbulb" style="width:15px;height:15px;"></i>
+    </div>
+    <div class="callout-text">
+      <strong>Tip:</strong> JobTracker scans your Gmail for job confirmation emails and auto-imports them as applications. It looks for application confirmations, interview invites, and offer letters from known ATS providers.
+    </div>
+  </div>
+
+  <!-- ── Gmail Connection Card ── -->
+  <div class="glass-card section reveal" style="animation-delay:0.10s">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon" style="background: oklch(0.65 0.22 25 / 0.12); border: 1px solid oklch(0.65 0.22 25 / 0.28);">
+          <i data-lucide="mail" style="width:14px;height:14px; color: oklch(0.7 0.22 25);"></i>
+        </div>
+        Gmail Connection
+      </div>
+      <span class="status-chip status-chip-connected">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+        Connected
+      </span>
+    </div>
+    <div class="gmail-status-block">
+      <div class="gmail-icon-circle">
+        <i data-lucide="mail" style="width:26px;height:26px;"></i>
+      </div>
+      <div class="gmail-info">
+        <div class="gmail-service-name">Gmail</div>
+        <div class="gmail-status-row">
+          <span class="status-dot status-dot-green"></span>
+          <span class="status-label-connected">Connected</span>
+        </div>
+        <div class="gmail-email">ethan.kowalski@gmail.com</div>
+        <div class="gmail-sync-info">
+          <i data-lucide="refresh-cw" style="width:11px;height:11px; color:var(--text-muted);"></i>
+          Last synced: 2 hours ago · 18 emails scanned
+        </div>
+      </div>
+      <div class="gmail-actions">
+        <button class="btn btn-ghost" style="gap:6px;">
+          <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>
+          Sync Now
+        </button>
+        <button class="btn-danger-link">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pending Emails Card ── -->
+  <div class="glass-card section reveal" style="animation-delay:0.15s">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon" style="background: var(--gold-dim); border: 1px solid oklch(0.82 0.14 88 / 0.3);">
+          <i data-lucide="inbox" style="width:14px;height:14px; color: var(--gold);"></i>
+        </div>
+        Pending Emails
+      </div>
+      <span class="status-chip status-chip-count">5 pending</span>
+    </div>
+    <div class="email-list">
+
+      <!-- Email Item 1 -->
+      <div class="email-list-item">
+        <div class="email-co-logo" style="background: linear-gradient(135deg, oklch(0.78 0.18 168), oklch(0.6 0.18 168));">V</div>
+        <div class="email-content">
+          <div class="email-company">Vercel</div>
+          <div class="email-subject">Your application for Senior Frontend Engineer has been received…</div>
+        </div>
+        <span class="email-date">Feb 14</span>
+        <div class="email-item-actions">
+          <button class="btn btn-primary btn-primary-sm">
+            <i data-lucide="download" style="width:11px;height:11px;"></i>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-ghost-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Email Item 2 -->
+      <div class="email-list-item">
+        <div class="email-co-logo" style="background: linear-gradient(135deg, oklch(0.82 0.14 88), oklch(0.72 0.16 55));">L</div>
+        <div class="email-content">
+          <div class="email-company">Linear</div>
+          <div class="email-subject">We received your application — Software Engineer, Growth</div>
+        </div>
+        <span class="email-date">Feb 13</span>
+        <div class="email-item-actions">
+          <button class="btn btn-primary btn-primary-sm">
+            <i data-lucide="download" style="width:11px;height:11px;"></i>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-ghost-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Email Item 3 -->
+      <div class="email-list-item">
+        <div class="email-co-logo" style="background: linear-gradient(135deg, oklch(0.7 0.18 300), oklch(0.6 0.2 270));">F</div>
+        <div class="email-content">
+          <div class="email-company">Figma</div>
+          <div class="email-subject">Interview confirmed: Product Engineer, Platform · Thurs Feb 20 at 10am PST</div>
+        </div>
+        <span class="email-date">Feb 12</span>
+        <div class="email-item-actions">
+          <button class="btn btn-primary btn-primary-sm">
+            <i data-lucide="download" style="width:11px;height:11px;"></i>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-ghost-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Email Item 4 -->
+      <div class="email-list-item">
+        <div class="email-co-logo" style="background: linear-gradient(135deg, oklch(0.65 0.22 25), oklch(0.72 0.18 45));">S</div>
+        <div class="email-content">
+          <div class="email-company">Stripe</div>
+          <div class="email-subject">Thanks for applying to Stripe — we're reviewing your application</div>
+        </div>
+        <span class="email-date">Feb 10</span>
+        <div class="email-item-actions">
+          <button class="btn btn-primary btn-primary-sm">
+            <i data-lucide="download" style="width:11px;height:11px;"></i>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-ghost-sm">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Email Item 5 -->
+      <div class="email-list-item">
+        <div class="email-co-logo" style="background: linear-gradient(135deg, oklch(0.72 0.15 200), oklch(0.6 0.18 220));">N</div>
+        <div class="email-content">
+          <div class="email-company">Notion</div>
+          <div class="email-subject">Notion — Application update for Software Engineer, Integrations</div>
+        </div>
+        <span class="email-date">Feb 8</span>
+        <div class="email-item-actions">
+          <button class="btn btn-primary btn-primary-sm">
+            <i data-lucide="download" style="width:11px;height:11px;"></i>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-ghost-sm">Dismiss</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Import History Card ── -->
+  <div class="glass-card section reveal" style="animation-delay:0.20s">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon" style="background: var(--mint-dim); border: 1px solid var(--mint-border);">
+          <i data-lucide="history" style="width:14px;height:14px; color: var(--mint);"></i>
+        </div>
+        Import History
+      </div>
+      <span class="status-chip status-chip-count">12 imported</span>
+    </div>
+    <div class="history-list">
+
+      <!-- History Item 1 -->
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-info">
+          <div class="history-company">Loom</div>
+          <div class="history-role">Senior Software Engineer, Infrastructure</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Feb 7</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+      <!-- History Item 2 -->
+      <div class="history-item">
+        <div class="history-dot" style="background:var(--gold); box-shadow:0 0 6px oklch(0.82 0.14 88 / 0.5);"></div>
+        <div class="history-info">
+          <div class="history-company">Airbnb</div>
+          <div class="history-role">Frontend Engineer, Design Systems</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Feb 4</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+      <!-- History Item 3 -->
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-info">
+          <div class="history-company">Clerk</div>
+          <div class="history-role">Full Stack Engineer</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Feb 2</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+      <!-- History Item 4 -->
+      <div class="history-item">
+        <div class="history-dot" style="background:oklch(0.7 0.18 300); box-shadow:0 0 6px oklch(0.7 0.18 300 / 0.5);"></div>
+        <div class="history-info">
+          <div class="history-company">Supabase</div>
+          <div class="history-role">React Engineer, Developer Experience</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Jan 29</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+      <!-- History Item 5 -->
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-info">
+          <div class="history-company">Resend</div>
+          <div class="history-role">Software Engineer</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Jan 27</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+      <!-- History Item 6 -->
+      <div class="history-item">
+        <div class="history-dot" style="background:var(--gold); box-shadow:0 0 6px oklch(0.82 0.14 88 / 0.5);"></div>
+        <div class="history-info">
+          <div class="history-company">PlanetScale</div>
+          <div class="history-role">Product Engineer</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">Jan 24</span>
+          <a href="#" class="history-view-link">View</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer note -->
+    <div style="padding: 0 26px 20px; text-align: center;">
+      <span style="font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">
+        Showing 6 of 12 imported · <a href="#" style="color:var(--mint); text-decoration:none;">View all</a>
+      </span>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<script>
+  // Lucide icons
+  lucide.createIcons();
+
+  // GSAP reveal animations
+  window.addEventListener('DOMContentLoaded', () => {
+    const reveals = document.querySelectorAll('.reveal');
+    gsap.to(reveals, {
+      opacity: 1,
+      y: 0,
+      duration: 0.65,
+      ease: 'power3.out',
+      stagger: 0.09,
+      delay: 0.1,
+    });
+
+    // Animate email list items from left
+    gsap.from('.email-list-item', {
+      opacity: 0,
+      x: -16,
+      duration: 0.45,
+      ease: 'power2.out',
+      stagger: 0.06,
+      delay: 0.55,
+    });
+
+    // Animate history items from left
+    gsap.from('.history-item', {
+      opacity: 0,
+      x: -16,
+      duration: 0.45,
+      ease: 'power2.out',
+      stagger: 0.06,
+      delay: 0.7,
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobTracker — Applications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root {
+    --background: oklch(0.07 0.012 285);
+    --foreground: oklch(0.93 0.008 285);
+    --primary: oklch(0.78 0.18 168);
+    --accent: oklch(0.82 0.14 88);
+    --muted-foreground: oklch(0.55 0.02 285);
+    --border: oklch(0.95 0.01 285 / 0.12);
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --glass-blur: 24px;
+    --glass-bg: oklch(1 0 0 / 0.05);
+    --glass-bg-hover: oklch(1 0 0 / 0.08);
+    --glass-border: oklch(1 0 0 / 0.12);
+    --glass-border-bright: oklch(1 0 0 / 0.22);
+    --glass-glow-primary: oklch(0.78 0.18 168 / 0.15);
+    --orb-1: oklch(0.52 0.22 168 / 0.18);
+    --orb-2: oklch(0.48 0.20 280 / 0.14);
+    --orb-3: oklch(0.60 0.16 88 / 0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans) !important;
+    background: oklch(0.07 0.012 285) !important;
+    color: oklch(0.93 0.008 285) !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .bg-canvas { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); }
+  .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--orb-1), transparent 70%); top: -100px; left: -100px; animation: drift1 18s ease-in-out infinite; }
+  .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, var(--orb-2), transparent 70%); bottom: 0; right: -100px; animation: drift2 22s ease-in-out infinite; }
+  .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, var(--orb-3), transparent 70%); top: 50%; left: 40%; animation: drift3 16s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(50px,60px); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-60px,-50px); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-40px); } }
+
+  .glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    position: relative;
+  }
+  .glass::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(135deg, oklch(1 0 0 / 0.06) 0%, transparent 50%, oklch(1 0 0 / 0.02) 100%);
+    pointer-events: none;
+  }
+
+  /* NAV */
+  .nav-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; width: calc(100% - 48px); max-width: 900px; border-radius: 100px !important; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(40px) saturate(200%) !important; -webkit-backdrop-filter: blur(40px) saturate(200%) !important; }
+  .nav-logo { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: oklch(0.93 0.008 285) !important; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px var(--glass-glow-primary); animation: pulse-dot 2.5s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.85); } }
+  .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+  .nav-link { padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 500; color: oklch(0.70 0.01 285) !important; text-decoration: none; transition: all 0.2s ease; position: relative; }
+  .nav-link:hover { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0 / 0.06); }
+  .nav-link.active { color: oklch(0.93 0.008 285) !important; background: oklch(1 0 0 / 0.10); }
+  .nav-link.active::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; border-radius: 1px; background: var(--primary); box-shadow: 0 0 8px var(--glass-glow-primary); }
+  .nav-icon-btn { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; background: none; color: oklch(0.65 0.01 285); }
+  .nav-icon-btn:hover { background: oklch(1 0 0 / 0.07); border-color: oklch(1 0 0 / 0.12); color: oklch(0.93 0.008 285); }
+
+  /* LAYOUT */
+  .main-content { position: relative; z-index: 1; padding-top: 100px; }
+  .page-wrapper { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 40px; gap: 20px; flex-wrap: wrap; }
+  .page-title { font-size: clamp(2rem, 4vw, 3rem) !important; font-weight: 800 !important; letter-spacing: -0.04em !important; color: oklch(0.95 0.008 285) !important; line-height: 1.05; }
+  .page-subtitle { font-size: 14px !important; color: oklch(0.55 0.015 285) !important; margin-top: 6px; }
+  .btn-primary { padding: 11px 22px; border-radius: 100px; background: var(--primary) !important; color: oklch(0.07 0.012 285) !important; font-weight: 700; font-size: 13px; font-family: var(--font-sans) !important; border: none; cursor: pointer; transition: all 0.2s cubic-bezier(0.16,1,0.3,1); display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 0 24px var(--glass-glow-primary); text-decoration: none; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--glass-glow-primary); }
+
+  /* FILTER BAR */
+  .filter-bar { border-radius: 20px !important; padding: 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-input-wrapper { flex: 1; min-width: 200px; position: relative; }
+  .search-input-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: oklch(0.50 0.01 285); pointer-events: none; }
+  .search-input { width: 100%; padding: 9px 12px 9px 38px; background: oklch(1 0 0 / 0.05) !important; border: 1px solid oklch(1 0 0 / 0.10) !important; border-radius: 12px !important; color: oklch(0.90 0.008 285) !important; font-size: 13px; font-family: var(--font-sans) !important; outline: none; transition: all 0.2s ease; }
+  .search-input::placeholder { color: oklch(0.45 0.01 285) !important; }
+  .search-input:focus { border-color: oklch(0.78 0.18 168 / 0.4) !important; background: oklch(1 0 0 / 0.08) !important; box-shadow: 0 0 0 3px oklch(0.78 0.18 168 / 0.08); }
+  .filter-select { padding: 9px 14px; background: oklch(1 0 0 / 0.05) !important; border: 1px solid oklch(1 0 0 / 0.10) !important; border-radius: 12px !important; color: oklch(0.78 0.01 285) !important; font-size: 13px; font-family: var(--font-sans) !important; outline: none; cursor: pointer; transition: all 0.2s ease; appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: right 10px center !important; }
+  .filter-select:focus { border-color: oklch(0.78 0.18 168 / 0.4) !important; }
+  .filter-select option { background: oklch(0.12 0.015 285) !important; color: oklch(0.90 0.008 285) !important; }
+  .filter-divider { width: 1px; height: 24px; background: oklch(1 0 0 / 0.08); flex-shrink: 0; }
+  .bulk-btn { padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; font-family: var(--font-sans) !important; border: 1px solid oklch(1 0 0 / 0.10) !important; background: oklch(1 0 0 / 0.04) !important; color: oklch(0.65 0.01 285) !important; cursor: pointer; transition: all 0.2s ease; }
+  .bulk-btn:hover { background: oklch(1 0 0 / 0.08) !important; color: oklch(0.88 0.008 285) !important; }
+
+  /* APP TABLE */
+  .app-table { border-radius: 24px !important; overflow: hidden; }
+  .table-header { display: grid; grid-template-columns: 32px 1fr 140px 100px 90px 40px; gap: 12px; padding: 12px 20px; border-bottom: 1px solid oklch(1 0 0 / 0.07); }
+  .th { font-size: 11px !important; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(0.45 0.01 285) !important; }
+  .app-row { display: grid; grid-template-columns: 32px 1fr 140px 100px 90px 40px; gap: 12px; padding: 15px 20px; border-bottom: 1px solid oklch(1 0 0 / 0.05); align-items: center; cursor: pointer; transition: all 0.18s ease; text-decoration: none; }
+  .app-row:last-child { border-bottom: none; }
+  .app-row:hover { background: oklch(1 0 0 / 0.04); }
+  .app-row:hover .row-arrow { opacity: 1; transform: translateX(2px); color: var(--primary) !important; }
+  .checkbox-wrap { display: flex; align-items: center; justify-content: center; }
+  .row-check { width: 16px; height: 16px; border-radius: 5px; border: 1px solid oklch(1 0 0 / 0.18) !important; background: transparent !important; cursor: pointer; accent-color: var(--primary); }
+  .company-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .company-avatar { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; border: 1px solid oklch(1 0 0 / 0.10); }
+  .company-name { font-size: 14px !important; font-weight: 600; color: oklch(0.90 0.008 285) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .company-role { font-size: 12px !important; color: oklch(0.50 0.01 285) !important; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell-date { font-size: 12px !important; font-family: var(--font-mono) !important; color: oklch(0.50 0.01 285) !important; }
+  .cell-salary { font-size: 12px !important; font-family: var(--font-mono) !important; color: oklch(0.58 0.01 285) !important; white-space: nowrap; }
+  .row-arrow { width: 16px; height: 16px; color: oklch(0.40 0.01 285); opacity: 0; transition: all 0.18s ease; display: flex; align-items: center; justify-content: center; }
+
+  /* STATUS PILLS */
+  .status-pill { padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .pill-applied    { background: oklch(0.78 0.18 168 / 0.12); color: var(--primary) !important; border: 1px solid oklch(0.78 0.18 168 / 0.22); }
+  .pill-applied::before    { background: var(--primary); }
+  .pill-screening  { background: oklch(0.75 0.16 220 / 0.12); color: oklch(0.75 0.16 220) !important; border: 1px solid oklch(0.75 0.16 220 / 0.22); }
+  .pill-screening::before  { background: oklch(0.75 0.16 220); }
+  .pill-interview  { background: oklch(0.82 0.14 88 / 0.12);  color: var(--accent) !important; border: 1px solid oklch(0.82 0.14 88 / 0.22); }
+  .pill-interview::before  { background: var(--accent); }
+  .pill-offered    { background: oklch(0.72 0.20 145 / 0.12); color: oklch(0.72 0.20 145) !important; border: 1px solid oklch(0.72 0.20 145 / 0.22); }
+  .pill-offered::before    { background: oklch(0.72 0.20 145); }
+  .pill-rejected   { background: oklch(0.58 0.18 25 / 0.12);  color: oklch(0.65 0.18 25) !important; border: 1px solid oklch(0.58 0.18 25 / 0.22); }
+  .pill-rejected::before   { background: oklch(0.58 0.18 25); }
+  .pill-withdrawn  { background: oklch(0.55 0.02 285 / 0.12); color: oklch(0.60 0.02 285) !important; border: 1px solid oklch(0.55 0.02 285 / 0.22); }
+  .pill-withdrawn::before  { background: oklch(0.55 0.02 285); }
+
+  /* PAGINATION */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-top: 1px solid oklch(1 0 0 / 0.07); flex-wrap: wrap; gap: 12px; }
+  .pagination-info { font-size: 12px !important; color: oklch(0.50 0.01 285) !important; font-family: var(--font-mono) !important; }
+  .pagination-controls { display: flex; gap: 4px; }
+  .page-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-family: var(--font-sans) !important; cursor: pointer; transition: all 0.18s ease; border: 1px solid transparent; background: none; color: oklch(0.60 0.01 285); }
+  .page-btn:hover { background: oklch(1 0 0 / 0.07); color: oklch(0.90 0.008 285); border-color: oklch(1 0 0 / 0.10); }
+  .page-btn.active { background: var(--primary) !important; color: oklch(0.07 0.012 285) !important; box-shadow: 0 0 16px var(--glass-glow-primary); border-color: transparent; }
+
+  /* FAB */
+  .fab { position: fixed; bottom: 32px; right: 32px; z-index: 50; width: 52px; height: 52px; border-radius: 50%; background: var(--primary) !important; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: oklch(0.07 0.012 285) !important; box-shadow: 0 0 0 1px oklch(0.78 0.18 168 / 0.3), 0 8px 24px oklch(0 0 0 / 0.4), 0 0 40px var(--glass-glow-primary); transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
+  .fab:hover { transform: scale(1.1); }
+
+  .reveal { opacity: 0; }
+  .mono { font-family: var(--font-mono) !important; }
+</style>
+</head>
+<body>
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<nav class="nav-bar glass" style="box-shadow: 0 0 0 1px oklch(1 0 0/0.08), 0 16px 48px oklch(0 0 0/0.6);">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    JobTracker
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link">Dashboard</a></li>
+    <li><a href="#" class="nav-link active">Applications</a></li>
+    <li><a href="#" class="nav-link">Connections</a></li>
+  </ul>
+  <div style="display:flex;gap:4px;">
+    <button class="nav-icon-btn"><i data-lucide="mail" style="width:16px;height:16px;"></i></button>
+    <button class="nav-icon-btn"><i data-lucide="settings" style="width:16px;height:16px;"></i></button>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-wrapper">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header reveal">
+      <div>
+        <h1 class="page-title">Applications</h1>
+        <p class="page-subtitle">24 total · 5 active this week</p>
+      </div>
+      <a href="#" class="btn-primary">
+        <i data-lucide="plus" style="width:15px;height:15px;"></i>
+        New Application
+      </a>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar glass reveal" style="transition-delay: 0.05s;">
+      <div class="search-input-wrapper">
+        <i data-lucide="search" style="width:14px;height:14px;"></i>
+        <input class="search-input" type="text" placeholder="Search company or role…">
+      </div>
+      <div class="filter-divider"></div>
+      <select class="filter-select">
+        <option>All Statuses</option>
+        <option>Applied</option>
+        <option>Screening</option>
+        <option>Interview</option>
+        <option>Offered</option>
+        <option>Rejected</option>
+        <option>Withdrawn</option>
+      </select>
+      <select class="filter-select">
+        <option>Sort: Date Applied</option>
+        <option>Sort: Company A–Z</option>
+        <option>Sort: Response Date</option>
+        <option>Sort: Status</option>
+      </select>
+      <div class="filter-divider"></div>
+      <button class="bulk-btn">
+        <i data-lucide="check-square" style="width:13px;height:13px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+        Select
+      </button>
+    </div>
+
+    <!-- APPLICATION TABLE -->
+    <div class="app-table glass reveal" style="transition-delay: 0.1s; box-shadow: 0 0 0 1px oklch(1 0 0/0.08), 0 20px 48px oklch(0 0 0/0.55);">
+
+      <!-- Header row -->
+      <div class="table-header">
+        <div class="th"></div>
+        <div class="th">Company / Role</div>
+        <div class="th">Status</div>
+        <div class="th">Applied</div>
+        <div class="th">Salary</div>
+        <div class="th"></div>
+      </div>
+
+      <!-- Data rows -->
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.78 0.18 168/0.12); color: var(--primary);">G</div>
+          <div>
+            <div class="company-name">Google</div>
+            <div class="company-role">Software Engineer, L5</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-interview">Interviewing</span></div>
+        <div class="cell-date">Jan 18</div>
+        <div class="cell-salary">$160–200k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.82 0.14 88/0.12); color: var(--accent);">S</div>
+          <div>
+            <div class="company-name">Stripe</div>
+            <div class="company-role">Backend Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-screening">Screening</span></div>
+        <div class="cell-date">Jan 15</div>
+        <div class="cell-salary">$150–180k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.72 0.20 145/0.12); color: oklch(0.72 0.20 145);">V</div>
+          <div>
+            <div class="company-name">Vercel</div>
+            <div class="company-role">Full Stack Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-offered">Offered</span></div>
+        <div class="cell-date">Jan 12</div>
+        <div class="cell-salary">$140–170k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.75 0.16 310/0.12); color: oklch(0.75 0.16 310);">L</div>
+          <div>
+            <div class="company-name">Linear</div>
+            <div class="company-role">Product Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-applied">Applied</span></div>
+        <div class="cell-date">Jan 10</div>
+        <div class="cell-salary">$130–160k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.58 0.18 25/0.12); color: oklch(0.65 0.18 25);">N</div>
+          <div>
+            <div class="company-name">Notion</div>
+            <div class="company-role">Frontend Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-rejected">Rejected</span></div>
+        <div class="cell-date">Jan 8</div>
+        <div class="cell-salary">$120–150k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.75 0.16 220/0.12); color: oklch(0.75 0.16 220);">F</div>
+          <div>
+            <div class="company-name">Figma</div>
+            <div class="company-role">Senior Software Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-interview">Interviewing</span></div>
+        <div class="cell-date">Jan 5</div>
+        <div class="cell-salary">$155–185k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <a href="#" class="app-row">
+        <div class="checkbox-wrap"><input type="checkbox" class="row-check"></div>
+        <div class="company-cell">
+          <div class="company-avatar" style="background: oklch(0.55 0.02 285/0.12); color: oklch(0.60 0.02 285);">D</div>
+          <div>
+            <div class="company-name">Dropbox</div>
+            <div class="company-role">Platform Engineer</div>
+          </div>
+        </div>
+        <div><span class="status-pill pill-withdrawn">Withdrawn</span></div>
+        <div class="cell-date">Dec 28</div>
+        <div class="cell-salary">$125–150k</div>
+        <div class="row-arrow"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></div>
+      </a>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <span class="pagination-info">Showing 1–7 of 24</span>
+        <div class="pagination-controls">
+          <button class="page-btn"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">…</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<button class="fab"><i data-lucide="plus" style="width:22px;height:22px;"></i></button>
+
+<script>
+  lucide.createIcons();
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Entrance animations
+  gsap.utils.toArray('.reveal').forEach((el, i) => {
+    gsap.fromTo(el,
+      { opacity: 0, y: 28, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'power3.out',
+        delay: 0.15 + i * 0.08 }
+    );
+  });
+
+  // Table rows stagger in
+  gsap.utils.toArray('.app-row').forEach((el, i) => {
+    gsap.fromTo(el,
+      { opacity: 0, x: -20 },
+      { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out', delay: 0.45 + i * 0.05 }
+    );
+  });
+
+  // Parallax orbs
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    document.querySelector('.orb-1').style.transform = `translate(${y*0.04}px,${y*0.06}px)`;
+    document.querySelector('.orb-2').style.transform = `translate(${-y*0.03}px,${-y*0.04}px)`;
+  }, { passive: true });
+</script>
+</body>
+</html>
