@@ -12,10 +12,16 @@
                 <h1 class="reveal-text">Applications</h1>
                 <p class="mt-1 reveal-text">Manage and track your job applications</p>
             </div>
-            <a href="{{ url_for('views.new_application') }}"
-               class="btn-primary mt-2">
-                + Add Application
-            </a>
+            <div class="flex items-center gap-3 mt-2">
+                <a href="{{ url_for('views.email_settings') }}"
+                   class="btn btn-glass">
+                    Account
+                </a>
+                <a href="{{ url_for('views.new_application') }}"
+                   class="btn-primary">
+                    + Add Application
+                </a>
+            </div>
         </div>
     </div>
 
