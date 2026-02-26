@@ -76,16 +76,15 @@
                    class="nav-link {% if request.endpoint == 'views.connections' %}active{% endif %}">
                     Connections
                 </a>
-                <a href="{{ url_for('views.email_settings') }}"
-                   class="nav-link {% if request.endpoint == 'views.email_settings' %}active{% endif %}">
-                    Account
-                </a>
             </div>
 
             <!-- Right actions -->
             <div style="display:flex;align-items:center;gap:6px;">
                 <a href="{{ url_for('views.new_application') }}" class="btn-primary" style="padding:8px 16px;font-size:12px;">
                     + Add Application
+                </a>
+                <a href="{{ url_for('views.email_settings') }}" class="btn btn-glass" style="padding:8px 16px;font-size:12px;">
+                    Account
                 </a>
             </div>
         </div>
