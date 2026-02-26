@@ -61,36 +61,62 @@ class JobEmailParser:
     SUBJECT_POSITION_PATTERNS = [
         # "Indeed Application: Position"
         r'Indeed Application:\s*(.+?)(?:\s*@|\s*$)',
-        # "Application Update: Position"
-        r'Application\s+(?:Update|Status|Confirmation):\s*(.+?)(?:\s*$)',
+        # "Application: Position" or "Application Update: Position"
+        r'Application\s*(?:Update|Status|Confirmation)?:\s*(.+?)(?:\s*@|\s*$)',
+        # "applied for Software Engineer at Company" / "application for X at Company"
+        r'(?:applied for|application for|applying for)\s+(?:the\s+)?(.+?)(?:\s+(?:at|@|with)\s+[A-Z]|\s*$)',
         # "Position @ Company" - get position before @
         r'^(.+?)\s*@\s*[A-Z]',
         # "Position at Company" - get position before "at"
         r'^(.+?)\s+at\s+[A-Z]',
-        # "Position - Location at Company"
+        # "Position - Location" or "Position - Company"
         r'^(.+?)\s+-\s+[A-Z][a-z]+',
         # "Applying to Position"
         r'[Aa]pplying to\s+(.+?)(?:\s+-\s+|\s+at\s+|\s*$)',
+        # "Your Application: Position" or "Re: Position"
+        r'(?:[Yy]our )?[Aa]pplication:\s*(.+?)(?:\s*$)',
     ]
 
-    # Body position patterns (work on both subject and body)
+    # Body position patterns — tried in order, more specific first.
+    # Each pattern must capture the title in group 1.
     BODY_POSITION_PATTERNS = [
-        # "for the following role(s)/opportunity: Position" (common in ATS emails, IBM uses "following opportunity") - PRIORITY
-        r'(?:following role|following position|following job|following opportunity)(?:\(s\))?:\s*\n?\s*(.+?)(?:\s*\(|\n|$)',
-        # "Job Title: Software Engineer" (IBM Workday / Taleo field format)
+        # ── Labeled field patterns (highest confidence) ──────────────────────────
+        # "Job Title: Software Engineer"  (Workday / Taleo / IBM field format)
         r'[Jj]ob\s+[Tt]itle:\s*(.+?)(?:\n|$)',
-        # "job application - 12345 - Job Title" (IBM format)
-        r'job application\s*-\s*\d+\s*-\s*(.+?)(?:\.|!|\n|$)',
-        # "application for the Position position/role" (e.g., "Your application for the Technical Sales Representative position")
+        # "Position: Software Engineer" or "Role: Software Engineer" as a field label
+        r'(?:^|\n)\s*(?:Position|Role)[:\s]+([A-Z][^\n]{2,80})(?:\n|$)',
+        # "Opportunity: Software Engineer" field label
+        r'(?:^|\n)\s*Opportunity[:\s]+([A-Z][^\n]{2,80})(?:\n|$)',
+
+        # ── "following X:" patterns ───────────────────────────────────────────────
+        # "for the following role/position/job/opportunity:" (IBM ATS, Greenhouse, etc.)
+        r'(?:following role|following position|following job|following opportunity)(?:\(s\))?[:\s]*\n?\s*(.+?)(?:\s*\(|\n|$)',
+
+        # ── "submitted for" / "applied for" on one line ──────────────────────────
+        # "submitted for: Software Engineer" or "submitted for the Software Engineer role"
+        r'submitted for[:\s]+(?:the\s+)?(.+?)(?:\s+(?:position|role)|\s+at\s+[A-Z]|\s*\n|$)',
+        # "you applied for Software Engineer" / "applied for the X position"
+        r'applied (?:for|to)\s+(?:the\s+)?(.+?)(?:\s+(?:position|role)|\s+at\s+[A-Z]|\s+with\s+[A-Z]|\.|,|\n|$)',
+        # "applying for the X role/position"
+        r'applying (?:for|to)\s+(?:the\s+)?(?!following)(.+?)\s+(?:position|role)',
+
+        # ── "application for X" ────────────────────────────────────────────────────
+        # "application for the Software Engineer position/role"
         r'application for\s+(?:the\s+)?(.+?)\s+(?:position|role)(?:\s|\.|\,|!|$)',
-        # "candidacy for the Position position/role" (IBM rejection format: "not moving forward with your candidacy for the X position")
+        # "Your application for Software Engineer at IBM" (no position/role suffix)
+        r'[Yy]our application for\s+(?:the\s+)?(.+?)(?:\s+(?:at|with)\s+[A-Z]|\s+has\b|\s+was\b|\.|,|\n|$)',
+        # "job application - 12345 - Job Title" (IBM legacy ATS format)
+        r'job application\s*-\s*\d+\s*-\s*(.+?)(?:\.|!|\n|$)',
+
+        # ── Rejection / status phrases that mention the role ─────────────────────
+        # "candidacy for the X position/role" (IBM rejection)
         r'candidacy for\s+(?:the\s+)?(.+?)\s+(?:position|role)',
-        # "position of Position" (e.g., "applying for the position of Account Coordinator")
+        # "consideration for the X position"
+        r'consideration for\s+(?:the\s+)?(.+?)\s+(?:position|role|opportunity)',
+
+        # ── "position of" / "interest in" / "applying to" ────────────────────────
         r'position of\s+([A-Z][A-Za-z0-9\s\-/]+?)(?:\.|,|!|\s+at|\s+with|\n)',
-        # "interest in the Position position/role"
         r'interest in (?:the\s+)?(?!following)(.+?)\s+(?:position|role|opportunity)',
-        # "applying to the Position position/role"
-        r'applying to (?:the\s+)?(?!following)(.+?)\s+(?:position|role)',
     ]
 
     # Platform-specific domains for detection
@@ -249,28 +275,126 @@ class JobEmailParser:
         return self._extract_company_from_domain(from_address)
 
     def _extract_position(self, subject: str, body: str) -> Optional[str]:
-        """Extract position/job title from email using universal patterns."""
-
-        # Try subject-only patterns on subject first
+        """
+        Extract position/job title from email using three strategies in order:
+          1. Subject-only regex patterns
+          2. Body regex patterns (run on both subject and body text)
+          3. Line-by-line scanner — catches IBM and other ATS formats where the
+             title appears on its own line after a trigger phrase, not inline.
+        """
+        # Strategy 1: subject-only patterns
         for pattern in self.SUBJECT_POSITION_PATTERNS:
             match = re.search(pattern, subject, re.IGNORECASE | re.MULTILINE)
             if match:
-                position = match.group(1).strip()
-                position = self._clean_position_name(position)
-                if position and len(position) > 2 and len(position) < 150:
-                    if self._looks_like_position(position):
-                        return position
+                position = self._clean_position_name(match.group(1).strip())
+                if position and 2 < len(position) < 150 and self._looks_like_position(position):
+                    return position
 
-        # Try body patterns on both subject and body
-        for text in [subject, body[:3000]]:
+        # Strategy 2: body patterns (also applied to subject for overlap)
+        for text in [subject, body[:5000]]:
             for pattern in self.BODY_POSITION_PATTERNS:
                 match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
-                    position = match.group(1).strip()
-                    position = self._clean_position_name(position)
-                    if position and len(position) > 2 and len(position) < 150:
-                        if self._looks_like_position(position):
-                            return position
+                    position = self._clean_position_name(match.group(1).strip())
+                    if position and 2 < len(position) < 150 and self._looks_like_position(position):
+                        return position
+
+        # Strategy 3: line-scanner fallback — handles "submitted for:\n[Title]" etc.
+        return self._scan_for_standalone_title(body[:5000])
+
+    # Title keywords used by the line scanner to identify job title lines
+    _TITLE_KEYWORDS = frozenset([
+        'engineer', 'developer', 'manager', 'director', 'analyst', 'specialist',
+        'coordinator', 'intern', 'associate', 'designer', 'consultant', 'advisor',
+        'representative', 'scientist', 'architect', 'lead', 'officer', 'administrator',
+        'recruiter', 'technician', 'supervisor', 'planner', 'strategist', 'executive',
+        'programmer', 'researcher', 'partner', 'operator', 'trainer', 'estimator',
+        'producer', 'writer', 'editor', 'accountant', 'auditor', 'buyer', 'agent',
+    ])
+
+    # Phrases that signal the job title will appear on the same or next line
+    _TRIGGER_PHRASES = [
+        'submitted for', 'successfully submitted for',
+        'applied for', 'applying for',
+        'following opportunity', 'following role', 'following position', 'following job',
+        'for the opportunity', 'for the role', 'for the position',
+        'job title', 'position title', 'role title',
+    ]
+
+    def _scan_for_standalone_title(self, text: str) -> Optional[str]:
+        """
+        Scan email body line-by-line for a job title that appears on its own line.
+
+        Two passes:
+          Pass 1 — look for a trigger phrase (e.g. "submitted for:") then grab
+                   the title from the same line or the next non-empty line.
+          Pass 2 — scan all short lines (1–7 words) that contain a title keyword
+                   and look like a title rather than a sentence.
+        """
+        lines = text.split('\n')
+        n = len(lines)
+
+        # ── Pass 1: trigger-phrase proximity scan ──────────────────────────────
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            lower = stripped.lower()
+
+            triggered = any(tp in lower for tp in self._TRIGGER_PHRASES)
+            if not triggered:
+                continue
+
+            # Check if the title is on the SAME line after the trigger
+            for tp in self._TRIGGER_PHRASES:
+                idx = lower.find(tp)
+                if idx < 0:
+                    continue
+                after = stripped[idx + len(tp):].strip().lstrip(':').strip()
+                after = re.sub(r'^(?:the|a|an)\s+', '', after, flags=re.IGNORECASE)
+                if after and 2 < len(after) < 120:
+                    cleaned = self._clean_position_name(after)
+                    if cleaned and self._looks_like_position(cleaned):
+                        return cleaned
+
+            # Title is on the NEXT non-empty line (IBM "submitted for:\n\nTitle")
+            for j in range(i + 1, min(i + 5, n)):
+                next_line = lines[j].strip()
+                if not next_line:
+                    continue
+                next_lower = next_line.lower()
+                # Stop if next line is metadata (Job ID, Req, digits, etc.)
+                if re.match(r'^(job\s+(id|code|req)|req\s*(id|#|:)|\d{4,}|location:|department:|ref\s*(id|#))', next_lower):
+                    break
+                cleaned = self._clean_position_name(next_line)
+                if cleaned and 2 < len(cleaned) < 120 and self._looks_like_position(cleaned):
+                    return cleaned
+                break  # only try the first non-empty line
+
+        # ── Pass 2: short capitalised lines containing a title keyword ──────────
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or not stripped[0].isupper():
+                continue
+
+            words = stripped.split()
+            if not (1 <= len(words) <= 7):
+                continue
+
+            lower = stripped.lower()
+
+            # Must contain a recognised title keyword
+            if not any(kw in lower for kw in self._TITLE_KEYWORDS):
+                continue
+
+            # Reject lines that are clearly sentences (contain pronouns/verbs)
+            sentence_words = {'we', 'you', 'our', 'your', 'i', 'they', 'is', 'are',
+                              'was', 'will', 'have', 'has', 'been', 'be', 'do', 'does',
+                              'please', 'thank', 'click', 'visit', 'apply', 'view'}
+            if any(w in sentence_words for w in lower.split()):
+                continue
+
+            cleaned = self._clean_position_name(stripped)
+            if cleaned and self._looks_like_position(cleaned):
+                return cleaned
 
         return None
 
@@ -451,7 +575,11 @@ class JobEmailParser:
                             'analyst', 'specialist', 'coordinator', 'assistant', 'associate',
                             'representative', 'recruiter', 'designer', 'planner', 'lead',
                             'executive', 'administrator', 'consultant', 'advisor', 'officer',
-                            'estimator', 'technician', 'operator', 'supervisor', 'trainer']
+                            'estimator', 'technician', 'operator', 'supervisor', 'trainer',
+                            'scientist', 'architect', 'programmer', 'researcher', 'partner',
+                            'strategist', 'producer', 'writer', 'editor', 'accountant',
+                            'auditor', 'buyer', 'agent', 'attorney', 'counsel', 'therapist',
+                            'nurse', 'physician', 'pharmacist', 'broker', 'underwriter']
         text_lower = text.lower()
         has_position_keyword = any(kw in text_lower for kw in position_keywords)
 
