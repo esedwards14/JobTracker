@@ -243,24 +243,46 @@ def find_matching_applications(company: str, position: str, email_from: str, bod
     applications = []
 
     # Strategy 1: Direct company name match (with normalization)
+    # Two passes: first try company+position match, then company-only match.
+    # This prevents spurious fallback matches when company is found but position
+    # text doesn't exactly match what's stored (e.g., "Ref: 91272 - Product Manager"
+    # vs "Product Manager" stored in DB).
     if company:
         normalized_company = normalize_company_name(company)
         base_query = JobApplication.query
         if user_id:
             base_query = base_query.filter_by(user_id=user_id)
         apps = base_query.all()
+
+        company_pos_matches = []
+        company_only_matches = []
+
         for app in apps:
             normalized_app_name = normalize_company_name(app.company_name)
-            # Direct match or substring match
-            if (normalized_company.lower() in normalized_app_name.lower() or 
-                normalized_app_name.lower() in normalized_company.lower()):
-                # If we have position, check that too
-                if position:
-                    if position.lower() in app.position.lower() if app.position else False:
-                        applications.append(app)
+            # Require a meaningful name length to avoid substring false-positives
+            # (e.g., "In" matching "LinkedIn", "A" matching "Apple")
+            if len(normalized_app_name) < 3:
+                continue
+            # Direct match or substring match (bidirectional)
+            company_match = (
+                normalized_company.lower() in normalized_app_name.lower() or
+                normalized_app_name.lower() in normalized_company.lower()
+            )
+            if company_match:
+                if position and app.position:
+                    pos_lower = position.lower()
+                    app_pos_lower = app.position.lower()
+                    # Bidirectional: either is a substring of the other
+                    if pos_lower in app_pos_lower or app_pos_lower in pos_lower:
+                        company_pos_matches.append(app)
+                    else:
+                        company_only_matches.append(app)
                 else:
-                    applications.append(app)
-        
+                    company_only_matches.append(app)
+
+        # Prefer position+company matches; fall back to company-only
+        applications = company_pos_matches if company_pos_matches else company_only_matches
+
         if applications:
             return applications
 

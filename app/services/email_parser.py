@@ -20,8 +20,9 @@ class JobEmailParser:
         r'^[Tt]hanks for [Aa]pplying to\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:!|\.?\s*$)',
         # "Thank You For Your Interest in Company!"
         r'[Ii]nterest in\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:!|\s*$)',
-        # "Company Application Update:" or "Company: Application"
-        r'^([A-Z][A-Za-z0-9\s&\-\.]+?)\s+Application\s+(?:Update|Status|Confirmation)',
+        # "Company Application Update:" or "Your IBM Application Status"
+        # The (?:Your\s+)? prefix strips the possessive pronoun so we get "IBM" not "Your IBM"
+        r'^(?:[Yy]our\s+|[Mm]y\s+)?([A-Z][A-Za-z0-9\s&\-\.]+?)\s+Application\s+(?:Update|Status|Confirmation)',
         # "Application to Company" or "Application at Company" - AMBIGUOUS, keep later
         r'[Aa]pplication\s+(?:to|at|for .+? at)\s+([A-Z][A-Za-z0-9\s&\-\.]+?)(?:!|\.|\s*$)',
         # "application was sent to Company"
@@ -63,6 +64,9 @@ class JobEmailParser:
         r'Indeed Application:\s*(.+?)(?:\s*@|\s*$)',
         # "Application: Position" or "Application Update: Position"
         r'Application\s*(?:Update|Status|Confirmation)?:\s*(.+?)(?:\s*@|\s*$)',
+        # IBM ATS format: "... | Position: Ref: 91272 - Product Manager 2026 ELH"
+        # Must come before generic patterns to extract clean title (strips Ref prefix)
+        r'\|\s*[Pp]osition:\s*(?:Ref(?:erence)?:?\s*[\w\-]+\s*[-–]\s*)?(.+?)(?:\s*$)',
         # "applied for Software Engineer at Company" / "application for X at Company"
         r'(?:applied for|application for|applying for)\s+(?:the\s+)?(.+?)(?:\s+(?:at|@|with)\s+[A-Z]|\s*$)',
         # "Position @ Company" - get position before @
@@ -84,7 +88,8 @@ class JobEmailParser:
         # "Job Title: Software Engineer"  (Workday / Taleo / IBM field format)
         r'[Jj]ob\s+[Tt]itle:\s*(.+?)(?:\n|$)',
         # "Position: Software Engineer" or "Role: Software Engineer" as a field label
-        r'(?:^|\n)\s*(?:Position|Role)[:\s]+([A-Z][^\n]{2,80})(?:\n|$)',
+        # Strips optional "Ref: XXXXX - " prefix common in IBM ATS emails
+        r'(?:^|\n)\s*(?:Position|Role)[:\s]+(?:Ref(?:erence)?:?\s*[\w\-]+\s*[-–]\s*)?([A-Z][^\n]{2,80})(?:\n|$)',
         # "Opportunity: Software Engineer" field label
         r'(?:^|\n)\s*Opportunity[:\s]+([A-Z][^\n]{2,80})(?:\n|$)',
 
@@ -624,7 +629,16 @@ class JobEmailParser:
         company = re.sub(r'\s*\[?https?://[^\s\]]*\]?', '', company)
         company = re.sub(r'<[^>]+>', '', company).strip()
 
-        # Remove common suffixes
+        # Strip trailing recruiting/HR department suffixes that get picked up from sender names
+        # e.g. "IBM Talent Acquisition" → "IBM", "Acme Recruiting Team" → "Acme"
+        company = re.sub(
+            r'\s+(?:Talent\s+Acquisition|Talent\s+Team|Recruiting\s+Team|Hiring\s+Team|'
+            r'Human\s+Resources|HR\s+Team|Careers\s+Team|Recruitment\s+Team|'
+            r'Recruiting|Staffing)\s*$',
+            '', company, flags=re.IGNORECASE
+        )
+
+        # Remove common corporate suffixes
         company = re.sub(r'\s*(?:Inc\.?|LLC\.?|Ltd\.?|Corp\.?|Corporation|Company|Co\.?)?\s*$', '', company, flags=re.IGNORECASE)
         company = re.sub(r'^\s*(?:the\s+)?', '', company, flags=re.IGNORECASE)
         company = re.sub(r'\s+', ' ', company).strip()
@@ -645,6 +659,9 @@ class JobEmailParser:
         position = re.sub(r'\s+', ' ', position).strip()
         position = position.rstrip('.,!?:;-')
         position = position.lstrip('.,!?:;-')
+
+        # Strip leading reference numbers common in IBM ATS: "Ref: 91272 - " or "Req: 91272 - "
+        position = re.sub(r'^(?:Ref(?:erence)?|Req(?:uisition)?):?\s*[\w\-]+\s*[-–]\s*', '', position, flags=re.IGNORECASE)
 
         # Remove common noise phrases
         noise_phrases = ['position', 'role', 'opportunity', 'job', 'the']
@@ -1035,6 +1052,8 @@ class JobEmailParser:
     # Additional patterns for extracting company from RESPONSE emails
     # These are patterns more common in rejection/interview emails vs confirmation emails
     RESPONSE_COMPANY_PATTERNS = [
+        # "IBM is appreciated" / "IBM wishes you" - company at start of subject before sentiment phrase
+        r'^([A-Z][A-Za-z0-9&\-\.\']+(?:\s+[A-Z][A-Za-z0-9&\-\.\']+)?)\s+(?:is (?:grateful|appreciated|pleased|honored|excited)|wishes you|would like to thank)',
         # "Position Filled: Job Title with Company" - common rejection format
         r'[Pp]osition [Ff]illed:.+?with\s+([A-Z][A-Za-z0-9\s&\-\.\']+?)(?:\s*$|!|\.|,|\n)',
         # "with Company" at end of subject/line
@@ -1067,6 +1086,9 @@ class JobEmailParser:
 
     # Patterns for extracting position/job title from response emails
     RESPONSE_POSITION_PATTERNS = [
+        # IBM ATS subject format: "| Position: Ref: 91272 - Product Manager 2026 ELH"
+        # Must come first to get clean title without Ref prefix
+        r'\|\s*[Pp]osition:\s*(?:Ref(?:erence)?:?\s*[\w\-]+\s*[-–]\s*)?([A-Za-z][A-Za-z0-9\s&\-\.\'\/]+?)(?:\s*$|\n)',
         # "Position Filled: Job Title with Company"
         r'[Pp]osition [Ff]illed:\s*([A-Za-z0-9\s&\-\.\'\/]+?)\s+with\s+',
         # "regarding the Job Title position"
@@ -1222,11 +1244,23 @@ class JobEmailParser:
         """Clean up extracted position name."""
         if not position:
             return ""
+        position = re.sub(r'\s+', ' ', position).strip()
         # Remove trailing punctuation
         position = re.sub(r'[\.\,\!\?\:\;]+$', '', position).strip()
         # Remove leading/trailing quotes
         position = position.strip('"\'')
-        return position
+        position = position.lstrip('.,!?:;-')
+
+        # Strip leading reference numbers (any ATS): "Ref: 91272 - " or "Req: 12345 - "
+        position = re.sub(r'^(?:Ref(?:erence)?|Req(?:uisition)?):?\s*[\w\-]+\s*[-–]\s*', '', position, flags=re.IGNORECASE)
+
+        # Remove common noise words when they appear as standalone prefix/suffix
+        noise_phrases = ['position', 'role', 'opportunity', 'job', 'the']
+        for phrase in noise_phrases:
+            position = re.sub(rf'^{phrase}\s+', '', position, flags=re.IGNORECASE)
+            position = re.sub(rf'\s+{phrase}$', '', position, flags=re.IGNORECASE)
+
+        return position.strip()
 
     def _looks_like_position(self, position: str) -> bool:
         """Check if the extracted text looks like a valid job position."""
