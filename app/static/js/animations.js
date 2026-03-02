@@ -20,7 +20,7 @@
         if (!main) return;
         gsap.fromTo(main,
             { opacity: 0, y: 32, filter: 'blur(4px)' },
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out', delay: 0.05 }
+            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out', delay: 0.05, clearProps: 'filter' }
         );
     }
 
