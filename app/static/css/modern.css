@@ -693,6 +693,8 @@ select.status-follow_up  { background-color: oklch(0.75 0.16 310 / 0.12) !import
     box-shadow: 0 0 0 1px oklch(1 0 0 / 0.08),
                 0 32px 80px oklch(0 0 0 / 0.7),
                 0 0 80px var(--accent-glow) !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
 }
 
 /* ── TAGS ── */
