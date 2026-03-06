@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="seal-bg" cx="40%" cy="33%" r="68%">
+      <stop offset="0%" stop-color="#1a2e5e"/>
+      <stop offset="100%" stop-color="#070c1c"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background disc -->
+  <circle cx="50" cy="50" r="49" fill="url(#seal-bg)"/>
+
+  <!-- Outer thick ring -->
+  <circle cx="50" cy="50" r="46.5" fill="none" stroke="#c8920e" stroke-width="2.5"/>
+  <!-- Subtle second ring -->
+  <circle cx="50" cy="50" r="43" fill="none" stroke="#c8920e" stroke-width="0.8" opacity="0.55"/>
+  <!-- Beaded / dashed ring -->
+  <circle cx="50" cy="50" r="39.5" fill="none" stroke="#c8920e" stroke-width="1.8"
+    stroke-dasharray="3.5 3" stroke-dashoffset="2"/>
+  <!-- Inner fine ring -->
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#c8920e" stroke-width="0.8" opacity="0.55"/>
+
+  <!-- Diamond ornaments at cardinal points (between the ring bands) -->
+  <polygon points="50,4.5  52.5,8  50,11.5  47.5,8"  fill="#c8920e"/>
+  <polygon points="50,88.5 52.5,92 50,95.5  47.5,92" fill="#c8920e"/>
+  <polygon points="4.5,50  8,52.5  11.5,50  8,47.5"  fill="#c8920e"/>
+  <polygon points="88.5,50 92,52.5 95.5,50  92,47.5"  fill="#c8920e"/>
+
+  <!-- Quill pen, tilted slightly for elegance -->
+  <g transform="translate(50,48) rotate(-12)">
+    <!-- Right / forward vane (brighter gold) -->
+    <path d="M0,-21 C13,-11 12,4 7,18 C4,23 1,27 0,29
+             C0,21 -1,13 -4,5 C-7,-7 -3,-17 0,-21Z"
+      fill="#c8920e"/>
+    <!-- Left / back vane (darker for depth) -->
+    <path d="M0,-21 C-11,-13 -9,-1 -6,10 C-4,16 -2,23 0,29
+             C0,21 -1,13 -4,5 C-6,-3 -4,-15 0,-21Z"
+      fill="#a07210"/>
+    <!-- Central shaft (rachis) -->
+    <line x1="0" y1="-21" x2="0" y2="29" stroke="#e8ca3a" stroke-width="0.9" opacity="0.65"/>
+    <!-- Nib tip -->
+    <path d="M-2,27 L0,35 L2,27 Z" fill="#c8920e"/>
+    <!-- Leading-edge highlight -->
+    <path d="M0,-21 C4,-14 5,-5 3,5" stroke="#edd84a" stroke-width="0.8" fill="none" opacity="0.45"/>
+    <!-- Right vane barbs -->
+    <path d="M5,-6 C9,-4 10,0"   stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+    <path d="M7,4  C10,6 10,11"  stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+    <path d="M5,14 C8,16 7,20"   stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+    <!-- Left vane barbs -->
+    <path d="M-5,-6 C-9,-4 -10,0"  stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+    <path d="M-6,4  C-9,6  -9,11"  stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+    <path d="M-5,14 C-7,16 -6,20"  stroke="#d8a820" stroke-width="0.55" fill="none" opacity="0.4"/>
+  </g>
+</svg>

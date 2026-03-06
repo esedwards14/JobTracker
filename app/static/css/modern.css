@@ -236,18 +236,14 @@ nav.glass-nav .h-16 {
 
 /* Logo */
 .logo-mark {
-    background: var(--accent) !important;
-    box-shadow: 0 0 16px var(--accent-glow);
-    border-radius: 50% !important;
-    width: 32px !important;
-    height: 32px !important;
-    transition: var(--transition);
-    animation: logo-pulse 3s ease-in-out infinite;
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    transition: opacity 0.2s ease;
 }
-@keyframes logo-pulse {
-    0%,100% { box-shadow: 0 0 16px var(--accent-glow); }
-    50%      { box-shadow: 0 0 8px var(--accent-glow); opacity: 0.8; }
-}
+.logo-mark:hover { opacity: 0.85; }
 .logo-text {
     color: var(--text-primary) !important;
     font-weight: 700 !important;
@@ -962,7 +958,7 @@ hr,
 .dark .bg-indigo-50\/50 { background: oklch(0.78 0.18 168 / 0.05) !important; }
 .dark nav  { background-color: transparent !important; }
 .dark footer { background-color: oklch(1 0 0 / 0.02) !important; }
-.dark .logo-mark { background: var(--accent) !important; }
+.dark .logo-mark { background: none !important; }
 
 /* Pending emails colors */
 .dark #pending-emails .text-green-800 { color: oklch(0.76 0.18 145) !important; }
