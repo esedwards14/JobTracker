@@ -31,7 +31,7 @@ class JobApplication(db.Model):
     interviews = db.relationship(
         'InterviewStage',
         backref='application',
-        lazy='dynamic',
+        lazy='select',
         cascade='all, delete-orphan'
     )
     contacts = db.relationship(

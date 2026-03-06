@@ -338,6 +338,7 @@ def stats_interview_breakdown():
     # Apps with interviews
     with_interviews = JobApplication.query.filter_by(user_id=user_id)\
         .join(InterviewStage)\
+        .distinct()\
         .order_by(JobApplication.date_applied.desc()).all()
 
     # Apps without interviews
