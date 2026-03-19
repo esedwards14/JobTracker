@@ -428,9 +428,8 @@ def sync_emails():
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
-    days_back = request.json.get('days_back', 30) if request.json else 30
-
     try:
+        days_back = (request.get_json(silent=True) or {}).get('days_back', 30)
         # Connect and fetch emails via OAuth
         connector = GmailOAuthConnector(
             settings.access_token or '',
@@ -652,9 +651,8 @@ def scan_response_emails():
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
-    days_back = request.json.get('days_back', 30) if request.json else 30
-
     try:
+        days_back = (request.get_json(silent=True) or {}).get('days_back', 30)
         # Connect and fetch emails via OAuth
         connector = GmailOAuthConnector(
             settings.access_token or '',
@@ -902,9 +900,9 @@ def preview_response_emails():
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected. Please connect via Google Sign-In first.'}), 400
 
-    days_back = request.json.get('days_back', 30) if request.json else 30
-
     try:
+        days_back = (request.get_json(silent=True) or {}).get('days_back', 30)
+
         # Connect and fetch emails via OAuth
         connector = GmailOAuthConnector(
             settings.access_token or '',
@@ -1034,9 +1032,8 @@ def scan_contacts_from_emails():
     if not settings or not settings.is_active or not settings.refresh_token:
         return jsonify({'error': 'Gmail not connected.'}), 400
 
-    days_back = request.json.get('days_back', 90) if request.json else 90
-
     try:
+        days_back = (request.get_json(silent=True) or {}).get('days_back', 90)
         connector = GmailOAuthConnector(
             settings.access_token or '',
             settings.refresh_token,
