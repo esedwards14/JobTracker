@@ -19,7 +19,11 @@ def dashboard():
 @views_bp.route('/applications')
 def applications():
     """Render the applications list page."""
-    return render_template('pages/applications.html')
+    from app.services.user_service import get_current_user_id
+    user_id = get_current_user_id()
+    settings = EmailSettings.query.filter_by(user_id=user_id).first() if user_id else None
+    email_connected = bool(settings and settings.refresh_token)
+    return render_template('pages/applications.html', email_connected=email_connected)
 
 
 @views_bp.route('/applications/<int:id>')
