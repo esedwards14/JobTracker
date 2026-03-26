@@ -57,20 +57,34 @@
                 </select>
             </div>
 
-            <div class="w-40">
-                <label for="from-date" class="block text-sm mb-1">From Date</label>
-                <input type="date"
-                       id="from-date"
-                       name="from_date"
-                       value="{{ request.args.get('from_date', '') }}">
+            <div class="w-44">
+                <label for="date-preset" class="block text-sm mb-1">Date Applied</label>
+                <select id="date-preset" onchange="applyDatePreset(this.value)">
+                    <option value="all" {% if not request.args.get('from_date') %}selected{% endif %}>All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 3 Months</option>
+                    <option value="180">Last 6 Months</option>
+                    <option value="365">Last Year</option>
+                    <option value="custom" {% if request.args.get('from_date') %}selected{% endif %}>Custom Range</option>
+                </select>
             </div>
 
-            <div class="w-40">
-                <label for="to-date" class="block text-sm mb-1">To Date</label>
-                <input type="date"
-                       id="to-date"
-                       name="to_date"
-                       value="{{ request.args.get('to_date', '') }}">
+            <div id="custom-date-range" class="flex gap-2 {% if not request.args.get('from_date') %}hidden{% endif %}">
+                <div class="w-36">
+                    <label for="from-date" class="block text-sm mb-1">From</label>
+                    <input type="date"
+                           id="from-date"
+                           name="from_date"
+                           value="{{ request.args.get('from_date', '') }}">
+                </div>
+                <div class="w-36">
+                    <label for="to-date" class="block text-sm mb-1">To</label>
+                    <input type="date"
+                           id="to-date"
+                           name="to_date"
+                           value="{{ request.args.get('to_date', '') }}">
+                </div>
             </div>
 
             <div class="w-48">
@@ -84,7 +98,7 @@
             </div>
 
             <button type="button"
-                    onclick="this.form.reset(); htmx.trigger(this.form, 'change')"
+                    onclick="clearFilters()"
                     class="btn btn-glass px-4 py-2 text-sm">
                 Clear
             </button>
@@ -236,6 +250,40 @@ function toggleSelectMode() {
             bulkSelect.clearAll();
         }
     }
+}
+
+function applyDatePreset(value) {
+    const fromInput = document.getElementById('from-date');
+    const toInput = document.getElementById('to-date');
+    const customRange = document.getElementById('custom-date-range');
+
+    if (value === 'all') {
+        fromInput.value = '';
+        toInput.value = '';
+        customRange.classList.add('hidden');
+        htmx.trigger(document.getElementById('filter-form'), 'change');
+    } else if (value === 'custom') {
+        customRange.classList.remove('hidden');
+        // Don't auto-trigger; let user pick dates
+    } else {
+        const days = parseInt(value);
+        const from = new Date();
+        from.setDate(from.getDate() - days);
+        fromInput.value = from.toISOString().split('T')[0];
+        toInput.value = '';
+        customRange.classList.add('hidden');
+        htmx.trigger(document.getElementById('filter-form'), 'change');
+    }
+}
+
+function clearFilters() {
+    const form = document.getElementById('filter-form');
+    form.reset();
+    document.getElementById('date-preset').value = 'all';
+    document.getElementById('from-date').value = '';
+    document.getElementById('to-date').value = '';
+    document.getElementById('custom-date-range').classList.add('hidden');
+    htmx.trigger(form, 'change');
 }
 
 function openScanModal() {
