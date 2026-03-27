@@ -480,8 +480,14 @@ def applications_list_partial():
     # Apply sorting
     if sort == 'alphabetical':
         query = query.order_by(JobApplication.company_name.asc())
+    elif sort == 'date_added_desc':
+        query = query.order_by(JobApplication.created_at.desc())
+    elif sort == 'date_added_asc':
+        query = query.order_by(JobApplication.created_at.asc())
     elif sort == 'date_applied_desc':
         query = query.order_by(JobApplication.date_applied.desc())
+    elif sort == 'date_applied_asc':
+        query = query.order_by(JobApplication.date_applied.asc())
     elif sort == 'status':
         # Sort by status in custom order: follow_up, offered, interviewing, rejected, applied, withdrawn
         status_order = case(

@@ -96,8 +96,11 @@
             <div class="w-48">
                 <label for="sort" class="block text-sm mb-1">Sort By</label>
                 <select id="sort" name="sort">
-                    <option value="response_date_desc" {% if request.args.get('sort', 'response_date_desc') == 'response_date_desc' %}selected{% endif %}>Most Recent Response Received</option>
-                    <option value="date_applied_desc" {% if request.args.get('sort') == 'date_applied_desc' %}selected{% endif %}>Most Recent Applied</option>
+                    <option value="response_date_desc" {% if request.args.get('sort', 'response_date_desc') == 'response_date_desc' %}selected{% endif %}>Most Recent Response</option>
+                    <option value="date_added_desc" {% if request.args.get('sort') == 'date_added_desc' %}selected{% endif %}>Date Added (Newest)</option>
+                    <option value="date_added_asc" {% if request.args.get('sort') == 'date_added_asc' %}selected{% endif %}>Date Added (Oldest)</option>
+                    <option value="date_applied_desc" {% if request.args.get('sort') == 'date_applied_desc' %}selected{% endif %}>Date Applied (Newest)</option>
+                    <option value="date_applied_asc" {% if request.args.get('sort') == 'date_applied_asc' %}selected{% endif %}>Date Applied (Oldest)</option>
                     <option value="status" {% if request.args.get('sort') == 'status' %}selected{% endif %}>Status</option>
                     <option value="alphabetical" {% if request.args.get('sort') == 'alphabetical' %}selected{% endif %}>Alphabetical (A-Z)</option>
                 </select>
