@@ -1,5 +1,6 @@
 """Main views for the web interface."""
 
+import traceback
 from datetime import date, datetime
 from flask import render_template, request, redirect, url_for, flash
 from decimal import Decimal
@@ -202,7 +203,15 @@ def edit_application(id):
         else:
             application.response_date = None
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            traceback.print_exc()
+            flash(f'Error saving application: {e}', 'error')
+            return render_template('pages/application_form.html',
+                                 application=application,
+                                 today=date.today().isoformat())
 
         flash('Application updated successfully!', 'success')
         return redirect(url_for('views.application_detail', id=application.id))
